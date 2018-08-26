@@ -418,6 +418,8 @@ let info_of_tok = function
   | Tregister            (i) -> i
   | Textern              (i) -> i
   | Tstatic              (i) -> i
+  | Tpublic              (i) -> i
+  | Tprivate             (i) -> i
   | Tconst               (i) -> i
   | Tvolatile            (i) -> i
 
@@ -593,6 +595,9 @@ let visitor_info_of_tok f = function
   | Tregister            (i) -> Tregister            (f i)
   | Textern              (i) -> Textern              (f i)
   | Tstatic              (i) -> Tstatic              (f i)
+  | Tpublic              (i) -> Tpublic              (f i)
+  | Tprivate             (i) -> Tprivate             (f i)
+
   | Tconst               (i) -> Tconst               (f i)
   | Tvolatile            (i) -> Tvolatile            (f i)
 
@@ -716,6 +721,8 @@ let string_of_token = function
   | Tregister _ -> "Tregister"
   | Textern _ -> "Textern"
   | Tstatic _ -> "Tstatic"
+  | Tpublic _ -> "Tpublic"
+  | Tprivate _ -> "Tprivate"
   | Ttypedef _ -> "Ttypedef"
   | Tconst _ -> "Tconst"
   | Tvolatile _ -> "Tvolatile"

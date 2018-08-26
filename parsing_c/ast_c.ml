@@ -578,8 +578,8 @@ and declaration =
        NoInit | ValInit of info * initialiser
      | ConstrInit of argument wrap2 (* , *) list wrap
      and storage       = storagebis * bool (* gccext: inline or not *)
-     and storagebis    = NoSto | StoTypedef | Sto of storageClass
-     and storageClass  = Auto  | Static | Register | Extern
+     and storagebis    = NoSto | StoTypedef | Sto of storageClass list
+     and storageClass  = Auto  | Static | Register | Extern | Public | Private
 
      and local_decl = LocalDecl | NotLocalDecl
 

@@ -194,14 +194,13 @@ let equal_sign a b =
   | _, (B.UnSigned|B.Signed) -> false
 
 let equal_storage a b =
+
   match a, b with
-  | A.Static   , B.Sto B.Static
-  | A.Auto     , B.Sto B.Auto
-  | A.Register , B.Sto B.Register
-  | A.Extern   , B.Sto B.Extern
-      -> true
+  | A.Static   , B.Sto ls -> List.mem B.Static ls
+  | A.Auto     , B.Sto ls -> List.mem B.Auto ls
+  | A.Register , B.Sto ls -> List.mem B.Register ls
+  | A.Extern   , B.Sto ls -> List.mem B.Extern ls
   | _, (B.NoSto | B.StoTypedef) -> false
-  | _, (B.Sto (B.Register|B.Static|B.Auto|B.Extern)) -> false
 
 
 (*---------------------------------------------------------------------------*)
@@ -4092,7 +4091,7 @@ and storage_optional_allminus allminus stoa (stob, iistob) =
 	  | i1::iistob ->
 	      let str = B.str_of_info i1 in
 	      (match str with
-		"static" | "extern" | "auto" | "register" ->
+		"static" | "extern" | "auto" | "register" | "public" | "private" ->
 		  (* not very elegant, but tokenf doesn't know what token to
 		     match with *)
 		  tokenf x i1 >>= (fun x i1 ->

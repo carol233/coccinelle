@@ -1163,16 +1163,22 @@ let rec visit_toplevel ~just_add_in_env ~depth elem =
             Visitor_c.vk_type bigf t;
 
 
-	    let local =
-	      match (sto,local) with
-	      | (_,Ast_c.NotLocalDecl) -> Ast_c.NotLocalVar
-	      |	((Ast_c.Sto Ast_c.Static, _), Ast_c.LocalDecl) ->
+		let local =
+		  let stoStatic =
+		  	match sto with
+				  | (Ast_c.Sto storageList, _) ->  List.mem Ast_c.Static storageList
+				  | _, _ -> false
+		  in
+
+	      match (sto,local, stoStatic) with
+	      | (_,Ast_c.NotLocalDecl, _ ) -> Ast_c.NotLocalVar
+          |	((Ast_c.Sto storageList, _), Ast_c.LocalDecl, true) ->
 		  (match Ast_c.info_of_type t with
 		    (* if there is no info about the type it must not be
 		       present, so we don't know what the variable is *)
 		    None -> Ast_c.NotLocalVar
 		  | Some ii -> Ast_c.StaticLocalVar ii)
-	      |	(_,Ast_c.LocalDecl) ->
+	      |	(_,Ast_c.LocalDecl, _) ->
 		  (match Ast_c.info_of_type t with
 		    (* if there is no info about the type it must not be
 		       present, so we don't know what the variable is *)

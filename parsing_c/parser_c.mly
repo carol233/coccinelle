@@ -72,10 +72,12 @@ let nullDecl = {
 let fake_pi = Common.fake_parse_info
 
 let addStorageD  = function
-  | ((x,ii), ({storageD = (NoSto,[])} as v)) -> { v with storageD = (x, [ii]) }
   | ((x,ii), ({storageD = (y, ii2)} as v)) ->
-      if x = y then warning "duplicate storage classes" v
-      else warning "multiple storage classes, keeping the second" v
+      { v with storageD = match y, x with 
+            | Sto sclist, Sto xval -> (Sto (List.concat([xval; sclist])), [ii])
+            | NoSto, Sto xval -> (Sto xval, [ii])
+            | _ -> (* should be impossible *) warning "not working" (y, [ii])
+      }
 
 let addInlineD  = function
   | ((true,ii), ({inlineD = (false,[])} as v)) -> { v with inlineD=(true,[ii])}
@@ -200,7 +202,7 @@ let (fixDeclSpecForDecl: decl -> (fullType * (storage wrap)))  = function
 let fixDeclSpecForParam = function ({storageD = (st,iist)} as r) ->
   let ((qu,ty) as v,_st) = fixDeclSpecForDecl r in
   match st with
-  | (Sto Register) -> (v, true), iist
+  | (Sto [Register]) -> (v, true), iist
   | NoSto -> (v, false), iist
   | _ ->
       raise
@@ -478,6 +480,7 @@ let args_to_params l pb =
        Tchar Tshort Tint Tdouble Tfloat Tlong Tunsigned Tsigned Tvoid
        Tsize_t Tssize_t Tptrdiff_t
        Tauto Tregister Textern Tstatic
+       Tpublic Tprivate
        Ttypedef
        Tconst Tvolatile
        Tstruct Tunion Tenum Tdecimal Texec
@@ -1573,10 +1576,12 @@ decl_spec2:
 
 
 storage_class_spec_nt:
- | Tstatic      { Sto Static,  $1 }
- | Textern      { Sto Extern,  $1 }
- | Tauto        { Sto Auto,    $1 }
- | Tregister    { Sto Register,$1 }
+ | Tstatic      { Sto [Static],  $1 }
+ | Textern      { Sto [Extern],  $1 }
+ | Tauto        { Sto [Auto],    $1 }
+ | Tregister    { Sto [Register],$1 }
+ | Tpublic      { Sto [Public],   $1}
+ | Tprivate     { Sto [Private],   $1}
 
 storage_class_spec:
  | storage_class_spec_nt { $1 }
