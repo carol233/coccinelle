@@ -425,6 +425,7 @@ let info_of_tok = function
 
   | Trestrict            (i) -> i
 
+  | Tclass               (i) -> i
   | Tstruct              (i) -> i
   | Tenum                (i) -> i
   | Tdecimal             (i) -> i
@@ -603,6 +604,7 @@ let visitor_info_of_tok f = function
 
   | Trestrict            (i) -> Trestrict            (f i)
 
+  | Tclass               (i) -> Tclass               (f i)
   | Tstruct              (i) -> Tstruct              (f i)
   | Tenum                (i) -> Tenum                (f i)
   | Tdecimal             (i) -> Tdecimal             (f i)
@@ -755,6 +757,7 @@ let string_of_token = function
   | TattributeNoarg _ -> "TattributeNoarg"
   | Tinline _ -> "Tinline"
   | Ttypeof _ -> "Ttypeof"
+  | Tclass _  -> "Tclass"
   | TDefine _ -> "TDefine"
   | TDefParamVariadic _ -> "TDefParamVariadic"
   | TCppEscapedNewline _ -> "TCppEscapedNewline"

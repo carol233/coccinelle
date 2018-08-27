@@ -501,6 +501,9 @@ let args_to_params l pb =
 %token <Ast_c.info> Tinline
 %token <Ast_c.info> Ttypeof
 
+/*(* java only stuff *)*/
+%token <Ast_c.info> Tclass
+
 /*(*-----------------------------------------*)*/
 /*(* cppext: extra tokens *)*/
 /*(*-----------------------------------------*)*/
@@ -1434,6 +1437,12 @@ parameter_decl2:
      }
 
 
+  
+
+class_methods:
+  | { [] }
+  | class_methods function_definition { Definition $2 :: $1 }
+
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
 /*(*----------------------------*)*/
@@ -2139,9 +2148,12 @@ cpp_other:
 /*(* celem *)*/
 /*(*************************************************************************)*/
 
+
+
 external_declaration:
  | function_definition               { Definition $1 }
  | decl                              { Declaration ($1 Ast_c.NotLocalDecl) }
+
 
 
 celem:
@@ -2149,6 +2161,13 @@ celem:
      { !LP._lexer_hint.context_stack <- [LP.InTopLevel];
        Namespace ($4, [$1; snd $2; $3; $5]) }
 
+ | Tclass TIdent TOBrace class_methods TCBrace 
+    { !LP._lexer_hint.context_stack <- [LP.InTopLevel];
+                                       Namespace ($4, [$1; snd $2; $3; $5]) } 
+| storage_class_spec Tclass TIdent TOBrace class_methods TCBrace 
+    { !LP._lexer_hint.context_stack <- [LP.InTopLevel];
+                                       Namespace ($5, [$2; snd $3; $4; $6]) } 
+                  
  | external_declaration                         { $1 }
 
  /*(* cppext: *)*/

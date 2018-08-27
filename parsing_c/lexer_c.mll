@@ -154,6 +154,7 @@ let keyword_table = Common.hash_of_list [
   "const",    (fun ii -> Tconst ii);
   "volatile", (fun ii -> Tvolatile ii);
 
+  "class",   (fun ii -> Tclass ii);
   "struct",  (fun ii -> Tstruct ii);
   "union",   (fun ii -> Tunion ii);
   "enum",    (fun ii -> Tenum ii);

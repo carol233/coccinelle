@@ -710,6 +710,7 @@ module Parser_c :
       | TattributeNoarg of Ast_c.info
       | Tinline of Ast_c.info
       | Ttypeof of Ast_c.info
+      | Tclass of Ast_c.info
       | TDefine of Ast_c.info
       | TDefParamVariadic of (string * Ast_c.info)
       | TCppEscapedNewline of Ast_c.info
