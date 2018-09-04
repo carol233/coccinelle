@@ -148,8 +148,11 @@ let keyword_table = Common.hash_of_list [
   "register", (fun ii -> Tregister ii);
   "extern",   (fun ii -> Textern ii);
   "static",   (fun ii -> Tstatic ii);
+
+  (* for java *)
   "public",   (fun ii -> Tpublic ii);
   "private",   (fun ii -> Tprivate ii);
+  (* // java *)
 
   "const",    (fun ii -> Tconst ii);
   "volatile", (fun ii -> Tvolatile ii);

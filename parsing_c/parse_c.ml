@@ -79,6 +79,7 @@ let is_define_passed passed =
   end
 
 
+
 (*****************************************************************************)
 (* Error diagnostic  *)
 (*****************************************************************************)
@@ -291,6 +292,15 @@ let parse file =
   let lexbuf = Lexing.from_channel (open_in file) in
   let result = Parser_c.main Lexer_c.token lexbuf in
   result
+
+
+(*****)
+
+
+(* *)
+
+
+(****)
 
 (*****************************************************************************)
 (* Parsing subelements, useful to debug parser *)
@@ -512,7 +522,7 @@ let in_exec = ref false
 let rec lexer_function ~pass tr = fun lexbuf ->
   match tr.rest with
   | [] -> pr2_err "ALREADY AT END"; tr.current
-  | v::xs ->
+  | v::xs ->	
     tr.rest <- xs;
     tr.current <- v;
 
@@ -926,6 +936,35 @@ module StringMap : Map.S with type key = string = Map.Make(String)
 
 let header_cache = Common.create_bounded_cache 0(*disabled 300*) ("",None)
 
+(* For reconstructing parts of the tokens in a celem later, such as when we want to get an individual function from each class *)
+type token_counter = {
+  mutable tokens : Parser_c.token list
+}
+
+
+(* used for printer *)
+let print_buffer = Buffer.create 32 
+
+let write_to_buffer s = Buffer.add_string print_buffer (s ^ " ")
+
+
+(* Copied from simple pretty printer... *)
+let pr_elem info =
+  let s = Ast_c.str_of_info info in
+  
+  	write_to_buffer s;
+ 
+and pr_space _ = ()
+
+and pr_nl _ = ()
+and pr_indent _ = ()
+and pr_outdent _ = ()
+and pr_unindent _ = ()
+  
+
+let  class_methods_printer = Pretty_print_c.mk_pretty_printers ~pr_elem ~pr_space ~pr_nl ~pr_indent ~pr_outdent ~pr_unindent
+
+
 let tree_stack = ref []
 let seen_files = ref []
 
@@ -1010,6 +1049,106 @@ and handle_include file wrapped_incl k =
     end
 
 
+and flatten_inner lll = List.map (fun ll -> List.flatten ll ) lll 
+
+
+
+
+
+
+(* debug *)
+
+and sublist b e l = 
+  match l with
+    [] -> failwith "sublist"
+  | h :: t -> 
+     let tail = if e=0 then [] else sublist (b-1) (e-1) t in
+     if b>0 then tail else h :: tail
+
+
+and details_of_info (info: Ast_c.info) = 
+
+  match info.pinfo with
+    OriginTok pi -> pr2 ("origintok " ^ pi.Common.str)
+  | ExpandedTok (pi,_) -> pr2 ("expanded" ^ pi.Common.str)
+  | FakeTok (s,_) ->  pr2 ("FakeTok" ^ s)
+  | AbstractLineTok pi -> pr2 "abstract"
+
+and (_defs_builtins : (string, Cpp_token_c.define_def) Hashtbl.t ref)  =
+  ref (Hashtbl.create 101)
+
+
+and true_tokens = {tokens = []} 
+
+  
+and mk_tokens tokens lexbuf  = 
+  true_tokens.tokens <- tokens;
+  try
+    let rec tokens_aux acc =
+      
+	  let tok = Lexer_c.token lexbuf in
+
+      if TH.is_eof tok
+      then List.rev (tok::acc)
+      else tokens_aux (tok::acc)
+    in
+    let parsed_tokens = tokens_aux [] in
+    let toks = if !Flag_parsing_c.exts_ITU
+                then Parsing_hacks.fix_tokens_ifdef parsed_tokens
+                else parsed_tokens
+      in
+    let toks =
+      Parsing_hacks.fix_tokens_cpp ~macro_defs:!_defs_builtins [] toks in
+    let toks =
+      Parsing_hacks.fix_tokens_strings toks in
+    (* let true_tokens_slice = sublist 0 (List.length toks) true_tokens.tokens  in  *)
+	
+	(* assume now that this is good enough. i.e. there are no blocks or lambdas *)
+	let take_tokens_until_closing_brace toks = 
+		(let (before, paren, after) = Common.split_when (fun a -> (TH.str_of_tok a) = "}") toks 
+		in (before @ [paren], after) )
+	in
+
+	(* TODO I can remove the mutable field in the global var (true_tokens) now *)
+	let result, updated_true_tokens  = take_tokens_until_closing_brace true_tokens.tokens in
+		true_tokens.tokens <- updated_true_tokens;
+		result;		
+    
+  with
+  | Lexer_c.Lexical s ->
+      failwith ("lexical error " ^ s ^ "\n =")
+  | e -> raise e
+
+(* actual parsed tokens -> c element -> (info list for each nested toplevel * remaining parsed tokens) *)
+and infos_of_class_methods tokens toplevel  =
+  (
+    match toplevel with 
+    
+    | Ast_c.Definition (def , il) ->
+
+        (* tokens_nested_in_def (def, il); *)
+        class_methods_printer.toplevel toplevel;
+        Buffer.contents print_buffer |> pr2;
+        let str = Buffer.contents print_buffer 
+
+          in let parsed_tokens = str |> Lexing.from_string |> (mk_tokens tokens ) in 
+          let _ = Buffer.clear print_buffer in 
+          
+          ([(str, parsed_tokens)], 
+          	true_tokens.tokens) (* remaining tokens *)
+        
+    | Ast_c.Namespace (toplevels, il) -> 
+        let infos = 
+          List.fold_left (fun (acc_infos, remaining_tokens) toplevel -> 
+            let (top_levels_infos, rest_tokens) = infos_of_class_methods tokens toplevel
+            in (acc_infos @ top_levels_infos, rest_tokens )
+          ) ([], []) toplevels
+        in infos
+    | _ -> ([], tokens)
+  ) 
+  
+
+(* look here! *)
 and _parse_print_error_heuristic2bis saved_typedefs saved_macros
   parse_strings file use_header_cache =
   let stat = Parsing_stat.default_stat file in
@@ -1170,17 +1309,54 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
          * Maybe simpler just to look at tr.passed and count
          * the lines in the token from the correct file ?
          *)
-    in
+	in
+
+
+  let strip_class_start_end tokens =  
+    (* just drop everything before the first '{' *)
+    let (bef, start_paren, after) = Common.split_when (fun tok -> (TH.str_of_tok tok) = "{") tokens
+    in after
+
+
+  in
+    
+      
     let info = mk_info_item file (List.rev tr.passed) in
+    
+    
 
     (* some stat updates *)
     stat.Stat.commentized <-
       stat.Stat.commentized + count_lines_commentized (snd info);
 
+
+    let infos = (match elem with 
+      | Common.Left elem_toplevel ->  (match elem_toplevel with
+        | Ast_c.Namespace (toplevel_list, il) -> 
+            let tokens_without_class = strip_class_start_end (List.rev tr.passed) in
+			let result = List.rev (toplevel_list) 
+				|> List.fold_left (
+					fun (acc_infos, remaining_tokens) toplevel -> 
+						let (info, leftover_toks ) = infos_of_class_methods remaining_tokens toplevel
+							in (acc_infos @ info, leftover_toks)
+					)  ([], tokens_without_class)
+				|> fst in 
+            result
+        | Ast_c.Definition (def, il) -> 
+            [];
+        | _ -> []) (* TODO handle muliply-nested stuff in future *)
+        
+      | Common.Right _ ->  [] (* TODO haven't figured out this case... *)
+	) in
+	
+	let _ = pr2 ("num infos : " ^ (string_of_int (List.length infos))) in
+	let _ = pr2 ("tr.passed : " ^ (List.fold_left (fun a b -> a ^ (TH.str_of_tok b)) "" (List.rev tr.passed))) in
+  
     let elem =
       match elem with
       | Left e ->
-          stat.Stat.correct <- stat.Stat.correct + diffline;
+		  stat.Stat.correct <- stat.Stat.correct + diffline;
+			pr2 ("top level : " ^ (Ast_c.string_of_toplevel e));
           e
       | Right (info_of_bads, line_error, col_error, toks_of_bads,
               passed_before_error, cur, exn, pass) ->
@@ -1244,7 +1420,11 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
 
     (match elem with
     | Ast_c.FinalDef x -> [(Ast_c.FinalDef x, info)]
-    | xs -> (xs, info):: loop tr (* recurse *)
+    | Ast_c.Namespace (nested_toplevels, il) -> 
+			  let result = zip nested_toplevels infos in 
+			  
+			  result;
+    | xs -> let acc = loop tr  in (xs, info) :: acc (* recurse *)
     )
   in
   let v = loop tr in
@@ -1269,7 +1449,8 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
   let v =
     let new_td = ref (Common.clone_scoped_h_env !LP._typedef) in
     Common.clean_scope_h new_td;
-    (v, !new_td, macros) in
+	(v, !new_td, macros) 
+  in
   { filename = file; parse_trees = v; statistics = stat }
 
 let parse_print_error_heuristic2 saved_typedefs saved_macros
@@ -1404,3 +1585,4 @@ let (cexpression_of_string: string -> Ast_c.expression) = fun s ->
         )
     | _ -> None
   )
+

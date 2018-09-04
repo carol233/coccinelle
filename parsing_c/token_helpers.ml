@@ -840,3 +840,4 @@ let is_same_line_or_close line tok =
  *)
 let filter_out_escaped_newline =
   List.filter (fun tok -> not (is_escaped_newline tok))
+

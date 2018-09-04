@@ -88,6 +88,11 @@ let sp_of_file file iso    =
 let print_flow flow =
   Control_flow_c.G.print_ograph_mutable flow "/tmp/test.dot" true
 
+let print_flow_count = ref 0
+
+let print_flow_with_counter flow = 
+	print_flow_count := !print_flow_count + 1;
+	Control_flow_c.G.print_ograph_mutable flow ("/tmp/test" ^ (string_of_int !print_flow_count) ^ ".dot") true
 
 let ast_to_flow_with_error_messages2 x =
   let flowopt =
@@ -1063,7 +1068,10 @@ let flatten l =
 	       function x ->
 		 x :: prev)
 	     prev cur)
-       [] l)
+	   [] l)
+	   
+
+
 
 let build_info_program env (cprogram,typedefs,macros) =
 
@@ -1081,8 +1089,43 @@ let build_info_program env (cprogram,typedefs,macros) =
     TAC.annotate_program env (*!g_contain_typedmetavar*) cs'
   in
 
-  zip cs_with_envs parseinfos +> List.map (fun ((c, (enva,envb)), parseinfo)->
-    let (fullstr, tokens) = parseinfo in
+
+  (* flat map to get the definitions out of the namespace *)
+  let cs_with_envs' = 
+	cs_with_envs +> 
+	List.map (fun cprogram' -> 
+		let (toplevel, misc_info) = cprogram' in 
+			match toplevel with  
+			(* namespaces consists of a list of toplevels *)
+				| Ast_c.Namespace (toplevel_list, _) -> 
+					List.map (fun c -> (c, misc_info))  toplevel_list 
+					
+					
+				| _ -> [cprogram']
+		) +> List.flatten
+  in
+
+  let parseinfos' = parseinfos in
+  (*	cs_with_envs +> 
+	List.map (fun cprogram' -> 
+	let (toplevel, _) = cprogram' in 
+		match toplevel, parseinfos with  
+		(* namespaces consists of a list of toplevels *)
+			| Ast_c.Namespace (toplevel_list, _), parse_i :: parse_is -> 
+				
+			toplevel_list +> List.map (fun toplevel ->
+				match match toplevel with
+					| Ast_c.Definition _ -> parse_is
+					| _ ->  parseinfos
+				 
+			| _ -> [parseinfos]
+			)
+	) +> List.flatten +> List.flatten
+  in  *)
+
+  zip cs_with_envs' parseinfos' +> List.map (fun ((c, (enva,envb)), parseinfo)->
+	let (fullstr, tokens) = parseinfo in
+
 
     let flow =
       ast_to_flow_with_error_messages c +>
@@ -1091,8 +1134,7 @@ let build_info_program env (cprogram,typedefs,macros) =
 
         (* remove the fake nodes for julia *)
         let fixed_flow = CCI.fix_flow_ctl flow in
-
-        if !Flag_cocci.show_flow then print_flow fixed_flow;
+        if true then print_flow_with_counter fixed_flow;
         if !Flag_cocci.show_before_fixed_flow then print_flow flow;
 
         fixed_flow
@@ -1127,17 +1169,16 @@ let build_info_program env (cprogram,typedefs,macros) =
 let rebuild_info_program cs file isexp parse_strings =
   cs +> List.map (fun c ->
     if !(c.was_modified)
-    then
-      let file = Common.new_temp_file "cocci_small_output" ".c" in
+	then
+	  let file = Common.new_temp_file "cocci_small_output" ".c" in
       cfile_of_program
         [(c.ast_c, (c.fullstring, c.tokens_c)), Unparse_c.PPnormal]
-        file;
+		file;
 
       (* cat file; *)
       let cprogram =
 	cprogram_of_file c.all_typedefs c.all_macros parse_strings false file in
       let xs = build_info_program c.env_typing_before cprogram in
-
       (* TODO: assert env has not changed,
       * if yes then must also reparse what follows even if not modified.
       * Do that only if contain_typedmetavar of course, so good opti.
@@ -1154,6 +1195,7 @@ let rebuild_info_c_and_headers ccs isexp parse_strings =
     then c_or_h.was_modified_once := true;
   );
   ccs +> List.map (fun c_or_h ->
+	
     { c_or_h with
       asts =
       rebuild_info_program c_or_h.asts c_or_h.full_fname isexp parse_strings }
@@ -1564,6 +1606,7 @@ let printtime str = Printf.printf "%s: %f\n" str (Unix.gettimeofday ())
 let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
     (ccs:file_info list ref) =
   Common.profile_code r.rule_info.rulename (fun () ->
+  
     show_or_not_rule_name r.ast_rule r.rule_info.ruleid;
     show_or_not_ctl_text r.ctl r.metavars r.ast_rule r.rule_info.ruleid;
 
@@ -1571,6 +1614,7 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
     let reorganized_env =
       reassociate_positions r.free_vars (Common.union_set neg_pos all_pos)
 	!es in
+	
 
     (* looping over the environments *)
     let (_,newes (* envs for next round/rule *)) =
@@ -1584,9 +1628,10 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 		[] -> true
 	      | reqopts ->
 		  List.exists (consistent_positions relevant_bindings)
-		    reqopts in
+			reqopts in
 	    if not consistent
-	    then
+		then
+	
 	      (cache,
 	       update_env_all newes
 		 (e +>
@@ -1597,7 +1642,7 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 			  !rules_that_have_ever_matched
 			  r.rule_info.dependencies)
 	    then
-	      begin
+		  begin
 		print_dependencies
 		  ("dependencies for rule "^r.rule_info.rulename^
 		   " not satisfied:")
@@ -1611,7 +1656,7 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 		      (fun (s,v) -> List.mem s r.rule_info.used_after))
 		   rules_that_have_matched)
 	      end
-	    else
+		else
 	      let (new_bindings,new_bindings_ua) =
 		try List.assoc relevant_bindings cache
 		with
@@ -1657,6 +1702,7 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 			  process_a_generated_a_env_a_toplevel r
 			    relevant_bindings !ccs;
 			  [] in
+			  
 		    let new_bindings_ua =
 		      Common.nub
 			(new_bindings +>
@@ -1689,6 +1735,7 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 		(* combine the new bindings with the old ones, and
 		   specialize to the used_after_list *)
 		  begin
+			
 		  (* have to explicitly discard the inherited variables
 		     because we want the inherited value of the positions
 		     variables not the extended one created by
@@ -1915,7 +1962,8 @@ let bigloop2 rs (ccs: file_info list) parse_strings =
   let rules_that_have_ever_matched = ref [] in
 
   (try
-
+  (* pr2 ("rule: " ^ (List.fold_left (fun a b -> ) "" rs); *)
+  
   (* looping over the rules *)
   rs +> List.iter (fun r ->
     match r with
@@ -1934,7 +1982,6 @@ let bigloop2 rs (ccs: file_info list) parse_strings =
             Pretty_print_cocci.unparse []
 	      (Ast_cocci.ScriptRule (nm,l,deps,mv,script_vars,pos,code)));
 	end;
-
       (*pr2 (List.hd(cmd_to_list "free -m | grep Mem"));*)
 	if !Flag.show_misc then print_endline "RESULT =";
 
@@ -1971,8 +2018,8 @@ let bigloop2 rs (ccs: file_info list) parse_strings =
     | CocciRuleCocciInfo r ->
 	apply_cocci_rule r rules_that_have_ever_matched parse_strings
 	  es ccs)
+	  
   with Exited -> ());
-
   if !Flag.sgrep_mode2
   then begin
     (* sgrep can lead to code that is not parsable, but we must
@@ -2223,7 +2270,7 @@ let full_engine2
 	c_infos' +> List.map (fun c_or_h ->
 	  if !(c_or_h.was_modified_once)
 	  then
-	    begin
+      begin
 	      let outfile =
 		Common.new_temp_file "cocci-output" ("-" ^ c_or_h.fname) in
 

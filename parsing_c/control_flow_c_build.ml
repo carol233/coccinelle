@@ -1353,11 +1353,29 @@ let specialdeclmacro_to_stmt (s, args, ii) =
   stmt,  (f, [iiptvirg])
 
 
+let rec ast_to_control_flow e = 
+	
+  match e with
+  | Ast_c.Namespace (defs, _) ->
+	(* globals (re)initialialisation *)
+	g := (new Control_flow_c.G.ograph_mutable);
+	let rec loop defs =
+		match defs with
+		| [] -> None
+		| def :: defs ->
+			
+			match ast_to_control_flow_not_namespace def with
+			| None -> loop defs 
+				
+			| x -> x in loop defs
+  | _ ->
+	(* globals (re)initialialisation *)
+	g := (new Control_flow_c.G.ograph_mutable); 
+	ast_to_control_flow_not_namespace e
 
-let rec ast_to_control_flow e =
+and ast_to_control_flow_not_namespace e =
 
   (* globals (re)initialialisation *)
-  g := (new Control_flow_c.G.ograph_mutable);
   counter_for_labels := 1;
   counter_for_braces := 0;
   counter_for_switch := 0;
@@ -1365,16 +1383,6 @@ let rec ast_to_control_flow e =
   let topi = !g +> add_node TopNode lbl_0 "[top]" in
 
   match e with
-  | Ast_c.Namespace (defs, _) ->
-      (* todo: incorporate the other defs *)
-      let rec loop defs =
-	match defs with
-	| [] -> None
-	| def :: defs ->
-	    match ast_to_control_flow def with
-	    | None -> loop defs
-	    | x -> x in
-      loop defs
   | Ast_c.Definition ((defbis,_) as def) ->
       let _funcs = defbis.f_name in
       let _c = defbis.f_body in
@@ -1476,17 +1484,6 @@ let rec ast_to_control_flow e =
       | Ast_c.DefineTodo ->
           raise (Error(Define(pinfo_of_ii ii)))
 
-(* old:
-      | Ast_c.DefineText (s, ii) ->
-          let endi = !g +> add_node EndNode lbl_0 "[end]" in
-          !g#add_arc ((headeri, endi),Direct);
-      | Ast_c.DefineInit _ ->
-          let endi = !g +> add_node EndNode lbl_0 "[end]" in
-          !g#add_arc ((headeri, endi),Direct);
-      | Ast_c.DefineTodo ->
-          let endi = !g +> add_node EndNode lbl_0 "[end]" in
-          !g#add_arc ((headeri, endi),Direct);
-*)
       );
 
       Some !g

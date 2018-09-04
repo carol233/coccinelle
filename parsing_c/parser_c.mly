@@ -1440,9 +1440,9 @@ parameter_decl2:
   
 
 class_methods:
-  | { [] }
-  | class_methods function_definition { Definition $2 :: $1 }
-
+  | { ([], []) }
+  | class_methods function_definition { (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
+                                                                /*(* maybe (snd $2) @ (snd $1) *)*/
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
 /*(*----------------------------*)*/
@@ -2158,15 +2158,18 @@ external_declaration:
 
 celem:
  | Tnamespace TIdent TOBrace translation_unit TCBrace
-     { !LP._lexer_hint.context_stack <- [LP.InTopLevel];
+     { print_string "does this even reach here3?";
+         !LP._lexer_hint.context_stack <- [LP.InTopLevel];
        Namespace ($4, [$1; snd $2; $3; $5]) }
 
  | Tclass TIdent TOBrace class_methods TCBrace 
     { !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-                                       Namespace ($4, [$1; snd $2; $3; $5]) } 
-| storage_class_spec Tclass TIdent TOBrace class_methods TCBrace 
+                                       Namespace (fst $4, snd $4 @ [snd $2; $3; $5]) } 
+ | storage_class_spec Tclass TIdent TOBrace class_methods TCBrace 
     { !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-                                       Namespace ($5, [$2; snd $3; $4; $6]) } 
+       print_string "does this even reach here? ..... ";
+        print_string (string_of_int (List.length (snd $5)));
+                                       Namespace (fst $5, snd $5 @ [ snd $3; $4; $6]) } 
                   
  | external_declaration                         { $1 }
 
