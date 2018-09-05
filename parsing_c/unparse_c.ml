@@ -29,7 +29,7 @@ let default_indent = ref "\t"
 (*****************************************************************************)
 (* Wrappers *)
 (*****************************************************************************)
-let pr2, pr2_once = mk_pr2_wrappers (ref true)
+let pr2, pr2_once = mk_pr2_wrappers Flag_parsing_c.verbose_unparsing
 
 (*****************************************************************************)
 (* Types used during the intermediate phases of the unparsing *)
@@ -227,19 +227,6 @@ let remove_useless_fakeInfo_struct program =
 (* Tokens1 generation *)
 (*****************************************************************************)
 
-
-(* debug *)
-
-let details_of_info (info: Ast_c.info) = 
-  
-  pr2 ("annots " ^string_of_bool (info.annots_tag = Token_annot.empty));
-  match info.pinfo with
-    OriginTok pi -> pr2 ("origintok " ^ pi.Common.str ^ " line " ^ (string_of_int pi.charpos) ^ " col " ^ (string_of_int pi.column))
-  | ExpandedTok (pi,_) -> pr2 ("expanded" ^ pi.Common.str)
-  | FakeTok (s,_) ->  pr2 ("FakeTok" ^ s)
-  | AbstractLineTok pi -> pr2 "abstract"
-    
-
 let get_fakeInfo_and_tokens celem toks =
   let toks_in  = ref toks in
   let toks_out = ref [] in
@@ -250,13 +237,11 @@ let get_fakeInfo_and_tokens celem toks =
     | Ast_c.FakeTok _ ->
       push2 (Fake1 info) toks_out
 	| Ast_c.OriginTok _ | Ast_c.ExpandedTok _ ->
-
       (* get the associated comments/space/cppcomment tokens *)
 	  let (before, x, after) =
         !toks_in +> split_when (fun tok ->
           info = TH.info_of_tok tok)
       in
-
       assert(info = TH.info_of_tok x);
       (*old: assert(before +> List.for_all (TH.is_comment)); *)
       before +> List.iter (fun x ->
@@ -269,7 +254,6 @@ let get_fakeInfo_and_tokens celem toks =
       push2 (T1 x) toks_out;
       toks_in := after;
     | Ast_c.AbstractLineTok _ ->
-
       (* can be called on type info when for instance use -type_c *)
       if !Flag_parsing_c.pretty_print_type_info
       then push2 (Fake1 info) toks_out
@@ -307,9 +291,7 @@ let get_fakeInfo_and_tokens celem toks =
 	compare (Ast_c.info_to_fixpos t1) (Ast_c.info_to_fixpos t2)
     | _ -> failwith "not possible" in
   let printed_toks = List.concat (front :: (List.sort tcompare rest)) in
-
   List.iter pr_elem printed_toks;
-   
 
   if  (!toks_in <> [])
   then failwith "WEIRD: unparsing not finished";
@@ -2506,12 +2488,11 @@ let pp_program2 xs outfile  =
 (* flush chan; *)
 (* Common.pr2 ("UNPARSING: >" ^ s ^ "<"); *)
     in
-      
+
     xs +> List.iter (fun ((e,(str, toks_e)), ppmethod) ->
       (* here can still work on ast *)
       let e = remove_useless_fakeInfo_struct e in
 
-    
       match ppmethod with
       | PPnormal ->
         (* now work on tokens *)
@@ -2519,7 +2500,6 @@ let pp_program2 xs outfile  =
         assert(toks_e +> List.for_all (fun t ->
           TH.is_origin t || TH.is_expanded t
         ));
-
         let toks = get_fakeInfo_and_tokens e toks_e in
         let toks = displace_fake_nodes toks in
         (* assert Origin;ExpandedTok;Faketok *)
@@ -2565,9 +2545,8 @@ let pp_program2 xs outfile  =
         print_all_tokens2 pr toks;
 
       | PPviastr -> pr str
-    );
+    )
   )
-  
 
 let pp_program a b =
   (if !Flag_parsing_c.indent > 0

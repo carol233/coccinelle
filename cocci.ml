@@ -88,12 +88,6 @@ let sp_of_file file iso    =
 let print_flow flow =
   Control_flow_c.G.print_ograph_mutable flow "/tmp/test.dot" true
 
-let print_flow_count = ref 0
-
-let print_flow_with_counter flow = 
-	print_flow_count := !print_flow_count + 1;
-	Control_flow_c.G.print_ograph_mutable flow ("/tmp/test" ^ (string_of_int !print_flow_count) ^ ".dot") true
-
 let ast_to_flow_with_error_messages2 x =
   let flowopt =
     try Ast_to_flow.ast_to_control_flow x
@@ -365,7 +359,8 @@ let show_or_not_ctl_tex a b  =
 
 
 let show_or_not_rule_name ast rulenb =
-  if true
+  if !Flag_cocci.show_ctl_text || !Flag.show_trying ||
+    !Flag.show_transinfo || !Flag_cocci.show_binding_in_out
   then
     begin
       let name =
@@ -389,7 +384,7 @@ let show_or_not_scr_rule_name name =
     end
 
 let show_or_not_ctl_text2 ctl mvs ast rulenb =
-  if true then begin
+  if !Flag_cocci.show_ctl_text then begin
 
     adjust_pp_with_indent (fun () ->
       Format.force_newline();
@@ -446,7 +441,7 @@ let show_or_not_celem2 prelude celem start_end =
       Flag.current_element := "something_else";
       (" ",None);
   ) in
-  if true
+  if !Flag.show_trying
   then
     match trying with
       Some(str,name) ->
@@ -1070,8 +1065,6 @@ let flatten l =
 	   [] l)
 	   
 
-
-
 let build_info_program env (cprogram,typedefs,macros) =
 
   let (cs, parseinfos) =
@@ -1122,12 +1115,11 @@ let build_info_program env (cprogram,typedefs,macros) =
 
         (* remove the fake nodes for julia *)
         let fixed_flow = CCI.fix_flow_ctl flow in
-        if true then print_flow_with_counter fixed_flow;
+        if !Flag_cocci.show_flow then print_flow fixed_flow;
         if !Flag_cocci.show_before_fixed_flow then print_flow flow;
 
         fixed_flow
       )
-
 	in
     {
       ast_c = c; (* contain refs so can be modified *)
@@ -1184,7 +1176,6 @@ let rebuild_info_c_and_headers ccs isexp parse_strings =
     then c_or_h.was_modified_once := true;
   );
   ccs +> List.map (fun c_or_h ->
-	
     { c_or_h with
       asts =
       rebuild_info_program c_or_h.asts c_or_h.full_fname isexp parse_strings }
@@ -1469,7 +1460,6 @@ let apply_script_rule r cache newes e rules_that_have_matched
 	rules_that_have_matched
 	!rules_that_have_ever_matched r.scr_rule_info.dependencies;
 	  show_or_not_binding "in environment" e;
-	  pr2 "merging in apply script rule2";
       (cache, safe_update_env_all newes e rules_that_have_matched)
     end
   else
@@ -1506,7 +1496,6 @@ let apply_script_rule r cache newes e rules_that_have_matched
 		  new_e +>
 		  List.filter
 			(fun (s,v) -> List.mem s r.scr_rule_info.used_after) in
-			let _ = pr2 "merging in apply script rule" in
 		(cache,update_env_all newes new_e rules_that_have_matched)
 	  with Not_found ->
 	    begin
@@ -1543,8 +1532,7 @@ let apply_script_rule r cache newes e rules_that_have_matched
 		   (String.concat ", " (List.map m2c unbound))));
 	  let e =
 	    e +>
-		List.filter (fun (s,v) -> List.mem s r.scr_rule_info.used_after) in
-		let _ = pr2 "apply sceipr rule 5" in 
+		List.filter (fun (s,v) -> List.mem s r.scr_rule_info.used_after) in 
 	  (cache, update_env_all newes e rules_that_have_matched))
     end)
 
@@ -1599,7 +1587,6 @@ let printtime str = Printf.printf "%s: %f\n" str (Unix.gettimeofday ())
 let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
     (ccs:file_info list ref) =
   Common.profile_code r.rule_info.rulename (fun () ->
-  
     show_or_not_rule_name r.ast_rule r.rule_info.ruleid;
     show_or_not_ctl_text r.ctl r.metavars r.ast_rule r.rule_info.ruleid;
 
@@ -1607,7 +1594,6 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
     let reorganized_env =
       reassociate_positions r.free_vars (Common.union_set neg_pos all_pos)
 	!es in
-	
 
     (* looping over the environments *)
     let (_,newes (* envs for next round/rule *)) =
@@ -1624,7 +1610,6 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 			reqopts in
 	    if not consistent
 		then
-			let _ = pr2 "apply sceipr rule 4" in 
 	      (cache,
 	       update_env_all newes
 		 (e +>
@@ -1642,7 +1627,6 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 		  rules_that_have_matched
 		  !rules_that_have_ever_matched r.rule_info.dependencies;
 		show_or_not_binding "in environment" e;
-		pr2 "apply sceipr rule 3";
 		(cache,
 		 update_env_all newes
 		   (e +>
@@ -1650,7 +1634,7 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 		      (fun (s,v) -> List.mem s r.rule_info.used_after))
 		   rules_that_have_matched)
 	      end
-		else
+	else
 	      let (new_bindings,new_bindings_ua) =
 		try List.assoc relevant_bindings cache
 		with
@@ -1696,7 +1680,6 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 			  process_a_generated_a_env_a_toplevel r
 			    relevant_bindings !ccs;
 			  [] in
-			  
 		    let new_bindings_ua =
 		      Common.nub
 			(new_bindings +>
@@ -1729,7 +1712,6 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 		(* combine the new bindings with the old ones, and
 		   specialize to the used_after_list *)
 		  begin
-			
 		  (* have to explicitly discard the inherited variables
 		     because we want the inherited value of the positions
 		     variables not the extended one created by
@@ -1916,19 +1898,8 @@ and process_a_ctl_a_env_a_toplevel2 r e c f =
        else
 	 begin
 	   show_or_not_celem "found match in" c.ast_c c.start_end;
-	   pr2 ("how many? " ^ (match c.ast_c with
-	   | Definition (d, il) -> il |> List.length |> string_of_int 
-	   | _ -> "match something else "
-	   ));
 	   show_or_not_trans_info trans_info;
 	   List.iter (show_or_not_binding "out") newbindings;
-
-
-	   (* pretty print for debugging *)
-	   (* pr2 "ARHGHHHH";
-	   Pretty_print_c.pp_toplevel_simple c.ast_c ;
-	   pr2 "ARHGHHHH11"; *)
-		(* the results of pretty printing looks correct *)
 
 	   r.rule_info.was_matched := true;
 
@@ -1967,8 +1938,6 @@ let bigloop2 rs (ccs: file_info list) parse_strings =
   let rules_that_have_ever_matched = ref [] in
 
   (try
-  (* pr2 ("rule: " ^ (List.fold_left (fun a b -> ) "" rs); *)
-  
   (* looping over the rules *)
   rs +> List.iter (fun r ->
     match r with

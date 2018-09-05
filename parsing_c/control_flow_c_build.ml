@@ -23,7 +23,7 @@ module Lib = Lib_parsing_c
 (*****************************************************************************)
 (* Wrappers *)
 (*****************************************************************************)
-let pr2_, pr2_once = Common.mk_pr2_wrappers Flag_parsing_c.verbose_cfg
+let pr2, pr2_once = Common.mk_pr2_wrappers Flag_parsing_c.verbose_cfg
 
 (*****************************************************************************)
 (* todo?: compute target level with goto (but rare that different I think)
