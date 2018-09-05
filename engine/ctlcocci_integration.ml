@@ -294,7 +294,7 @@ let (control_flow_for_ctl: F.cflow -> 'a F.G.ograph_mutable) =
  *
  * update: also erase the fake nodes (and adjust the edges accordingly),
  * so that AX in CTL can now work.
- * Indeed, à la fin de la branche then (et else), on devrait aller directement
+ * Indeed, ï¿½ la fin de la branche then (et else), on devrait aller directement
  * au suivant du endif, sinon si ecrit if(1) { foo(); }; bar();
  * sans '...' entre le if et bar(), alors ca matchera pas car le CTL
  * generera un AX bar()  qui il tombera d'abord sur le [endif] :(
@@ -324,16 +324,19 @@ let fix_flow_ctl2 (flow : F.cflow) : F.cflow =
 
   (* for the regular functions *)
   (try
-    let exitnodei  = F.find_node (fun x -> x = F.Exit) !g in
-    let errornodei = F.find_node (fun x -> x = F.ErrorExit) !g in
+    let exitnodesi  = F.find_nodes (fun x -> x = F.Exit) !g in
+    let errornodesi = F.find_nodes (fun x -> x = F.ErrorExit) !g in
 
-    !g#add_arc ((exitnodei, exitnodei), F.Direct);
+      exitnodesi |> List.iter (fun exitnodei -> !g#add_arc ((exitnodei, exitnodei), F.Direct));
 
-    if (F.KeyEdgeSet.is_empty (!g#successors errornodei)) &&
-       (F.KeyEdgeSet.is_empty (!g#predecessors errornodei))
-    then !g#del_node errornodei
-    else !g#add_arc ((errornodei, errornodei), F.Direct);
-   with Not_found -> ()
+      errornodesi |> List.iter(fun errornodei ->
+        if (F.KeyEdgeSet.is_empty (!g#successors errornodei)) &&
+          (F.KeyEdgeSet.is_empty (!g#predecessors errornodei))
+        then !g#del_node errornodei
+        else !g#add_arc ((errornodei, errornodei), F.Direct);
+      );
+    with Not_found -> ()
+    
   );
 
   let pred nodei node = match F.unwrap node with

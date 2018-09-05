@@ -134,5 +134,6 @@ val mk_fake_node: node2 -> int list -> int list -> string -> node
 
 val first_node : cflow -> G.key
 val find_node : (node2 -> bool) -> cflow -> G.key
+val find_nodes : (node2 -> bool) -> cflow -> G.key list
 (* remove an intermediate node and redirect the connection  *)
 val remove_one_node : G.key -> cflow -> unit

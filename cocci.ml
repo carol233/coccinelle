@@ -1113,11 +1113,8 @@ let build_info_program env (cprogram,typedefs,macros) =
 			)
 	) +> List.flatten +> List.flatten
   in  *)
-
   zip cs_with_envs' parseinfos' +> List.map (fun ((c, (enva,envb)), parseinfo)->
 	let (fullstr, tokens) = parseinfo in
-
-
     let flow =
       ast_to_flow_with_error_messages c +>
       Common.map_option (fun flow ->
@@ -1130,7 +1127,8 @@ let build_info_program env (cprogram,typedefs,macros) =
 
         fixed_flow
       )
-    in
+
+	in
     {
       ast_c = c; (* contain refs so can be modified *)
       start_end =
@@ -1405,9 +1403,7 @@ let end_env env =
 let merge_env new_e old_e =
   List.iter
 	(function (e,rules) ->
-	  pr2 "are we merging?";
 	  let _ = update_env_all old_e e rules in ()) new_e;
-	  pr2 "Done merging";
   old_e
 
 let merge_env_list new_e old_e = new_e@old_e

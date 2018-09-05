@@ -23,7 +23,7 @@ module Lib = Lib_parsing_c
 (*****************************************************************************)
 (* Wrappers *)
 (*****************************************************************************)
-let pr2, pr2_once = Common.mk_pr2_wrappers Flag_parsing_c.verbose_cfg
+let pr2_, pr2_once = Common.mk_pr2_wrappers Flag_parsing_c.verbose_cfg
 
 (*****************************************************************************)
 (* todo?: compute target level with goto (but rare that different I think)
@@ -1354,26 +1354,32 @@ let specialdeclmacro_to_stmt (s, args, ii) =
 
 
 let rec ast_to_control_flow e = 
-	
-  match e with
-  | Ast_c.Namespace (defs, _) ->
 	(* globals (re)initialialisation *)
 	g := (new Control_flow_c.G.ograph_mutable);
+	let root = !g +> add_node TopNode lbl_0 "[class]" in 
+  match e with
+  | Ast_c.Namespace (defs, _) ->
+	
 	let rec loop defs =
 		match defs with
-		| [] -> None
+		| [] -> Some !g
 		| def :: defs ->
-			(* TODO this assumes that each class only contains definitions, and defitiniotns do not contain more nested stuff (both functions and more classes can be nested) *)
-			match ast_to_control_flow_not_namespace def with
+			(* TODO this assumes that each class only contains definitions, and definitions do not contain more nested stuff (both functions and more classes can be nested) *)
+			match ast_to_control_flow_not_namespace def root with
 			| None -> loop defs 
 				
-			| x -> x in loop defs
-  | _ ->
-	(* globals (re)initialialisation *)
-	g := (new Control_flow_c.G.ograph_mutable); 
-	ast_to_control_flow_not_namespace e
+			| x -> loop defs 
+	in 
 
-and ast_to_control_flow_not_namespace e =
+	let result = loop defs in 
+	result;
+  | _ ->
+
+	let result = ast_to_control_flow_not_namespace e root in 
+	result;
+
+
+and ast_to_control_flow_not_namespace e root =
 
   (* globals (re)initialialisation *)
   counter_for_labels := 1;
@@ -1381,6 +1387,7 @@ and ast_to_control_flow_not_namespace e =
   counter_for_switch := 0;
 
   let topi = !g +> add_node TopNode lbl_0 "[top]" in
+  let _ = !g#add_arc ((root, topi),Direct) in 
 
   match e with
   | Ast_c.Definition ((defbis,_) as def) ->

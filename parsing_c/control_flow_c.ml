@@ -342,6 +342,12 @@ let find_node f g =
   let node = List.find f' nodes in
   fst node
 
+let find_nodes f g = 
+  let f' (_,node) = f (unwrap node) in
+  let nodes = KeyMap.bindings g#nodes in
+  let nodes = List.filter f' nodes in
+  nodes |> List.map fst 
+
 (* ------------------------------------------------------------------------ *)
 let first_node = find_node is_first_node
 
