@@ -365,8 +365,7 @@ let show_or_not_ctl_tex a b  =
 
 
 let show_or_not_rule_name ast rulenb =
-  if !Flag_cocci.show_ctl_text || !Flag.show_trying ||
-    !Flag.show_transinfo || !Flag_cocci.show_binding_in_out
+  if true
   then
     begin
       let name =
@@ -390,7 +389,7 @@ let show_or_not_scr_rule_name name =
     end
 
 let show_or_not_ctl_text2 ctl mvs ast rulenb =
-  if !Flag_cocci.show_ctl_text then begin
+  if true then begin
 
     adjust_pp_with_indent (fun () ->
       Format.force_newline();
@@ -447,7 +446,7 @@ let show_or_not_celem2 prelude celem start_end =
       Flag.current_element := "something_else";
       (" ",None);
   ) in
-  if !Flag.show_trying
+  if true
   then
     match trying with
       Some(str,name) ->
@@ -1092,17 +1091,9 @@ let build_info_program env (cprogram,typedefs,macros) =
 
   (* flat map to get the definitions out of the namespace *)
   let cs_with_envs' = 
-	cs_with_envs +> 
-	List.map (fun cprogram' -> 
-		let (toplevel, misc_info) = cprogram' in 
-			match toplevel with  
-			(* namespaces consists of a list of toplevels *)
-				| Ast_c.Namespace (toplevel_list, _) -> 
-					List.map (fun c -> (c, misc_info))  toplevel_list 
-					
-					
-				| _ -> [cprogram']
-		) +> List.flatten
+	cs_with_envs 
+
+
   in
 
   let parseinfos' = parseinfos in
@@ -1340,7 +1331,8 @@ let update_env (env : string list list ref MyHashtbl.t) v i =
 let update_env_all (env : string list list ref MyHashtbl.t) v i =
   let cell =
     try MyHashtbl.find env v
-    with Not_found ->
+	with Not_found ->
+	  
       let cell = ref [] in
       MyHashtbl.add env v cell;
       cell in
@@ -1412,8 +1404,10 @@ let end_env env =
 
 let merge_env new_e old_e =
   List.iter
-    (function (e,rules) ->
-      let _ = update_env_all old_e e rules in ()) new_e;
+	(function (e,rules) ->
+	  pr2 "are we merging?";
+	  let _ = update_env_all old_e e rules in ()) new_e;
+	  pr2 "Done merging";
   old_e
 
 let merge_env_list new_e old_e = new_e@old_e
@@ -1478,7 +1472,8 @@ let apply_script_rule r cache newes e rules_that_have_matched
       print_dependencies "dependencies for script not satisfied:"
 	rules_that_have_matched
 	!rules_that_have_ever_matched r.scr_rule_info.dependencies;
-      show_or_not_binding "in environment" e;
+	  show_or_not_binding "in environment" e;
+	  pr2 "merging in apply script rule2";
       (cache, safe_update_env_all newes e rules_that_have_matched)
     end
   else
@@ -1514,7 +1509,8 @@ let apply_script_rule r cache newes e rules_that_have_matched
 		let new_e =
 		  new_e +>
 		  List.filter
-		    (fun (s,v) -> List.mem s r.scr_rule_info.used_after) in
+			(fun (s,v) -> List.mem s r.scr_rule_info.used_after) in
+			let _ = pr2 "merging in apply script rule" in
 		(cache,update_env_all newes new_e rules_that_have_matched)
 	  with Not_found ->
 	    begin
@@ -1551,7 +1547,8 @@ let apply_script_rule r cache newes e rules_that_have_matched
 		   (String.concat ", " (List.map m2c unbound))));
 	  let e =
 	    e +>
-	    List.filter (fun (s,v) -> List.mem s r.scr_rule_info.used_after) in
+		List.filter (fun (s,v) -> List.mem s r.scr_rule_info.used_after) in
+		let _ = pr2 "apply sceipr rule 5" in 
 	  (cache, update_env_all newes e rules_that_have_matched))
     end)
 
@@ -1631,7 +1628,7 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 			reqopts in
 	    if not consistent
 		then
-	
+			let _ = pr2 "apply sceipr rule 4" in 
 	      (cache,
 	       update_env_all newes
 		 (e +>
@@ -1649,6 +1646,7 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 		  rules_that_have_matched
 		  !rules_that_have_ever_matched r.rule_info.dependencies;
 		show_or_not_binding "in environment" e;
+		pr2 "apply sceipr rule 3";
 		(cache,
 		 update_env_all newes
 		   (e +>
@@ -1922,8 +1920,19 @@ and process_a_ctl_a_env_a_toplevel2 r e c f =
        else
 	 begin
 	   show_or_not_celem "found match in" c.ast_c c.start_end;
+	   pr2 ("how many? " ^ (match c.ast_c with
+	   | Definition (d, il) -> il |> List.length |> string_of_int 
+	   | _ -> "match something else "
+	   ));
 	   show_or_not_trans_info trans_info;
 	   List.iter (show_or_not_binding "out") newbindings;
+
+
+	   (* pretty print for debugging *)
+	   (* pr2 "ARHGHHHH";
+	   Pretty_print_c.pp_toplevel_simple c.ast_c ;
+	   pr2 "ARHGHHHH11"; *)
+		(* the results of pretty printing looks correct *)
 
 	   r.rule_info.was_matched := true;
 

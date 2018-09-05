@@ -2164,12 +2164,7 @@ celem:
 
  | Tclass TIdent TOBrace class_methods TCBrace 
     { !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-                                       Namespace (fst $4, snd $4 @ [snd $2; $3; $5]) } 
- | storage_class_spec Tclass TIdent TOBrace class_methods TCBrace 
-    { !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-       print_string "does this even reach here? ..... ";
-        print_string (string_of_int (List.length (snd $5)));
-                                       Namespace (fst $5, snd $5 @ [ snd $3; $4; $6]) } 
+                                       Namespace (fst $4, $1 :: (snd $4 @ [snd $2; $3; $5])) } 
                   
  | external_declaration                         { $1 }
 

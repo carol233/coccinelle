@@ -284,7 +284,7 @@ module Ast_c :
         NoSto
       | StoTypedef
       | Sto of storageClass list
-    and storageClass = Ast_c.storageClass = Auto | Static | Register | Extern | Public | Private
+    and storageClass = Ast_c.storageClass = Auto | Static | Register | Extern | Public | Private (* need to rename this for java*)
     and local_decl = Ast_c.local_decl = LocalDecl | NotLocalDecl
     and initialiser = initialiserbis wrap
     and initialiserbis =

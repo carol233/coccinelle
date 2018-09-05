@@ -249,10 +249,10 @@ let get_fakeInfo_and_tokens celem toks =
     match Ast_c.pinfo_of_info info with
     | Ast_c.FakeTok _ ->
       push2 (Fake1 info) toks_out
-    | Ast_c.OriginTok _ | Ast_c.ExpandedTok _ ->
-    
+	| Ast_c.OriginTok _ | Ast_c.ExpandedTok _ ->
+
       (* get the associated comments/space/cppcomment tokens *)
-      let (before, x, after) =
+	  let (before, x, after) =
         !toks_in +> split_when (fun tok ->
           info = TH.info_of_tok tok)
       in
@@ -291,10 +291,11 @@ let get_fakeInfo_and_tokens celem toks =
     | _ -> false in (* don't know if the others have proper positions *)
   let rec tok_group = function
       [] -> []
-    | tok::rest ->
-	let (nonorig,origrest) =
-	  Common.span (function tok -> not (is_origin tok)) rest in
-	(tok::nonorig)::(tok_group origrest) in
+	| tok::rest -> 
+		let (nonorig,origrest) = Common.span (function tok -> not (is_origin tok)) rest 
+		in
+		(tok::nonorig)::(tok_group origrest) 
+  in
   let (front,rest) =
     match tok_group (List.rev !printed_toks) with
       front::rest when not(is_origin (List.hd front)) (*might not be orig*)

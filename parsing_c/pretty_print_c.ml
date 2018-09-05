@@ -1302,11 +1302,20 @@ and pp_init (init, iinit) =
 
     | IfdefTop ifdefdir -> pp_ifdef ifdefdir
 
-    | Namespace (tls, [i1; i2; i3; i4]) ->
-	pr_elem i1; pr_elem i2; pr_elem i3;
-	List.iter pp_toplevel tls;
-	pr_elem i4;
-    | (MacroTop _) | (Namespace _) -> raise (Impossible 120) in
+    | Namespace (tls, il) ->
+        (match il with 
+            | [] -> failwith "Impossible: namespace's il cannot be empty" 
+            | head::cons -> 
+                (* head is ii of TClass *)
+                match Common.last_n 3 cons with 
+                | [i2; i3; i4;] -> 
+                    let defs = Common.take ((cons |> List.length)-3) cons in 
+                        pr_elem head; pr_elem i2; pr_elem i3;
+                        List.iter pp_toplevel tls;
+                        pr_elem i4;
+                | _ -> raise (Impossible 121) (* what number to raise? *)
+        )
+    | (MacroTop _) -> raise (Impossible 120) in
 
 
 

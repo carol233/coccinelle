@@ -1363,7 +1363,7 @@ let rec ast_to_control_flow e =
 		match defs with
 		| [] -> None
 		| def :: defs ->
-			
+			(* TODO this assumes that each class only contains definitions, and defitiniotns do not contain more nested stuff (both functions and more classes can be nested) *)
 			match ast_to_control_flow_not_namespace def with
 			| None -> loop defs 
 				

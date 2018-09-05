@@ -1083,6 +1083,7 @@ and true_tokens = {tokens = []}
   
 and mk_tokens tokens lexbuf  = 
   true_tokens.tokens <- tokens;
+  
   try
     let rec tokens_aux acc =
       
@@ -1134,7 +1135,7 @@ and infos_of_class_methods tokens toplevel  =
           in let parsed_tokens = str |> Lexing.from_string |> (mk_tokens tokens ) in 
           let _ = Buffer.clear print_buffer in 
           
-          ([(str, parsed_tokens)], 
+          ([(str ^ ("  < pretty-printed"), parsed_tokens)], 
           	true_tokens.tokens) (* remaining tokens *)
         
     | Ast_c.Namespace (toplevels, il) -> 
@@ -1216,7 +1217,9 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
     let elem =
       let pass1 =
         Common.profile_code "Parsing: 1st pass" (fun () ->
-          get_one_elem ~pass:1 tr
+		  let result = get_one_elem ~pass:1 tr in
+
+		result
         ) in
       match pass1 with
       | Left e ->
@@ -1294,7 +1297,6 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
           end
     in
 
-
     (* again not sure if checkpoint2 corresponds to end of bad region *)
     let checkpoint2 = TH.line_of_tok tr.current in (* <> line_error *)
     let checkpoint2_file = TH.file_of_tok tr.current in
@@ -1321,7 +1323,7 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
   in
     
       
-    let info = mk_info_item file (List.rev tr.passed) in
+	let info = mk_info_item file (List.rev tr.passed) in
     
     
 
@@ -1332,7 +1334,7 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
 
     let infos = (match elem with 
       | Common.Left elem_toplevel ->  (match elem_toplevel with
-        | Ast_c.Namespace (toplevel_list, il) -> 
+		| Ast_c.Namespace (toplevel_list, il) -> 
             let tokens_without_class = strip_class_start_end (List.rev tr.passed) in
 			let result = List.rev (toplevel_list) 
 				|> List.fold_left (
@@ -1342,21 +1344,17 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
 					)  ([], tokens_without_class)
 				|> fst in 
             result
-        | Ast_c.Definition (def, il) -> 
+		| Ast_c.Definition (def, il) -> 
             [];
         | _ -> []) (* TODO handle muliply-nested stuff in future *)
         
       | Common.Right _ ->  [] (* TODO haven't figured out this case... *)
 	) in
-	
-	let _ = pr2 ("num infos : " ^ (string_of_int (List.length infos))) in
-	let _ = pr2 ("tr.passed : " ^ (List.fold_left (fun a b -> a ^ (TH.str_of_tok b)) "" (List.rev tr.passed))) in
-  
+
     let elem =
       match elem with
       | Left e ->
 		  stat.Stat.correct <- stat.Stat.correct + diffline;
-			pr2 ("top level : " ^ (Ast_c.string_of_toplevel e));
           e
       | Right (info_of_bads, line_error, col_error, toks_of_bads,
               passed_before_error, cur, exn, pass) ->
@@ -1420,10 +1418,6 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
 
     (match elem with
     | Ast_c.FinalDef x -> [(Ast_c.FinalDef x, info)]
-    | Ast_c.Namespace (nested_toplevels, il) -> 
-			  let result = zip nested_toplevels infos in 
-			  
-			  result;
     | xs -> let acc = loop tr  in (xs, info) :: acc (* recurse *)
     )
   in

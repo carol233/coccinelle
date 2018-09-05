@@ -3566,8 +3566,8 @@ exception Bad_code of string
 let rec zip xs ys =
   match (xs,ys) with
   | ([],[]) -> []
-  | ([],_) -> raise (Bad_code "zip of different lengths")
-  | (_,[]) -> raise (Bad_code "zip of different lengths")
+  | ([],_) -> raise (Bad_code "zip of different lengths, right is longer")
+  | (_,[]) -> raise (Bad_code "zip of different lengths, left is longer")
   | (x::xs,y::ys) -> (x,y)::zip xs ys
 
 let rec combine4 : 'a list -> 'b list -> 'c list -> 'd list ->
