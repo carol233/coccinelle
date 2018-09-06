@@ -215,7 +215,7 @@ and v_init =
   | ConstrInit of argument wrap2 list wrap
 and storage = storagebis * bool
 and storagebis = NoSto | StoTypedef | Sto of storageClass list
-and storageClass = Auto | Static | Register | Extern | Public | Private
+and storageClass = Auto | Static | Register | Extern | Public | Private | Protected | Abstract | Final
 and local_decl = LocalDecl | NotLocalDecl
 and initialiser = initialiserbis wrap
 and initialiserbis =

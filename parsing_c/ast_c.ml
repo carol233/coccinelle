@@ -579,7 +579,7 @@ and declaration =
      | ConstrInit of argument wrap2 (* , *) list wrap
      and storage       = storagebis * bool (* gccext: inline or not *)
      and storagebis    = NoSto | StoTypedef | Sto of storageClass list (* need to rename this for Java *)
-     and storageClass  = Auto  | Static | Register | Extern | Public | Private
+     and storageClass  = Auto  | Static | Register | Extern | Public | Private | Protected | Abstract | Final
 
      and local_decl = LocalDecl | NotLocalDecl
 

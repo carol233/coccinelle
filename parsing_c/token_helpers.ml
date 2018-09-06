@@ -420,6 +420,9 @@ let info_of_tok = function
   | Tstatic              (i) -> i
   | Tpublic              (i) -> i
   | Tprivate             (i) -> i
+  | Tprotected           (i) -> i
+  | Tfinal               (i) -> i
+  | Tabstract            (i) -> i
   | Tconst               (i) -> i
   | Tvolatile            (i) -> i
 
@@ -598,6 +601,9 @@ let visitor_info_of_tok f = function
   | Tstatic              (i) -> Tstatic              (f i)
   | Tpublic              (i) -> Tpublic              (f i)
   | Tprivate             (i) -> Tprivate             (f i)
+  | Tprotected           (i) -> Tprotected           (f i)
+  | Tfinal               (i) -> Tfinal               (f i)
+  | Tabstract            (i) -> Tabstract            (f i)
 
   | Tconst               (i) -> Tconst               (f i)
   | Tvolatile            (i) -> Tvolatile            (f i)
@@ -725,6 +731,9 @@ let string_of_token = function
   | Tstatic _ -> "Tstatic"
   | Tpublic _ -> "Tpublic"
   | Tprivate _ -> "Tprivate"
+  | Tprotected _ -> "Tprotected"
+  | Tabstract _ -> "Tabstract"
+  | Tfinal _ -> "Tfinal"
   | Ttypedef _ -> "Ttypedef"
   | Tconst _ -> "Tconst"
   | Tvolatile _ -> "Tvolatile"

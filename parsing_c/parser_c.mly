@@ -480,7 +480,8 @@ let args_to_params l pb =
        Tchar Tshort Tint Tdouble Tfloat Tlong Tunsigned Tsigned Tvoid
        Tsize_t Tssize_t Tptrdiff_t
        Tauto Tregister Textern Tstatic
-       Tpublic Tprivate
+       Tpublic Tprivate Tprotected
+       Tabstract Tfinal
        Ttypedef
        Tconst Tvolatile
        Tstruct Tunion Tenum Tdecimal Texec
@@ -1591,6 +1592,25 @@ storage_class_spec_nt:
  | Tregister    { Sto [Register],$1 }
  | Tpublic      { Sto [Public],   $1}
  | Tprivate     { Sto [Private],   $1}
+ | Tprotected   { Sto [Protected],   $1}
+ | Tfinal       { Sto [Final],   $1}
+ | Tabstract    { Sto [Abstract],   $1}
+ 
+storage_class_spec_opt:
+ | storage_class_spec_nt storage_class_spec_opt { 
+     
+    Sto ((
+        match fst $1 with
+        | Sto list -> list
+        | _ -> raise (Impossible 123)
+    ) @ (
+        match fst $2 with
+        | Sto list -> list
+        | NoSto -> []
+        | _ -> internal_error "Shouldn't be possible that storage_class_spec_opt returns a non-Sto list or non-NoSto ";
+    )),
+    snd $1 :: snd $2 }
+ | /*(* empty *)*/ { (NoSto, []) }
 
 storage_class_spec:
  | storage_class_spec_nt { $1 }
@@ -2162,9 +2182,9 @@ celem:
          !LP._lexer_hint.context_stack <- [LP.InTopLevel];
        Namespace ($4, [$1; snd $2; $3; $5]) }
 
- | Tclass TIdent TOBrace class_methods TCBrace 
-    { !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-                                       Namespace (fst $4, $1 :: (snd $4 @ [snd $2; $3; $5])) } 
+ | storage_class_spec_opt Tclass TIdent TOBrace class_methods TCBrace 
+    {  !LP._lexer_hint.context_stack <- [LP.InTopLevel];
+        Namespace (fst $5, $2 :: (snd $5 @ [snd $3; $4; $6])) } 
                   
  | external_declaration                         { $1 }
 

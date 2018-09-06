@@ -152,6 +152,9 @@ let keyword_table = Common.hash_of_list [
   (* for java *)
   "public",   (fun ii -> Tpublic ii);
   "private",   (fun ii -> Tprivate ii);
+  "protected",   (fun ii -> Tprotected ii);
+  "abstract",   (fun ii -> Tabstract ii);
+  "final",   (fun ii -> Tfinal ii);
   (* // java *)
 
   "const",    (fun ii -> Tconst ii);

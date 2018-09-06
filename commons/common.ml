@@ -1061,8 +1061,7 @@ let pp_f_in_box f      =
   Format.close_box ();
   res
 
-let pp s = pr2 s
-(* let pp s =  Format.print_string s *)
+let pp s =  Format.print_string s
 
 let mk_str_func_of_assoc_conv xs =
   let swap (x,y) = (y,x) in
@@ -3561,13 +3560,11 @@ let safe_tl l = try List.tl l with _ -> []
 let push l v =
   l := v :: !l
 
-exception Bad_code of string
-
 let rec zip xs ys =
   match (xs,ys) with
   | ([],[]) -> []
-  | ([],_) -> raise (Bad_code "zip of different lengths, right is longer")
-  | (_,[]) -> raise (Bad_code "zip of different lengths, left is longer")
+  | ([],_) -> failwith "zip: not same length"
+  | (_,[]) -> failwith "zip: not same length"
   | (x::xs,y::ys) -> (x,y)::zip xs ys
 
 let rec combine4 : 'a list -> 'b list -> 'c list -> 'd list ->

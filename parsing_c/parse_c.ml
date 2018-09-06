@@ -1271,26 +1271,6 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
     stat.Stat.commentized <-
       stat.Stat.commentized + count_lines_commentized (snd info);
 
-
-    let infos = (match elem with 
-      | Common.Left elem_toplevel ->  (match elem_toplevel with
-		| Ast_c.Namespace (toplevel_list, il) -> 
-            let tokens_without_class = strip_class_start (List.rev tr.passed) in
-			let result = List.rev (toplevel_list) 
-				|> List.fold_left (
-					fun (acc_infos, remaining_tokens) toplevel -> 
-						let (info, leftover_toks ) = infos_of_class_methods remaining_tokens toplevel
-							in (acc_infos @ info, leftover_toks)
-					)  ([], tokens_without_class)
-				|> fst in 
-            result
-		| Ast_c.Definition (def, il) -> 
-            [];
-        | _ -> []) (* TODO handle muliply-nested stuff in future *)
-        
-      | Common.Right _ ->  [] (* TODO haven't figured out this case... *)
-	) in
-
     let elem =
       match elem with
       | Left e ->

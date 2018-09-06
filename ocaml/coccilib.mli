@@ -284,7 +284,8 @@ module Ast_c :
         NoSto
       | StoTypedef
       | Sto of storageClass list
-    and storageClass = Ast_c.storageClass = Auto | Static | Register | Extern | Public | Private (* need to rename this for java*)
+    (* need to rename this for java*)
+    and storageClass = Ast_c.storageClass = Auto | Static | Register | Extern | Public | Private | Protected | Abstract | Final
     and local_decl = Ast_c.local_decl = LocalDecl | NotLocalDecl
     and initialiser = initialiserbis wrap
     and initialiserbis =
@@ -678,6 +679,9 @@ module Parser_c :
       | Tstatic of Ast_c.info
       | Tpublic of Ast_c.info
       | Tprivate of Ast_c.info
+      | Tprotected of Ast_c.info
+      | Tabstract of Ast_c.info
+      | Tfinal of Ast_c.info
       | Ttypedef of Ast_c.info
       | Tconst of Ast_c.info
       | Tvolatile of Ast_c.info
