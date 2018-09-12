@@ -112,7 +112,7 @@ let addTypeD     = function
       {v with typeD = (a, Some x,c),ii @ ii2}
 
   | ((Right3 t,ii),       ({typeD = ((a,b,Some x),ii2)} as v)) ->
-      let mktype t ii = (({const=false;volatile=false;},[]),(t,ii)) in
+      let mktype t ii = (({const=false;volatile=false;static=false; access=Default},[]),(t,ii)) in
       computed_warning
 	(fun _ ->
 	  Printf.sprintf
@@ -129,8 +129,12 @@ let addQualif = function
   | ({volatile=true},({volatile=true} as x))-> warning "duplicate 'volatile'" x
   | ({const=true},    v) -> {v with const=true}
   | ({volatile=true}, v) -> {v with volatile=true}
+  | ({static=true}, v) -> {v with static=true}
+  | ({access=APublic}, v) -> {v with access=APublic}
+  | ({access=APrivate}, v) -> {v with access=APrivate}
+  | ({access=AProtected}, v) -> {v with access=AProtected}
   | _ ->
-      internal_error "there is no noconst or novolatile keyword"
+      internal_error "invalid type qualifier"
 
 let addQualifD ((qu,ii), ({qualifD = (v,ii2)} as x)) =
   { x with qualifD = (addQualif (qu, v),ii::ii2) }
@@ -1237,6 +1241,7 @@ type_spec2:
  | Tsigned              { Left3 Signed,   [$1]}
  | Tunsigned            { Left3 UnSigned, [$1]}
  | struct_or_union_spec { Right3 (fst $1), snd $1 }
+ /*(* | TIdent               { Right3 (StructUnionName (Struct, fst $1)), [snd $1] } class, treat it as a struct *)*/
  | enum_spec            { Right3 (fst $1), snd $1 }
  | Tdecimal TOPar const_expr TComma const_expr TCPar
      { Right3 (Decimal($3,Some $5)), [$1;$2;$4;$6] }
@@ -1274,10 +1279,15 @@ type_spec: type_spec2    { dt "type" (); $1   }
 /*(*-----------------------------------------------------------------------*)*/
 
 type_qualif:
- | Tconst    { {const=true  ; volatile=false}, $1 }
- | Tvolatile { {const=false ; volatile=true},  $1 }
+ | Tconst    { {const=true  ; volatile=false; static=false; access=Default}, $1 }
+ | Tvolatile { {const=false ; volatile=true; static=false; access=Default},  $1 }
+ /*(* TODO, may need include these information *)*/
+ | Tstatic  { {const=false ; volatile=false; static=true; access=Default},  $1 }
+ | Tprivate  { {const=false ; volatile=false; static=false; access=APrivate},  $1 }
+ | Tpublic   { {const=false ; volatile=false; static=false; access=APublic},  $1 }
+ | Tprotected  { {const=false ; volatile=false; static=false; access=AProtected},  $1 }
  /*(* C99 *)*/
- | Trestrict { (* TODO *) {const=false ; volatile=false},  $1 }
+ | Trestrict { (* TODO *) {const=false ; volatile=false; static=false; access=Default},  $1 }
 
 
 /*(*-----------------------------------------------------------------------*)*/
@@ -1438,12 +1448,15 @@ parameter_decl2:
      }
 
 
-  
+field_decls:
+  | decl {} /*(* parse and throw away*)*/
 
 class_methods:
   | { ([], []) }
-  | class_methods function_definition { (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
-                                                                /*(* maybe (snd $2) @ (snd $1) *)*/
+  | class_methods function_definition {  (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
+  | class_methods field_decls { $1 } /*(* drop field names. We'll just assume any non-local declaration is a field. *)*/
+
+
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
 /*(*----------------------------*)*/
@@ -1616,6 +1629,13 @@ storage_class_spec:
  | storage_class_spec_nt { $1 }
  | Ttypedef     { StoTypedef,  $1 }
 
+generic_opt:
+ | TInf generic_list TSup {}
+ | /*(* empty *)*/ {}
+
+generic_list:
+ | /*(* can be empty, for the diamond operator in usages where type inference can be used. Not always valid, but we are going to ignore generics anyway *)*/ {}
+ | generic_list TIdent TComma {}
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
@@ -2182,9 +2202,10 @@ celem:
          !LP._lexer_hint.context_stack <- [LP.InTopLevel];
        Namespace ($4, [$1; snd $2; $3; $5]) }
 
- | storage_class_spec_opt Tclass TIdent TOBrace class_methods TCBrace 
-    {  !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-        Namespace (fst $5, $2 :: (snd $5 @ [snd $3; $4; $6])) } 
+ | storage_class_spec_opt Tclass TIdent generic_opt TOBrace class_methods TCBrace 
+    {  
+        !LP._lexer_hint.context_stack <- [LP.InTopLevel];
+        Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
                   
  | external_declaration                         { $1 }
 

@@ -89,7 +89,12 @@ module Ast_c :
       Ast_c.typeQualifierbis = {
       const : bool;
       volatile : bool;
+      static: bool;
+      access: accessType
     }
+    and accessType = 
+      Ast_c.accessType = 
+	      Default | APublic | APrivate | AProtected
     and attribute = attributebis wrap
     and attributebis = Ast_c.attributebis = Attribute of string
     and expression = (expressionbis * exp_info ref) wrap3
