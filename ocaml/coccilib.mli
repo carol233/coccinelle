@@ -59,7 +59,7 @@ module Ast_c :
     and base = Ast_c.base = CChar2 | CShort | CInt | CLong | CLongLong
     and sign = Ast_c.sign = Signed | UnSigned
     and floatType = Ast_c.floatType = CFloat | CDouble | CLongDouble
-    and structUnion = Ast_c.structUnion = Struct | Union
+    and structUnion = Ast_c.structUnion = Struct of string option | Union
     and structType = field list
     and field =
       Ast_c.field =
@@ -713,6 +713,7 @@ module Parser_c :
       | Tdefined of Ast_c.info
       | TOParCplusplusInit of Ast_c.info
       | Tnamespace of Ast_c.info
+      | Textends of Ast_c.info
       | Trestrict of Ast_c.info
       | Tasm of Ast_c.info
       | Tattribute of Ast_c.info
@@ -2713,7 +2714,7 @@ module Ast_cocci :
       | PtrDiffType
       | BoolType
       | Unknown
-    and structUnion = Ast_cocci.structUnion = Struct | Union
+    and structUnion = Ast_cocci.structUnion = Struct of string option | Union
     and sign = Ast_cocci.sign = Signed | Unsigned
     and const_vol = Ast_cocci.const_vol = Const | Volatile
     and base_declaration =

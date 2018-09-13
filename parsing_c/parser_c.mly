@@ -493,6 +493,9 @@ let args_to_params l pb =
        Tgoto Tdefault
        Tsizeof Tnew Tdelete Tdefined TOParCplusplusInit Tnamespace
 
+%token <Ast_c.info>
+       Textends
+
 /*(* C99 *)*/
 %token <Ast_c.info>
        Trestrict
@@ -1451,6 +1454,11 @@ parameter_decl2:
 field_decls:
   | decl {} /*(* parse and throw away*)*/
 
+
+extends: 
+  | /*(* empty *)*/ { }
+  | Textends TIdent {  } /*(* TODO *)*/
+
 class_methods:
   | { ([], []) }
   | class_methods function_definition {  (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
@@ -1769,10 +1777,10 @@ s_or_u_spec2:
      { StructUnionName (fst $1, fst $2), [snd $1;snd $2] }
 
 struct_or_union2:
- | Tstruct   { Struct, $1 }
+ | Tstruct   { Struct None, $1 }
  | Tunion    { Union, $1 }
  /*(* gccext: *)*/
- | Tstruct attributes   { Struct, $1 (* TODO *) }
+ | Tstruct attributes   { Struct None, $1 (* TODO *) }
  | Tunion  attributes   { Union, $1  (* TODO *) }
 
 
@@ -2202,10 +2210,10 @@ celem:
          !LP._lexer_hint.context_stack <- [LP.InTopLevel];
        Namespace ($4, [$1; snd $2; $3; $5]) }
 
- | storage_class_spec_opt Tclass TIdent generic_opt TOBrace class_methods TCBrace 
+ | storage_class_spec_opt Tclass TIdent generic_opt extends TOBrace class_methods TCBrace 
     {  
         !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-        Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
+        Namespace (fst $7, $2 :: (snd $7 @ [snd $3; $6; $8])) } 
                   
  | external_declaration                         { $1 }
 

@@ -362,7 +362,7 @@ and baseType = VoidType | CharType | ShortType | ShortIntType | IntType
 | SizeType | SSizeType | PtrDiffType
 | BoolType | Unknown
 
-and structUnion = Struct | Union
+and structUnion = Struct of string option | Union
 
 and sign = Signed | Unsigned
 
@@ -1077,7 +1077,7 @@ let string_of_expression e =
   | _ -> "?"
 
 let string_of_structUnion = function
-    Struct -> "struct"
+    Struct _ -> "struct"
   | Union -> "union"
 
 let rec string_of_typeC ty =

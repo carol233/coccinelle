@@ -344,7 +344,7 @@ and baseType = VoidType | CharType | ShortType | ShortIntType | IntType
 | SizeType | SSizeType | PtrDiffType
 | BoolType | Unknown
 
-and structUnion = Struct | Union
+and structUnion = Struct of string option | Union
 
 and sign = Signed | Unsigned
 

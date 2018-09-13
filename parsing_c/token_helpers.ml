@@ -416,6 +416,7 @@ let info_of_tok = function
   | Tptrdiff_t           (i) -> i
   | Tauto                (i) -> i
   | Tregister            (i) -> i
+  | Textends             (i) -> i
   | Textern              (i) -> i
   | Tstatic              (i) -> i
   | Tpublic              (i) -> i
@@ -608,6 +609,7 @@ let visitor_info_of_tok f = function
   | Tconst               (i) -> Tconst               (f i)
   | Tvolatile            (i) -> Tvolatile            (f i)
 
+  | Textends             (i) -> Textends             (f i)
   | Trestrict            (i) -> Trestrict            (f i)
 
   | Tclass               (i) -> Tclass               (f i)
@@ -726,6 +728,7 @@ let string_of_token = function
   | Tssize_t _ -> "Tssize_t"
   | Tptrdiff_t _ -> "Tptrdiff_t"
   | Tauto _ -> "Tauto"
+  | Textends _ -> "Textends"
   | Tregister _ -> "Tregister"
   | Textern _ -> "Textern"
   | Tstatic _ -> "Tstatic"

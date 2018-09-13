@@ -1,23 +1,23 @@
 @find@
-identifier i; statement S1;
+ statement S1;
+ statement S2;
 @@
 
-i(<... AverageType ...>) {
 
-...
 
   switch (...) {
+       case MEAN:
+            S2
 +      case GEOMETRIC:
 +             System.out.Println("Geometric")
        default:
               S1
   }
 
-...
 
 }
 
-@add@
+@@
 
 @@
 

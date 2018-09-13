@@ -866,7 +866,7 @@ expression_type:
 | Tstruct m=list(TMul)
     { P.ty_pointerify
         (Ast0.wrap
-           (Ast0.StructUnionName (Ast0.make_mcode Ast.Struct, None))) m }
+           (Ast0.StructUnionName (Ast0.make_mcode (Ast.Struct None), None))) m }
 | Tunion m=list(TMul)
     { P.ty_pointerify
         (Ast0.wrap
@@ -1051,7 +1051,7 @@ typedef_ctype:
 /* ---------------------------------------------------------------------- */
 
 struct_or_union:
-       s=Tstruct { P.clt2mcode Ast.Struct s }
+       s=Tstruct { P.clt2mcode (Ast.Struct None) s }
      | u=Tunion  { P.clt2mcode Ast.Union u }
 
 struct_decl:

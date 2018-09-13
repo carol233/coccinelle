@@ -161,6 +161,7 @@ let keyword_table = Common.hash_of_list [
   "volatile", (fun ii -> Tvolatile ii);
 
   "class",   (fun ii -> Tclass ii);
+  "extends", (fun ii -> Textends ii);
   "struct",  (fun ii -> Tstruct ii);
   "union",   (fun ii -> Tunion ii);
   "enum",    (fun ii -> Tenum ii);
@@ -331,7 +332,7 @@ let dec = ['0'-'9']
 let oct = ['0'-'7']
 let hex = ['0'-'9' 'a'-'f' 'A'-'F']
 
-let decimal = ('0' | (['1'-'9'] dec*))
+let decimal = ('0' | (['1'-'9'] (dec | '_' )*))
 let octal   = ['0']        oct+
 let hexa    = ("0x" |"0X") hex+
 

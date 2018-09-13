@@ -768,7 +768,7 @@ and baseType ty = print_string (Ast.string_of_baseType ty ^ " ")
   | Ast.PtrDiffType -> print_string "ptrdiff_t "
 *)
 and structUnion = function
-    Ast.Struct -> print_string "struct"
+    Ast.Struct _ -> print_string "struct"
   | Ast.Union -> print_string "union"
 
 and sign = function

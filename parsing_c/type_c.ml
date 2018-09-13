@@ -470,7 +470,7 @@ let (type_field:
                  * cf sparse source, where can access subfields directly.
                  * It can also be used in conjunction with union.
                  *)
-                | StructUnion (Struct, _, fields) ->
+                | StructUnion (Struct _, _, fields) ->
                     aux_fields fields
 
                 | _ -> ()

@@ -241,7 +241,9 @@ and fullType = typeQualifier * typeC
 
 
      (* -------------------------------------- *)
-     and structUnion = Struct | Union
+	 and structUnion = 
+	   | Struct of string option (* Struct contains the name of its parent classt *)
+	   | Union
      and structType  = field list
          and field =
            | DeclarationField of field_declaration

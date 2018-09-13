@@ -183,9 +183,9 @@ let equal_fixOp a b =
 
 let equal_structUnion a b =
   match a, b with
-  | A.Struct, B.Struct -> true
+  | A.Struct _ , B.Struct _ -> true
   | A.Union,  B.Union -> true
-  | _, (B.Struct|B.Union) -> false
+  | _, (B.Struct _ |B.Union) -> false
 
 let equal_sign a b =
   match a, b with
@@ -1115,6 +1115,14 @@ let rec (expression: (A.expression, Ast_c.expression) matcher) =
 	      |	B.Unary(e,B.UnMinus) -> matches (B.unwrap_expr e)
 	      | B.SizeOfExpr(exp) -> true
 	      | B.SizeOfType(ty) -> true
+		  | B.RecordAccess(expr, name) -> 
+		  	let s = Ast_c.str_of_name name in
+					if s =~ "[A-Z_][A-Z_0-9]*$"
+					then begin
+				pr2_once ("warning: " ^ s ^ " treated as a constant");
+				true
+					end
+					else false
 	      | _ -> false in
 	    matches e
 	| (A.LocalID,e) ->
@@ -3844,7 +3852,7 @@ and (typeC: (A.typeC, Ast_c.typeC) matcher) =
 		   (match A.unwrap ty with
 		     A.StructUnionName(sua, None) ->
 		       (match (term sua, sub) with
-			 (A.Struct,B.Struct)
+			 (A.Struct _,B.Struct _)
 		       | (A.Union,B.Union) -> return ((),())
 		       | _ -> fail) >>=
 		       (fun _ _ ->
@@ -4452,9 +4460,9 @@ and compatible_sign signa signb =
 
 and equal_structUnion_type_cocci a b =
   match Ast_cocci.unwrap_mcode a, b with
-    A.Struct, B.Struct -> true
+    A.Struct _, B.Struct _ -> true
   | A.Union,  B.Union -> true
-  | _, (B.Struct | B.Union) -> false
+  | _, (B.Struct _ | B.Union) -> false
 
 
 

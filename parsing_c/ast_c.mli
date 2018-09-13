@@ -52,7 +52,7 @@ and signed = sign * base
 and base = CChar2 | CShort | CInt | CLong | CLongLong
 and sign = Signed | UnSigned
 and floatType = CFloat | CDouble | CLongDouble
-and structUnion = Struct | Union
+and structUnion = Struct of string option | Union
 and structType = field list
 and field =
     DeclarationField of field_declaration
