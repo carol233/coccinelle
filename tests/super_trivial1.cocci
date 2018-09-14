@@ -1,7 +1,7 @@
 @superTrivialRule@
-expression E;
+int E;
 @@
 
-* f(E);
+* E
 ...
 
