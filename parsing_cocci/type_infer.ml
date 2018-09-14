@@ -145,7 +145,8 @@ let rec propagate_types env =
                          dummy)))
 	       | Ast.Char(_) -> Some (Ast0.rewrap e char_type)
 	       | Ast.Int(_) -> Some (Ast0.rewrap e int_type)
-	       | Ast.Float(_) ->  Some (Ast0.rewrap e float_type)
+				 | Ast.Float(_) ->  Some (Ast0.rewrap e float_type)
+				 | Ast.Boolean (_) -> Some (Ast0.rewrap e bool_type)
 	       | Ast.DecimalConst(_,l,p) ->
 		   Some (
                      Ast0.rewrap e (

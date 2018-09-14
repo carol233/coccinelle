@@ -47,6 +47,7 @@ and baseType =
   | SizeType
   | SSizeType
   | PtrDiffType
+  | Boolean
 and intType = CChar | Si of signed
 and signed = sign * base
 and base = CChar2 | CShort | CInt | CLong | CLongLong
@@ -118,6 +119,7 @@ and constant =
   | Char of (string * isWchar)
   | Int of (string * intType)
   | Float of (string * floatType)
+  | Bool of string
   | DecimalConst of (string * string * string)
 and isWchar = IsWchar | IsChar
 and unaryOp = GetRef | DeRef | UnPlus | UnMinus | Tilde | Not | GetRefLabel

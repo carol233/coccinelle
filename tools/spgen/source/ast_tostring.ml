@@ -26,6 +26,7 @@ let constant_tostring = function
   | Ast.Char(s) -> "'" ^ s ^ "'"
   | Ast.Int(s) -> s
   | Ast.Float(s) -> s
+  | Ast.Boolean(s) -> s
   | Ast.DecimalConst(s,_,_) -> s
 
 let struct_union_tostring = Ast.string_of_structUnion

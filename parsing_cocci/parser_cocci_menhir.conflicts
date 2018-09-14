@@ -1,0 +1,31 @@
+
+** Conflict (reduce/reduce) in state 111.
+** Tokens involved: Tstatic Tregister Tlist Tinline Textern Tauto Tattr TWords TTypedef TTypeId TType TSymbol TSymId TStatement TRuleName TRightIso TPure TPtVirg TPosition TParameter TOrLog TOPar0 TOPar TOCro TName TMul TMid0 TMetaType TMetaLocalFunc TMetaId TMetaFunc TMeta TMPtVirg TLocal TLineEnd TIteratorId TIterator TIso TInitialiser TIdentifier TIdent TIdExpression TGenerated TFunction TFunDecl TFresh TExpression TError TDotDot TDeclarerId TDeclarer TContext TConstant TComma TCPar0 TCPar TCCro TCBrace TArobArob TArob TAndLog TAnd0 EOF
+** The following explanations concentrate on token TRightIso.
+** This state is reached from iso_main after reading:
+
+TIsoType Tboolean 
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+iso_main 
+TIsoType ctype list(iso(ctype)) EOF // lookahead token appears because list(iso(ctype)) can begin with TRightIso
+         all_basic_types list(mul) // lookahead token is inherited because list(mul) can vanish
+         (?)
+
+** In state 111, looking ahead at TRightIso, reducing production
+** non_signable_types_no_ident -> Tboolean 
+** is permitted because of the following sub-derivation:
+
+non_signable_types // lookahead token is inherited
+non_signable_types_no_ident // lookahead token is inherited
+Tboolean . 
+
+** In state 111, looking ahead at TRightIso, reducing production
+** signable_types_no_ident -> Tboolean 
+** is permitted because of the following sub-derivation:
+
+signable_types // lookahead token is inherited
+signable_types_no_ident // lookahead token is inherited
+Tboolean . 

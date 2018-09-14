@@ -1,4 +1,4 @@
 @@
-boolean i;
+identifier i;
 @@
-* i 
+* i = 0

@@ -214,7 +214,7 @@ let check_constraint_allowed () =
 %token<string> TRuleName
 %token<string * int> TScript
 
-%token<Data.clt> Tchar Tshort Tint Tdouble Tfloat Tlong
+%token<Data.clt> Tchar Tshort Tint Tdouble Tfloat Tlong Tboolean
 %token<Data.clt> Tsize_t Tssize_t Tptrdiff_t
 %token<Data.clt> Tvoid Tstruct Tunion Tenum
 %token<Data.clt> Tunsigned Tsigned
@@ -264,7 +264,7 @@ let check_constraint_allowed () =
 
 %token <Data.clt> TInc TDec
 
-%token <string * Data.clt> TString TChar TFloat TInt
+%token <string * Data.clt> TString TChar TFloat TInt TBoolean
 %token <string * string (*n*) * string (*p*) * Data.clt> TDecimalCst
 
 %token <Data.clt> TOrLog
@@ -905,6 +905,8 @@ signable_types_no_ident:
       Ast0.wrap(Ast0.MetaType(P.clt2mcode nm clt,cstr,pure)) }
 | ty1=Tlong
     { Ast0.wrap(Ast0.BaseType(Ast.LongType,[P.clt2mcode "long" ty1])) }
+| ty1=Tboolean
+    { Ast0.wrap(Ast0.BaseType(Ast.BoolType,[P.clt2mcode "boolean" ty1])) }
 | ty1=Tlong ty2=Tint
     { Ast0.wrap
 	(Ast0.BaseType
@@ -943,6 +945,8 @@ non_signable_types_no_ident:
     { Ast0.wrap(Ast0.BaseType(Ast.DoubleType,[P.clt2mcode "double" ty])) }
 | ty=Tfloat
     { Ast0.wrap(Ast0.BaseType(Ast.FloatType,[P.clt2mcode "float" ty])) }
+| ty=Tboolean
+    { Ast0.wrap(Ast0.BaseType(Ast.BoolType,[P.clt2mcode "boolean" ty])) }
 | ty=Tsize_t
     { Ast0.wrap(Ast0.BaseType(Ast.SizeType,[P.clt2mcode "size_t" ty])) }
 | ty=Tssize_t
@@ -2200,6 +2204,11 @@ primary_expr(recurser,primary_extra):
  | TFloat
      { let (x,clt) = $1 in
      Ast0.wrap(Ast0.Constant (P.clt2mcode (Ast.Float x) clt)) }
+ | TBoolean 
+     {
+       let (x,clt) = $1 in
+       Ast0.wrap(Ast0.Constant (P.clt2mcode (Ast.Boolean x) clt))
+     }
  | TString
      { let (x,clt) = $1 in P.parse_string x clt }
  | TChar
@@ -3207,6 +3216,7 @@ anything: /* used for script code */
  | Tdouble { "double" }
  | Tfloat { "float" }
  | Tlong { "long" }
+ | Tboolean { "boolean" }
  | Tsize_t { "size_t" }
  | Tssize_t { "ssize_t" }
  | Tptrdiff_t { "ptrdiff_t" }
@@ -3270,6 +3280,7 @@ anything: /* used for script code */
  | TString { Printf.sprintf "\"%s\"" (fst $1) }
  | TChar { fst $1 }
  | TFloat { fst $1 }
+ | TBoolean {fst $1 }
  | TInt { fst $1 }
  | TDecimalCst { let (x,_,_,_) = $1 in x }
 

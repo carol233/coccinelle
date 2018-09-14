@@ -45,7 +45,7 @@ open Ast_c (* to factorise tokens, OpAssign, ... *)
 (*****************************************************************************)
 (* Wrappers *)
 (*****************************************************************************)
-let pr2, pr2_once = Common.mk_pr2_wrappers Flag_parsing_c.verbose_lexing
+let pr2, pr2_once = Common.mk_pr2_wrappers (ref true)
 
 (*****************************************************************************)
 
@@ -137,6 +137,7 @@ let keyword_table = Common.hash_of_list [
   "long",   (fun ii -> Tlong ii);
   "float",  (fun ii -> Tfloat ii);
   "double", (fun ii -> Tdouble ii);
+  "boolean", (fun ii -> Tboolean ii);
   "size_t", (fun ii -> Tsize_t ii);
   "ssize_t", (fun ii -> Tssize_t ii);
   "ptrdiff_t", (fun ii -> Tptrdiff_t ii);
@@ -181,7 +182,6 @@ let keyword_table = Common.hash_of_list [
   "goto",    (fun ii -> Tgoto ii);
 
   "sizeof", (fun ii -> Tsizeof ii);
-
 
   (* gccext: cppext: linuxext: synonyms *)
   "asm",     (fun ii -> Tasm ii);
@@ -791,7 +791,13 @@ rule token = parse
   (* ----------------------------------------------------------------------- *)
   (* C keywords and ident *)
   (* ----------------------------------------------------------------------- *)
+  | ("true" | "false") 
+     {
+		 let info = tokinfo lexbuf in
+			let s = tok lexbuf in
+				TBoolean   (s,  info )
 
+     }
   (* StdC: must handle at least name of length > 509, but can
    * truncate to 31 when compare and truncate to 6 and even lowerise
    * in the external linkage phase
@@ -852,7 +858,7 @@ rule token = parse
         pr2 ("LEXER: identifier with dollar: "  ^ s);
         TIdent (s, info)
       }
-
+  
   | cplusplus_ident
       ('<' "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
       (", " "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>') ?
@@ -872,7 +878,7 @@ rule token = parse
 	  end
       }
   | cplusplus_ident
-      ('<' "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
+      (' ' * '<' "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
       (", " "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>')
 
       {
@@ -930,6 +936,7 @@ rule token = parse
 	  pr2_once "~ and :: not allowed in C identifiers, try -c++ option");
 	TIdent (s, info)
       }
+   
 
   (* ----------------------------------------------------------------------- *)
   (* C constant *)

@@ -668,6 +668,7 @@ and constant = function
   | Ast.Char(s) -> print_string ("\'"^s^"\'")
   | Ast.Int(s) -> print_string s
   | Ast.Float(s) -> print_string s
+  | Ast.Boolean(s) -> print_string s
   | Ast.DecimalConst(s,_l,_p) -> print_string s
 
 (* --------------------------------------------------------------------- *)

@@ -790,7 +790,8 @@ let string_of_expression exp =
 	  warning "Unable to apply a constraint on a multistring constant!"
       | Ast_c.Char  (char , _) -> char
       | Ast_c.Int   (int  , _) -> int
-      | Ast_c.Float (float, _) -> float
+	  | Ast_c.Float (float, _) -> float
+	  | Ast_c.Bool  (string) -> string
       | Ast_c.DecimalConst (d, n, p) ->
 	  warning "Unable to apply a constraint on a decimal constant!")
   | Ast_c.StringConstant (cst,orig,w) -> orig
@@ -1276,7 +1277,9 @@ let rec (expression: (A.expression, Ast_c.expression) matcher) =
       | A.Char x, B.Char (y,_) when x = y  (* todo: use kind ? *)
           -> do1()
       | A.Float x, B.Float (y,_) when x = y (* todo: use floatType ? *)
-          -> do1()
+		  -> do1()
+	  | A.Boolean x, B.Bool (y) when x = y 
+		  -> do1()
       | A.DecimalConst (x,lx,px),B.DecimalConst (y,ly,py)
 	when x = y && lx = ly && px = py(*lx etc perhaps implied by x=y*)
           -> do1()
@@ -1293,7 +1296,7 @@ let rec (expression: (A.expression, Ast_c.expression) matcher) =
           )
 
       | _, B.MultiString _ -> (* todo cocci? *) fail
-      | _, (B.String _ | B.Float _ | B.Char _ | B.Int _ | B.DecimalConst _) ->
+      | _, (B.String _ | B.Float _ | B.Char _ | B.Int _ | B.DecimalConst _| B.Bool _) ->
 	  fail
       )
 
@@ -3622,7 +3625,7 @@ and simulate_signed ta basea stringsa signaopt tb baseb ii rebuilda =
 	  | [] -> fail (* should something be done in this case? *)
 	  | _ -> raise (Impossible 43))
 
-      | _, (B.Void|B.FloatType _|B.IntType _
+      | _, (B.Void|B.FloatType _|B.IntType _|B.Boolean
 	    |B.SizeType|B.SSizeType|B.PtrDiffType) -> fail
 
 and simulate_signed_meta ta basea signaopt tb baseb ii rebuilda =
@@ -3663,7 +3666,7 @@ and simulate_signed_meta ta basea signaopt tb baseb ii rebuilda =
           )
 
       | (B.Void|B.FloatType _|B.IntType _
-         |B.SizeType|B.SSizeType|B.PtrDiffType) -> fail
+         |B.SizeType|B.SSizeType|B.PtrDiffType|B.Boolean) -> fail
 
 and (typeC: (A.typeC, Ast_c.typeC) matcher) =
   fun ta tb ->
@@ -4260,10 +4263,10 @@ and compatible_base_type a signa b =
   | _, B.FloatType B.CLongDouble ->
       pr2_once "no longdouble in cocci";
       fail
-  | A.BoolType, _ -> failwith "no booltype in C"
+  | A.BoolType, B.Boolean -> ok
 
   | _, (B.Void|B.FloatType _|B.IntType _
-        |B.SizeType|B.SSizeType|B.PtrDiffType) -> fail
+        |B.SizeType|B.SSizeType|B.PtrDiffType|B.Boolean) -> fail
 
 and compatible_base_type_meta a signa qua b ii local =
   let fullType_of_baseType b = Ast_c.mk_ty (Ast_c.BaseType b) [] in
@@ -4290,7 +4293,7 @@ and compatible_base_type_meta a signa qua b ii local =
       fail
 
   | _, (B.Void|B.FloatType _|B.IntType _
-        |B.SizeType|B.SSizeType|B.PtrDiffType) -> fail
+        |B.SizeType|B.SSizeType|B.PtrDiffType|B.Boolean) -> fail
 
 and compatible_type a (b,local) =
   match A.unwrap a, b with

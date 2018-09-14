@@ -445,7 +445,7 @@ let args_to_params l pb =
 
 %token <(string * (Ast_c.sign * Ast_c.base)) * Ast_c.info> TInt
 %token <(string * Ast_c.floatType) * Ast_c.info> TFloat
-%token <(string) * Ast_c.info> TBoolean
+%token < string                  * Ast_c.info>   TBoolean
 %token <(string * Ast_c.isWchar) * Ast_c.info>   TChar
 %token <(string * Ast_c.isWchar) * Ast_c.info>   TString
 %token <(string * Ast_c.isWchar) * Ast_c.info>   TQuote
@@ -1222,6 +1222,7 @@ token:
   | TInt    { snd $1 }
   | TFloat  { snd $1 }
   | TString { snd $1 }
+  | TBoolean    { snd $1 }
   | TChar   { snd $1 } /* other constants needed? */
 
 /*(*************************************************************************)*/

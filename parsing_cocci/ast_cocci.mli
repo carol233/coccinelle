@@ -290,10 +290,11 @@ and  arithOp =
 and  logicalOp = Inf | Sup | InfEq | SupEq | Eq | NotEq | AndLog | OrLog
 
 and constant =
-    String of string
-  | Char   of string
-  | Int    of string
-  | Float  of string
+    String  of string
+  | Char    of string
+  | Int     of string
+  | Float   of string
+  | Boolean of string
   | DecimalConst of (string * string * string)
 
 (* --------------------------------------------------------------------- *)

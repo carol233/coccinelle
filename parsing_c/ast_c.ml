@@ -225,6 +225,7 @@ and fullType = typeQualifier * typeC
 		   | SizeType
 		   | SSizeType
 		   | PtrDiffType
+		   | Boolean
 
 	  (* stdC: type section
            * add  a | SizeT ?
@@ -386,7 +387,8 @@ and expression = (expressionbis * exp_info ref (* semantic: *)) wrap3
     | MultiString of string list (* can contain MacroString, todo: more info *)
     | Char   of (string * isWchar) (* normally it is equivalent to Int *)
     | Int    of (string * intType)
-    | Float  of (string * floatType)
+	| Float  of (string * floatType)
+	| Bool   of string
     | DecimalConst of (string * string * string)
 
     and isWchar = IsWchar | IsChar

@@ -54,6 +54,7 @@ module Ast_c :
       | SizeType
       | SSizeType
       | PtrDiffType
+      | Boolean
     and intType = Ast_c.intType = CChar | Si of signed
     and signed = sign * base
     and base = Ast_c.base = CChar2 | CShort | CInt | CLong | CLongLong
@@ -144,6 +145,7 @@ module Ast_c :
       | Char of (string * isWchar)
       | Int of (string * intType)
       | Float of (string * floatType)
+      | Bool of string
       | DecimalConst of (string * string * string)
     and isWchar = Ast_c.isWchar = IsWchar | IsChar
     and unaryOp =
@@ -616,6 +618,7 @@ module Parser_c :
       | TComment of Ast_c.info
       | TInt of ((string * (Ast_c.sign * Ast_c.base)) * Ast_c.info)
       | TFloat of ((string * Ast_c.floatType) * Ast_c.info)
+      | TBoolean of (string * Ast_c.info)
       | TChar of ((string * Ast_c.isWchar) * Ast_c.info)
       | TString of ((string * Ast_c.isWchar) * Ast_c.info)
       | TQuote of ((string * Ast_c.isWchar) * Ast_c.info)
@@ -672,6 +675,7 @@ module Parser_c :
       | Tdouble of Ast_c.info
       | Tfloat of Ast_c.info
       | Tlong of Ast_c.info
+      | Tboolean of Ast_c.info
       | Tunsigned of Ast_c.info
       | Tsigned of Ast_c.info
       | Tvoid of Ast_c.info
@@ -2666,6 +2670,7 @@ module Ast_cocci :
       | Char of string
       | Int of string
       | Float of string
+      | Boolean of string
       | DecimalConst of (string * string * string)
     and base_fullType =
       Ast_cocci.base_fullType =

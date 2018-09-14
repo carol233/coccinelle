@@ -684,7 +684,8 @@ let annotater_expr_visitor_subpart = (fun (k,bigf) expr ->
     | StringConstant (s,os,kind) -> make_info_def (type_of_s "char []")
     | Constant (String (s,kind)) -> make_info_def (type_of_s "char []")
     | Constant MultiString _  -> make_info_def (type_of_s "char []")
-    | Constant (Char   (s,kind)) -> make_info_def (type_of_s "char")
+	| Constant (Char   (s,kind)) -> make_info_def (type_of_s "char")
+	| Constant (Bool s) ->  make_info_def (type_of_s "boolean")
     | Constant (Int (s,kind)) ->
 	(* this seems really unpleasant, but perhaps the type needs to be set
 	   up in some way that allows pretty printing *)

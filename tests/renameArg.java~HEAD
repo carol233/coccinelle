@@ -1,0 +1,64 @@
+<<<<<<< HEAD:java-tests/super_trivial1.java:java-tests/super_trivial1.java
+class Ahhh extends B {
+    public static void hello() {
+=======
+class Ahhh {
+    public static void hello(int iii) {
+>>>>>>> 696bc89fe7d09d107098788c2b7b1864af15bc00:tests/renameArg.java:tests/renameArg.java
+        System.out.println("hello");
+        int j = 0;
+        if (true) {
+            f(iii);
+        } else {
+            f(j);
+            // comments
+        }
+<<<<<<< HEAD:java-tests/super_trivial1.java:java-tests/super_trivial1.java
+        // static method call
+        OtherClass.g(j);
+
+        boolean b = true;
+        b = false;
+=======
+        // this should be changed
+        OtherClass.g(iii);
+>>>>>>> 696bc89fe7d09d107098788c2b7b1864af15bc00:tests/renameArg.java:tests/renameArg.java
+    }
+    private int k;
+    public static final Integer CONSTANT_1 = 5;
+
+    public static void main(String[] args) {
+        // no arg constructor
+        Thing obj = new Thing();
+        int i = 5;
+        f(i);
+        int j = 0;
+        OtherClass.g(i);
+<<<<<<< HEAD:java-tests/super_trivial1.java:java-tests/super_trivial1.java
+=======
+
+    }
+>>>>>>> 696bc89fe7d09d107098788c2b7b1864af15bc00:tests/renameArg.java:tests/renameArg.java
+
+        i = OtherClass.staticValue;
+
+        // side-effect on a field
+        k = 10;
+
+        // constructor, with usage of enum
+        Thing obj2 = new Thing(j, ThingEnum.VALUE_1);
+
+        obj2.doSomething(ThingEnum2.VALUE_2);
+        obj2.getValue();
+
+        // using `this`,  set to constant from another class
+        this.k = Integer.MAX_VALUE;
+
+        
+        if (this.k > CONSTANT_1) {
+            System.out.println("true");
+
+        } 
+
+    }
+}

@@ -308,10 +308,11 @@ and arithOp =
 and  logicalOp = Inf | Sup | InfEq | SupEq | Eq | NotEq | AndLog | OrLog
 
 and constant =
-    String of string
-  | Char   of string
-  | Int    of string
-  | Float  of string
+    String  of string
+  | Char    of string
+  | Int     of string
+  | Float   of string
+  | Boolean of string
   | DecimalConst of (string * string * string)
 
 (* --------------------------------------------------------------------- *)
@@ -357,7 +358,7 @@ and fullType = base_fullType wrap
 and typeC = base_typeC wrap
 
 and baseType = VoidType | CharType | ShortType | ShortIntType | IntType
-| DoubleType | LongDoubleType | FloatType
+| DoubleType | LongDoubleType | FloatType 
 | LongType | LongIntType | LongLongType | LongLongIntType
 | SizeType | SSizeType | PtrDiffType
 | BoolType | Unknown
@@ -1052,7 +1053,7 @@ let string_of_baseType = function
   | SizeType -> "size_t"
   | SSizeType -> "ssize_t"
   | PtrDiffType -> "ptrdiff_t"
-  | BoolType -> "bool"
+  | BoolType -> "boolean"
   | Unknown -> "unknown"
 
 let string_of_const_vol = function

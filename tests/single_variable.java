@@ -1,1 +1,1 @@
-        boolean b = true;
+Thing i = 0;
