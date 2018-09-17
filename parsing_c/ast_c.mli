@@ -74,7 +74,7 @@ and parameterType = {
 }
 and typeQualifier = typeQualifierbis wrap
 and typeQualifierbis = { const : bool; volatile : bool; static: bool; access: accessType; synchronized: bool; transient: bool}
-and accessType = Default | APublic | APrivate | AProtected
+and accessType = ADefault | APublic | APrivate | AProtected
 and attribute = attributebis wrap
 and attributebis = Attribute of string
 and expression = (expressionbis * exp_info ref) wrap3

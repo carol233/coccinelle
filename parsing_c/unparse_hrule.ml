@@ -207,7 +207,7 @@ let print_metavar pr = function
 	(function _ -> pr " ")
         {Ast_c.p_register = (false,[]);
          p_namei = Some name';
-         p_type = (({Ast_c.const = false; Ast_c.volatile = false; Ast_c.static=false; Ast_c.access=Ast_c.Default; Ast_c.synchronized=false; Ast_c.transient=false},[]),ty)
+         p_type = (({Ast_c.const = false; Ast_c.volatile = false; Ast_c.static=false; Ast_c.access=Ast_c.ADefault; Ast_c.synchronized=false; Ast_c.transient=false},[]),ty)
         }
   | _ -> failwith "function must have named parameters"
 

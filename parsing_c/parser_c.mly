@@ -112,7 +112,7 @@ let addTypeD     = function
       {v with typeD = (a, Some x,c),ii @ ii2}
 
   | ((Right3 t,ii),       ({typeD = ((a,b,Some x),ii2)} as v)) ->
-      let mktype t ii = (({const=false;volatile=false;static=false; access=Default;synchronized=false;transient=false},[]),(t,ii)) in
+      let mktype t ii = (({const=false;volatile=false;static=false; access=ADefault;synchronized=false;transient=false},[]),(t,ii)) in
       computed_warning
 	(fun _ ->
 	  Printf.sprintf
@@ -1284,17 +1284,17 @@ type_spec: type_spec2    { dt "type" (); $1   }
 /*(*-----------------------------------------------------------------------*)*/
 
 type_qualif:
- | Tconst    { {const=true  ; volatile=false; static=false; access=Default; synchronized=false; transient= false}, $1 }
- | Tvolatile { {const=false ; volatile=true; static=false; access=Default; synchronized=false; transient= false},  $1 }
+ | Tconst    { {const=true  ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=false}, $1 }
+ | Tvolatile { {const=false ; volatile=true ; static=false ; access=ADefault ; synchronized=false ; transient=false},  $1 }
  /*(* TODO, may need include these information *)*/
- | Tstatic  { {const=false ; volatile=false; static=true; access=Default; synchronized=false; transient= false},  $1 }
- | Tprivate  { {const=false ; volatile=false; static=false; access=APrivate; synchronized=false; transient= false},  $1 }
- | Tpublic   { {const=false ; volatile=false; static=false; access=APublic; synchronized=false; transient= false},  $1 }
- | Tprotected  { {const=false ; volatile=false; static=false; access=AProtected; synchronized=false; transient= false},  $1 }
- | Tsynchronized  { {const=false ; volatile=false; static=false; access=Default; synchronized=true; transient= false},  $1 }
- | Ttransient { {const=false ; volatile=false; static=false; access=Default; synchronized=false; transient= true},  $1 }
+ | Tstatic  { {const=false ; volatile=false ; static=true ; access=ADefault ; synchronized=false ; transient=false},  $1 }
+ | Tprivate  { {const=false ; volatile=false ; static=false ; access=APrivate ; synchronized=false ; transient=false},  $1 }
+ | Tpublic   { {const=false ; volatile=false ; static=false ; access=APublic ; synchronized=false ; transient=false},  $1 }
+ | Tprotected  { {const=false ; volatile=false ; static=false ; access=AProtected ; synchronized=false ; transient=false},  $1 }
+ | Tsynchronized  { {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=true ; transient=false},  $1 }
+ | Ttransient { {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=true},  $1 }
  /*(* C99 *)*/
- | Trestrict { (* TODO *) {const=false ; volatile=false; static=false; access=Default; synchronized=false; transient= false},  $1 }
+ | Trestrict { (* TODO *) {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=false},  $1 }
 
 
 /*(*-----------------------------------------------------------------------*)*/

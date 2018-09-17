@@ -96,7 +96,7 @@ module Ast_c :
     }
     and accessType = 
       Ast_c.accessType = 
-	      Default | APublic | APrivate | AProtected
+	      ADefault | APublic | APrivate | AProtected
     and attribute = attributebis wrap
     and attributebis = Ast_c.attributebis = Attribute of string
     and expression = (expressionbis * exp_info ref) wrap3
