@@ -1278,8 +1278,7 @@ let rec (expression: (A.expression, Ast_c.expression) matcher) =
           -> do1()
       | A.Float x, B.Float (y,_) when x = y (* todo: use floatType ? *)
 		  -> do1()
-	  | A.Boolean x, B.Bool (y) when x = y 
-		  -> do1()
+	  
       | A.DecimalConst (x,lx,px),B.DecimalConst (y,ly,py)
 	when x = y && lx = ly && px = py(*lx etc perhaps implied by x=y*)
           -> do1()

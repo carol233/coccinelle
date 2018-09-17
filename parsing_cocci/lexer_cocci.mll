@@ -274,7 +274,6 @@ let id_tokens lexbuf =
   | "int" ->        Tint      linetype
   | "double" ->     Tdouble   linetype
   | "float" ->      Tfloat    linetype
-  | "boolean" ->    Tboolean  linetype
   | "long" ->       Tlong     linetype
   | "void" ->       Tvoid     linetype
   | "size_t" ->     Tsize_t   linetype

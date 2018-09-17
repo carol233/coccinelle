@@ -312,7 +312,6 @@ and constant =
   | Char    of string
   | Int     of string
   | Float   of string
-  | Boolean of string
   | DecimalConst of (string * string * string)
 
 (* --------------------------------------------------------------------- *)
@@ -1053,7 +1052,6 @@ let string_of_baseType = function
   | SizeType -> "size_t"
   | SSizeType -> "ssize_t"
   | PtrDiffType -> "ptrdiff_t"
-  | BoolType -> "boolean"
   | Unknown -> "unknown"
 
 let string_of_const_vol = function

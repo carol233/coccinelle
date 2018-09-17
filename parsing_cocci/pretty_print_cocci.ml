@@ -355,7 +355,6 @@ and constant = function
   | Ast.Char(s) -> print_string "'"; print_string s; print_string "'"
   | Ast.Int(s) -> print_string s
   | Ast.Float(s) -> print_string s
-  | Ast.Boolean(s) -> print_string s
   | Ast.DecimalConst(s,_,_) -> print_string s
 
 (* --------------------------------------------------------------------- *)

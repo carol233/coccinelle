@@ -2670,7 +2670,6 @@ module Ast_cocci :
       | Char of string
       | Int of string
       | Float of string
-      | Boolean of string
       | DecimalConst of (string * string * string)
     and base_fullType =
       Ast_cocci.base_fullType =

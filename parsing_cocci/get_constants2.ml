@@ -439,8 +439,7 @@ let do_get_constants constants keywords env (neg_pos,_) =
 	  | Ast.Char s -> option_default (* probably not chars either *)
 	  (* the following were eg keywords "1", but not good for glimpse *)
 	  | Ast.Int s -> option_default (* glimpse doesn't index integers *)
-    | Ast.Float s -> option_default (* probably not floats either *)
-    | Ast.Boolean s -> option_default (* *)
+	  | Ast.Float s -> option_default (* probably not floats either *)
 	  | Ast.DecimalConst _ -> option_default (* or decimals *))
     | Ast.StringConstant(lq,str,rq) -> option_default
 	(* Like the above constant case, this information is not likely indexed

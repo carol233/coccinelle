@@ -294,7 +294,6 @@ and constant =
   | Char    of string
   | Int     of string
   | Float   of string
-  | Boolean of string
   | DecimalConst of (string * string * string)
 
 (* --------------------------------------------------------------------- *)

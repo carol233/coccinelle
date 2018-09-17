@@ -111,7 +111,6 @@ let token2c (tok,_) add_clt =
   | PC.Tint(clt) -> add_clt "int" clt
   | PC.Tdouble(clt) -> add_clt "double" clt
   | PC.Tfloat(clt) -> add_clt "float" clt
-  | PC.Tboolean(clt) -> add_clt "boolean" clt
   | PC.Tlong(clt) -> add_clt "long" clt
   | PC.Tvoid(clt) -> add_clt "void" clt
   | PC.Tsize_t(clt) -> add_clt "size_t" clt
@@ -179,7 +178,6 @@ let token2c (tok,_) add_clt =
   | PC.TString(x,clt) -> add_clt (Printf.sprintf "\"%s\"" x) clt
   | PC.TChar(x,clt) -> add_clt x clt
   | PC.TFloat(x,clt) -> add_clt x clt
-  | PC.TBoolean(x,clt) -> add_clt x clt
   | PC.TInt(x,clt) -> add_clt x clt
   | PC.TDecimalCst(x,len,prc,clt) -> add_clt x clt
 
@@ -410,7 +408,7 @@ exception NoClt of string
 let get_clt (tok,_) =
   match tok with
     PC.Tchar(clt) | PC.Tshort(clt) | PC.Tint(clt) | PC.Tdouble(clt)
-  | PC.Tfloat(clt) | PC.Tlong(clt) | PC.Tvoid(clt) | PC.Tboolean(clt)
+  | PC.Tfloat(clt) | PC.Tlong(clt) | PC.Tvoid(clt)
   | PC.Tsize_t(clt) | PC.Tssize_t(clt) | PC.Tptrdiff_t(clt)
   | PC.Tstruct(clt)
   | PC.Tunion(clt) | PC.Tenum(clt) | PC.Tunsigned(clt) | PC.Tsigned(clt)
@@ -434,7 +432,7 @@ let get_clt (tok,_) =
 
   | PC.TSizeof(clt) | PC.TTypeof(clt)
 
-  | PC.TString(_,clt) | PC.TChar(_,clt) | PC.TFloat(_,clt) | PC.TInt(_,clt) | PC.TBoolean(_, clt) 
+  | PC.TString(_,clt) | PC.TChar(_,clt) | PC.TFloat(_,clt) | PC.TInt(_,clt)
   | PC.TDecimalCst(_,_,_,clt)
 
   | PC.TOrLog(clt) | PC.TAndLog(clt) | PC.TOr(clt) | PC.TXor(clt)
@@ -564,7 +562,6 @@ let update_clt (tok,x) clt =
   | PC.Tshort(_) -> (PC.Tshort(clt),x)
   | PC.Tint(_) -> (PC.Tint(clt),x)
   | PC.Tdouble(_) -> (PC.Tdouble(clt),x)
-  | PC.Tboolean(_) -> (PC.Tboolean(clt), x)
   | PC.Tfloat(_) -> (PC.Tfloat(clt),x)
   | PC.Tlong(_) -> (PC.Tlong(clt),x)
   | PC.Tvoid(_) -> (PC.Tvoid(clt),x)
@@ -627,7 +624,6 @@ let update_clt (tok,x) clt =
   | PC.TString(s,_) -> (PC.TString(s,clt),x)
   | PC.TChar(s,_) -> (PC.TChar(s,clt),x)
   | PC.TFloat(s,_) -> (PC.TFloat(s,clt),x)
-  | PC.TBoolean(s,_) -> (PC.TBoolean(s,clt),x)
   | PC.TInt(s,_) -> (PC.TInt(s,clt),x)
   | PC.TDecimalCst(s,l,p,_) -> (PC.TDecimalCst(s,l,p,clt),x)
 
