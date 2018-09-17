@@ -19,7 +19,7 @@ class Ahhh extends B {
     }
 
     private int k;
-    public static final Integer CONSTANT_1 = 5;
+    public static final Double CONSTANT_1 = 5;
 
     public static void main(String[] args) {
         // no arg constructor
@@ -30,6 +30,11 @@ class Ahhh extends B {
         OtherClass.g(i);
 
         i = OtherClass.staticValue;
+
+        {
+
+            i = OtherClass.STATIC_FINAL_VALUE;
+        }
 
         // side-effect on a field
         k = 10;
