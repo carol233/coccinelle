@@ -1,1 +1,7 @@
-Thing i = 0;
+public class A{
+    public int main() {
+        if (true) {
+       method(Integer.MAX_VALUE);
+        }
+    }
+}

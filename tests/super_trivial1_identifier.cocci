@@ -1,0 +1,4 @@
+@@
+identifier i;
+@@
+* i

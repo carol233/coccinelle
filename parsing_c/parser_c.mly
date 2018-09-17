@@ -727,7 +727,7 @@ identifier:
  *)
 */
 identifier_cpp:
- | TIdent
+ | ident
      { RegularName (mk_string_wrap $1) }
  | ident_extra_cpp { $1 }
 
@@ -1156,7 +1156,7 @@ exec_list:
 exec_ident:
     { function prev -> prev }
  | TDot   TIdent exec_ident
-     { function prev ->
+     { print_string "record access" ;function prev ->
        let fld = RegularName (mk_string_wrap $2) in
        $3 (mk_e(RecordAccess   (prev,fld)) [$1]) }
  | TPtrOp TIdent exec_ident
@@ -1463,10 +1463,10 @@ extends:
   | /*(* empty *)*/ { }
   | Textends TIdent {  } /*(* TODO *)*/
 
-class_methods:
+class_body:
   | { ([], []) }
-  | class_methods function_definition {  (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
-  | class_methods field_decls { $1 } /*(* drop field names. We'll just assume any non-local declaration is a field. *)*/
+  | class_body function_definition {  (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
+  | class_body field_decls { $1 } /*(* drop field names. We'll just assume any non-local declaration is a field. *)*/
 
 
 /*(*----------------------------*)*/
@@ -2214,7 +2214,7 @@ celem:
          !LP._lexer_hint.context_stack <- [LP.InTopLevel];
        Namespace ($4, [$1; snd $2; $3; $5]) }
 
- | storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_methods TCBrace 
+ | storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
     {  
         !LP._lexer_hint.context_stack <- [LP.InTopLevel];
         Namespace (fst $7, $2 :: (snd $7 @ [snd $3; $6; $8])) } 
