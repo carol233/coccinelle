@@ -307,7 +307,6 @@ let info_of_tok = function
   | TypedefIdent  (s, i) -> i
 
   | TInt  (s, i) -> i
-  | TBoolean (s, i) -> i
 
   | TDefine (ii) -> ii
   | TInclude (includes, filename, inifdef, i1) ->     i1
@@ -409,7 +408,6 @@ let info_of_tok = function
   | Tdouble              (i) -> i
   | Tfloat               (i) -> i
   | Tlong                (i) -> i
-  | Tboolean             (i) -> i
   | Tunsigned            (i) -> i
   | Tsigned              (i) -> i
   | Tvoid                (i) -> i
@@ -472,7 +470,6 @@ let visitor_info_of_tok f = function
   | TString ((s, isWchar), i)  -> TString ((s, isWchar), f i)
   | TChar  ((s, isWchar), i)   -> TChar  ((s, isWchar), f i)
   | TFloat ((s, floatType), i) -> TFloat ((s, floatType), f i)
-  | TBoolean (s, i)            -> TBoolean (s, i)
   | TDecimal ((s, n, p), i)    -> TDecimal ((s, n, p), f i)
   | TAssign  (assignOp, ii)     -> TAssign  (assignOp, List.map f ii)
 
@@ -593,7 +590,6 @@ let visitor_info_of_tok f = function
   | Tdouble              (i) -> Tdouble              (f i)
   | Tfloat               (i) -> Tfloat               (f i)
   | Tlong                (i) -> Tlong                (f i)
-  | Tboolean             (i) -> Tboolean             (f i)
   | Tunsigned            (i) -> Tunsigned            (f i)
   | Tsigned              (i) -> Tsigned              (f i)
   | Tvoid                (i) -> Tvoid                (f i)
@@ -669,7 +665,6 @@ let string_of_token = function
   | TComment _ -> "TComment"
   | TInt _ -> "TInt"
   | TFloat _ -> "TFloat"
-  | TBoolean _ -> "TBoolean"
   | TChar _ -> "TChar"
   | TString _ -> "TString"
   | TQuote _ -> "TQuote"
@@ -725,7 +720,6 @@ let string_of_token = function
   | Tint _ -> "Tint"
   | Tdouble _ -> "Tdouble"
   | Tfloat _ -> "Tfloat"
-  | Tboolean _ -> "Tboolean"
   | Tlong _ -> "Tlong"
   | Tunsigned _ -> "Tunsigned"
   | Tsigned _ -> "Tsigned"

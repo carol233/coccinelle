@@ -1178,9 +1178,6 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
             | _ -> ()
         end; Left e
 	  | Right (info,line_err, _, passed, passed_before_error, cur, exn, _) ->
-			let msg = Printexc.to_string exn
-			and stack = Printexc.get_backtrace () in
-			Printf.eprintf "there was an error: %s%s\n" msg stack;
           if !Flag_parsing_c.disable_multi_pass
           then pass1
           else begin

@@ -445,7 +445,6 @@ let args_to_params l pb =
 
 %token <(string * (Ast_c.sign * Ast_c.base)) * Ast_c.info> TInt
 %token <(string * Ast_c.floatType) * Ast_c.info> TFloat
-%token < string                  * Ast_c.info>   TBoolean
 %token <(string * Ast_c.isWchar) * Ast_c.info>   TChar
 %token <(string * Ast_c.isWchar) * Ast_c.info>   TString
 %token <(string * Ast_c.isWchar) * Ast_c.info>   TQuote
@@ -482,7 +481,7 @@ let args_to_params l pb =
        TPlus TMinus TMul TDiv TMod  TMax TMin
 
 %token <Ast_c.info>
-       Tchar Tshort Tint Tdouble Tfloat Tlong Tboolean Tunsigned Tsigned Tvoid
+       Tchar Tshort Tint Tdouble Tfloat Tlong Tunsigned Tsigned Tvoid
        Tsize_t Tssize_t Tptrdiff_t
        Tauto Tregister Textern Tstatic
        Tpublic Tprivate Tprotected
@@ -900,7 +899,6 @@ primary_expr:
       mk_e(Constant (Int (str,Si(sign,base)))) [snd $1] }
  | TFloat  { mk_e(Constant (Float  (fst $1))) [snd $1] }
  | TString { mk_e(Constant (String (fst $1))) [snd $1] }
- | TBoolean { mk_e(Constant (Bool (fst $1))) [snd $1] }
  | TQuote string_fragments TQuote
      { let ((fullstring,isW),lqinfo) = $1 in
        let (_,rqinfo) = $3 in
@@ -1222,7 +1220,6 @@ token:
   | TInt    { snd $1 }
   | TFloat  { snd $1 }
   | TString { snd $1 }
-  | TBoolean    { snd $1 }
   | TChar   { snd $1 } /* other constants needed? */
 
 /*(*************************************************************************)*/
@@ -1242,7 +1239,6 @@ type_spec2:
  | Tsize_t              { Right3 (BaseType SizeType),            [$1] }
  | Tssize_t             { Right3 (BaseType SSizeType),           [$1] }
  | Tptrdiff_t           { Right3 (BaseType PtrDiffType),         [$1] }
- | Tboolean             { Right3 (BaseType Boolean),             [$1] }
  | Tshort               { Middle3 Short,  [$1]}
  | Tlong                { Middle3 Long,   [$1]}
  | Tsigned              { Left3 Signed,   [$1]}
