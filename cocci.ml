@@ -1080,33 +1080,7 @@ let build_info_program env (cprogram,typedefs,macros) =
   let cs_with_envs =
     TAC.annotate_program env (*!g_contain_typedmetavar*) cs'
   in
-
-
-  (* flat map to get the definitions out of the namespace *)
-  let cs_with_envs' = 
-	cs_with_envs 
-
-
-  in
-
-  let parseinfos' = parseinfos in
-  (*	cs_with_envs +> 
-	List.map (fun cprogram' -> 
-	let (toplevel, _) = cprogram' in 
-		match toplevel, parseinfos with  
-		(* namespaces consists of a list of toplevels *)
-			| Ast_c.Namespace (toplevel_list, _), parse_i :: parse_is -> 
-				
-			toplevel_list +> List.map (fun toplevel ->
-				match match toplevel with
-					| Ast_c.Definition _ -> parse_is
-					| _ ->  parseinfos
-				 
-			| _ -> [parseinfos]
-			)
-	) +> List.flatten +> List.flatten
-  in  *)
-  zip cs_with_envs' parseinfos' +> List.map (fun ((c, (enva,envb)), parseinfo)->
+  zip cs_with_envs parseinfos +> List.map (fun ((c, (enva,envb)), parseinfo)->
 	let (fullstr, tokens) = parseinfo in
     let flow =
       ast_to_flow_with_error_messages c +>

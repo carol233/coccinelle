@@ -1309,7 +1309,6 @@ and pp_init (init, iinit) =
                 (* head is ii of TClass *)
                 match Common.last_n 3 cons with 
                 | [i2; i3; i4;] -> 
-                    let defs = Common.take ((cons |> List.length)-3) cons in 
                         pr_elem head; pr_elem i2; pr_elem i3;
                         List.iter pp_toplevel tls;
                         pr_elem i4;

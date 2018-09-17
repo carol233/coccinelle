@@ -1,4 +1,4 @@
-class Ahhh extends B {
+class Ahhh<T> extends B {
 
     public T t;
 
@@ -19,7 +19,9 @@ class Ahhh extends B {
     }
 
     private int k;
-    public static final Double CONSTANT_1 = 5;
+    public static final int CONSTANT_1 = 5;
+    volatile int v;
+    private transient double trans;
 
     public static void main(String[] args) {
         // no arg constructor

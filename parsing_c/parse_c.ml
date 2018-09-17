@@ -1256,14 +1256,6 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
          * the lines in the token from the correct file ?
          *)
 	in
-
-
-  let strip_class_start tokens =  
-    (* just drop everything before the first '{' *)
-    let (bef, start_paren, after) = Common.split_when (fun tok -> (TH.str_of_tok tok) = "{") tokens
-    in after
-
-  in
           
 	let info = mk_info_item file (List.rev tr.passed) in
 
