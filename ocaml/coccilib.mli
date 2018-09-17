@@ -90,7 +90,9 @@ module Ast_c :
       const : bool;
       volatile : bool;
       static: bool;
-      access: accessType
+      access: accessType;
+      synchronized: bool;
+      transient: bool;
     }
     and accessType = 
       Ast_c.accessType = 
@@ -687,6 +689,8 @@ module Parser_c :
       | Tprotected of Ast_c.info
       | Tabstract of Ast_c.info
       | Tfinal of Ast_c.info
+      | Tsynchronized of Ast_c.info
+      | Ttransient of Ast_c.info
       | Ttypedef of Ast_c.info
       | Tconst of Ast_c.info
       | Tvolatile of Ast_c.info

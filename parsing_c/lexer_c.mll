@@ -155,6 +155,8 @@ let keyword_table = Common.hash_of_list [
   "protected",   (fun ii -> Tprotected ii);
   "abstract",   (fun ii -> Tabstract ii);
   "final",   (fun ii -> Tfinal ii);
+  "synchronized", (fun ii -> Tsynchronized ii);
+  "transient", (fun ii -> Ttransient ii);
   (* // java *)
 
   "const",    (fun ii -> Tconst ii);

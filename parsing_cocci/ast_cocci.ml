@@ -1045,6 +1045,7 @@ let string_of_baseType = function
   | DoubleType -> "double"
   | LongDoubleType -> "long double"
   | FloatType -> "float"
+  | BoolType -> "bool"
   | LongType -> "long"
   | LongIntType -> "long int"
   | LongLongType -> "long long"

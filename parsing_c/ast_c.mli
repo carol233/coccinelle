@@ -73,7 +73,7 @@ and parameterType = {
   p_type : fullType;
 }
 and typeQualifier = typeQualifierbis wrap
-and typeQualifierbis = { const : bool; volatile : bool; static: bool; access: accessType}
+and typeQualifierbis = { const : bool; volatile : bool; static: bool; access: accessType; synchronized: bool; transient: bool}
 and accessType = Default | APublic | APrivate | AProtected
 and attribute = attributebis wrap
 and attributebis = Attribute of string

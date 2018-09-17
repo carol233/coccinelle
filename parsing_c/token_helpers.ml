@@ -426,6 +426,8 @@ let info_of_tok = function
   | Tabstract            (i) -> i
   | Tconst               (i) -> i
   | Tvolatile            (i) -> i
+  | Tsynchronized        (i) -> i
+  | Ttransient           (i) -> i
 
   | Trestrict            (i) -> i
 
@@ -605,6 +607,8 @@ let visitor_info_of_tok f = function
   | Tprotected           (i) -> Tprotected           (f i)
   | Tfinal               (i) -> Tfinal               (f i)
   | Tabstract            (i) -> Tabstract            (f i)
+  | Tsynchronized            (i) -> Tsynchronized            (f i)
+  | Ttransient            (i) -> Ttransient            (f i)
 
   | Tconst               (i) -> Tconst               (f i)
   | Tvolatile            (i) -> Tvolatile            (f i)
@@ -737,6 +741,8 @@ let string_of_token = function
   | Tprotected _ -> "Tprotected"
   | Tabstract _ -> "Tabstract"
   | Tfinal _ -> "Tfinal"
+  | Tsynchronized _ -> "Tsynchronized"
+  | Ttransient _ -> "Ttransient"
   | Ttypedef _ -> "Ttypedef"
   | Tconst _ -> "Tconst"
   | Tvolatile _ -> "Tvolatile"
