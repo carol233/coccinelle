@@ -497,7 +497,7 @@ let args_to_params l pb =
        Ttry Tcatch Tfinally
 
 %token <Ast_c.info>
-       Textends
+       Textends Timplements
 
 /*(* C99 *)*/
 %token <Ast_c.info>
@@ -715,8 +715,8 @@ translation_unit:
    * hence sometimes the use of ident  instead of TIdent.
    *)*/
 ident:
- | TIdent       { print_string "TIdent"; $1 }
- | TypedefIdent { print_string "TypedefIdent";$1 }
+ | TIdent       { $1 }
+ | TypedefIdent { $1 }
 
 
 identifier:
@@ -1088,7 +1088,7 @@ selection:
  /* [Nasty Undisciplined Cpp] #ifdef A if e S1 else #else S2 #endif S3 */
  | TUifdef Tif TOPar expr TCPar statement Telse TUelseif statement TUendif statement
      { Ifdef_Ite2 ($4,$6,$9,$11), [$1;$2;$3;$5;$7;$8;$10] }
- | Ttry statement Tcatch TOPar TypedefIdent ident TCPar statement {print_string"rule matched"; Try ($2, $8, None), [$1;$3;$4;$7] } 
+ | Ttry statement Tcatch TOPar TypedefIdent ident TCPar statement { Try ($2, $8, None), [$1;$3;$4;$7] } 
  | Ttry statement Tcatch TOPar TypedefIdent ident TCPar statement Tfinally statement { Try ($2, $8, Some $10), [$1;$3;$4;$7;$9;]  }
 
 iteration:
@@ -1464,7 +1464,8 @@ field_decls:
 
 extends: 
   | /*(* empty *)*/ { }
-  | Textends TIdent {  } /*(* TODO *)*/
+  | Textends ident {  } /*(* TODO *)*/
+  | Timplements ident { }
 
 class_body:
   | { ([], []) }
