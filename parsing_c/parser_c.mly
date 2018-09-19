@@ -846,6 +846,18 @@ new_argument:
  | TypedefIdent TOPar TCPar
      { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, [])) [$2;$3]) }
+ | ident TInf TSup TOPar argument_list_ne TCPar
+    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+       Left (mk_e(FunCall (fn, $5)) [$4;$6]) }
+ | ident TInf TSup TOPar TCPar
+    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+       Left (mk_e(FunCall (fn, [])) [$4;$5]) }
+ | ident generic_opt TOPar  argument_list_ne TCPar
+    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+       Left (mk_e(FunCall (fn, [])) [$3;$5]) }
+| ident generic_opt TOPar  TCPar
+    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+       Left (mk_e(FunCall (fn, [])) [$3;$4]) }
  | type_spec
      { let ty = addTypeD ($1,nullDecl) in
        let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam ty in
@@ -1272,6 +1284,11 @@ type_spec2:
  | TypedefIdent
      { let name = RegularName (mk_string_wrap $1) in
        Right3 (TypeName (name, Ast_c.noTypedefDef())),[] }
+ | TypedefIdent generic_opt 
+    {
+      let name = RegularName (mk_string_wrap $1) in
+      Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
+    }
 
  | Ttypeof TOPar assign_expr TCPar { Right3 (TypeOfExpr ($3)), [$1;$2;$4] }
  | Ttypeof TOPar type_name   TCPar { Right3 (TypeOfType ($3)), [$1;$2;$4] }
@@ -1647,11 +1664,12 @@ storage_class_spec:
 
 generic_opt:
  | TInf generic_list TSup {}
+ | TInf ident TSup {}
  | /*(* empty *)*/ {}
 
 generic_list:
  | /*(* can be empty, for the diamond operator in usages where type inference can be used. Not always valid, but we are going to ignore generics anyway *)*/ {}
- | generic_list TIdent TComma {}
+ | generic_list ident TComma {}
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
