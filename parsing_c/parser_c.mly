@@ -494,6 +494,7 @@ let args_to_params l pb =
        Tbreak Telse Tswitch Tcase Tcontinue Tfor Tdo Tif  Twhile Treturn
        Tgoto Tdefault
        Tsizeof Tnew Tdelete Tdefined TOParCplusplusInit Tnamespace
+       Ttry Tcatch Tfinally
 
 %token <Ast_c.info>
        Textends
@@ -714,8 +715,8 @@ translation_unit:
    * hence sometimes the use of ident  instead of TIdent.
    *)*/
 ident:
- | TIdent       { $1 }
- | TypedefIdent { $1 }
+ | TIdent       { print_string "TIdent"; $1 }
+ | TypedefIdent { print_string "TypedefIdent";$1 }
 
 
 identifier:
@@ -1087,6 +1088,8 @@ selection:
  /* [Nasty Undisciplined Cpp] #ifdef A if e S1 else #else S2 #endif S3 */
  | TUifdef Tif TOPar expr TCPar statement Telse TUelseif statement TUendif statement
      { Ifdef_Ite2 ($4,$6,$9,$11), [$1;$2;$3;$5;$7;$8;$10] }
+ | Ttry statement Tcatch TOPar TypedefIdent ident TCPar statement {print_string"rule matched"; Try ($2, $8, None), [$1;$3;$4;$7] } 
+ | Ttry statement Tcatch TOPar TypedefIdent ident TCPar statement Tfinally statement { Try ($2, $8, Some $10), [$1;$3;$4;$7;$9;]  }
 
 iteration:
  | Twhile TOPar expr TCPar statement

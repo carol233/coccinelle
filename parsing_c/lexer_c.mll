@@ -157,6 +157,10 @@ let keyword_table = Common.hash_of_list [
   "final",   (fun ii -> Tfinal ii);
   "synchronized", (fun ii -> Tsynchronized ii);
   "transient", (fun ii -> Ttransient ii);
+
+  "try",     (fun ii -> Ttry ii);
+  "catch",   (fun ii -> Tcatch ii);
+  "finally", (fun ii -> Tfinally ii);
   (* // java *)
 
   "const",    (fun ii -> Tconst ii);

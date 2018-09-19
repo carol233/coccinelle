@@ -360,10 +360,15 @@ let fix_flow_ctl2 (flow : F.cflow) : F.cflow =
     end
   ) !g#nodes;
 
+  F.KeyMap.iter (
+    fun nodei node -> if (F.KeyEdgeSet.cardinal (!g#successors nodei) < 1)
+    then print_string ("\nfailed: " ^ (node|> snd ));
+    ()
+  )  !g#nodes;
+
   F.KeyMap.iter (fun nodei node ->
     assert (F.KeyEdgeSet.cardinal (!g#successors nodei) >= 1);
     ) !g#nodes;
-
   !g
 let fix_flow_ctl a =
   Common.profile_code "fix_flow" (fun () -> fix_flow_ctl2 a)

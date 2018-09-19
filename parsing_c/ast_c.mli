@@ -176,6 +176,8 @@ and declOrExpr = ForDecl of declaration | ForExp of expression option wrap
 and selection =
     If of expression * statement * statement
   | Switch of expression * statement
+  (* try/catch/finally *)
+  | Try    of statement * statement * statement option
   | Ifdef_Ite of expression * statement * statement
   | Ifdef_Ite2 of expression * statement * statement * statement
 and iteration =

@@ -235,6 +235,8 @@ module Ast_c :
       Ast_c.selection =
         If of expression * statement * statement
       | Switch of expression * statement
+      (* try/catch/finally *)
+      | Try    of statement * statement * statement option
       | Ifdef_Ite of expression * statement * statement
       | Ifdef_Ite2 of expression * statement * statement * statement
     and iteration =
@@ -717,6 +719,9 @@ module Parser_c :
       | Tdefined of Ast_c.info
       | TOParCplusplusInit of Ast_c.info
       | Tnamespace of Ast_c.info
+      | Ttry of Ast_c.info
+      | Tcatch of Ast_c.info
+      | Tfinally of Ast_c.info
       | Textends of Ast_c.info
       | Trestrict of Ast_c.info
       | Tasm of Ast_c.info

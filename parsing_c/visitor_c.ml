@@ -413,6 +413,8 @@ and vk_statement = fun bigf (st: Ast_c.statement) ->
         statf st3;
     | Selection  (Switch (e, st)) ->
         vk_expr bigf e; statf st;
+    | Selection (Try (s1, s2, s3)) ->
+        statf s1; statf s2; s3 |> do_option (fun s -> statf s);
     | Iteration  (While (e, st)) ->
         vk_expr bigf e; statf st;
     | Iteration  (DoWhile (st, e)) -> statf st; vk_expr bigf e;
@@ -895,6 +897,10 @@ and vk_node = fun bigf node ->
     | F.DoWhileTail (e,ii) ->
         iif ii;
         vk_expr bigf e
+    | F.Try (_, (_,ii)) 
+    | F.Catch(_, (_,ii))
+    | F.Finally(_, (_,ii)) ->
+      iif ii;
 
     | F.ForHeader (_st, ((ForExp (e1opt,i1), (e2opt,i2), (e3opt,i3)), ii)) ->
         iif i1; iif i2; iif i3;
@@ -1280,6 +1286,8 @@ and vk_statement_s = fun bigf st ->
                                                   ,statf st3))
       | Selection (Switch (e, st))   ->
           Selection  (Switch ((vk_expr_s bigf) e, statf st))
+      | Selection (Try (s1, s2, s3)) -> 
+      Selection  (Try (statf s1, statf s2, s3 |> map_option (statf)))
       | Iteration (While (e, st))    ->
           Iteration  (While ((vk_expr_s bigf) e, statf st))
       | Iteration (DoWhile (st, e))  ->
@@ -1828,6 +1836,10 @@ and vk_node_s = fun bigf node ->
         F.WhileHeader (st, (vk_expr_s bigf e, iif ii))
     | F.DoWhileTail (e,ii)  ->
         F.DoWhileTail (vk_expr_s bigf e, iif ii)
+    | F.Try(st, (_, ii)) -> F.Try(st, ((), iif ii))
+    | F.Catch(st, (_, ii)) -> F.Catch(st, ((), iif ii))
+    | F.Finally(st, (_, ii)) -> F.Finally(st, ((), iif ii))
+      
 
     | F.ForHeader (st, ((first, (e2opt,i2), (e3opt,i3)), ii)) ->
 	let first =

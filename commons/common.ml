@@ -4450,7 +4450,7 @@ let (member_set: 'a -> 'a set -> bool) = List.mem
 
 let find_set = List.find
 let sort_set = List.sort
-let iter_set = List.iter
+let (iter_set: ('a -> unit) -> 'a set -> unit) = List.iter
 
 let (top_set: 'a set -> 'a) = List.hd
 

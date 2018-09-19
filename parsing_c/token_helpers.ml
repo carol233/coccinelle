@@ -416,6 +416,9 @@ let info_of_tok = function
   | Tptrdiff_t           (i) -> i
   | Tauto                (i) -> i
   | Tregister            (i) -> i
+  | Ttry                 (i) -> i
+  | Tcatch               (i) -> i
+  | Tfinally             (i) -> i
   | Textends             (i) -> i
   | Textern              (i) -> i
   | Tstatic              (i) -> i
@@ -607,11 +610,14 @@ let visitor_info_of_tok f = function
   | Tprotected           (i) -> Tprotected           (f i)
   | Tfinal               (i) -> Tfinal               (f i)
   | Tabstract            (i) -> Tabstract            (f i)
-  | Tsynchronized            (i) -> Tsynchronized            (f i)
+  | Tsynchronized        (i) -> Tsynchronized            (f i)
   | Ttransient            (i) -> Ttransient            (f i)
 
   | Tconst               (i) -> Tconst               (f i)
   | Tvolatile            (i) -> Tvolatile            (f i)
+  | Ttry                 (i) -> Ttry                 (f i)
+  | Tcatch               (i) -> Tcatch                 (f i)
+  | Tfinally             (i) -> Tfinally                 (f i)
 
   | Textends             (i) -> Textends             (f i)
   | Trestrict            (i) -> Trestrict            (f i)
@@ -733,6 +739,9 @@ let string_of_token = function
   | Tptrdiff_t _ -> "Tptrdiff_t"
   | Tauto _ -> "Tauto"
   | Textends _ -> "Textends"
+  | Ttry _  -> "Ttry"
+  | Tcatch _  -> "Tcatch"
+  | Tfinally _ -> "Tfinally"
   | Tregister _ -> "Tregister"
   | Textern _ -> "Textern"
   | Tstatic _ -> "Tstatic"

@@ -1080,6 +1080,7 @@ let build_info_program env (cprogram,typedefs,macros) =
   let cs_with_envs =
     TAC.annotate_program env (*!g_contain_typedmetavar*) cs'
   in
+
   zip cs_with_envs parseinfos +> List.map (fun ((c, (enva,envb)), parseinfo)->
 	let (fullstr, tokens) = parseinfo in
     let flow =
@@ -1094,7 +1095,8 @@ let build_info_program env (cprogram,typedefs,macros) =
 
         fixed_flow
       )
-	in
+  in
+  
     {
       ast_c = c; (* contain refs so can be modified *)
       start_end =

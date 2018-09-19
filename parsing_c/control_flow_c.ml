@@ -238,6 +238,9 @@ type node = node1 * string
   | Label of fullstatement * name * unit wrap (* : *)
   | Goto of fullstatement * name * unit wrap (* goto *)
 
+  | Try of fullstatement * unit wrap
+  | Catch of fullstatement * unit wrap
+  | Finally of fullstatement * unit wrap
 
   | Asm of fullstatement * asmbody wrap
   | MacroStmt of fullstatement * unit wrap
@@ -403,6 +406,9 @@ let extract_fullstatement node =
   | DoHeader (st, _)
   | ForHeader (st, _)
   | SwitchHeader (st, _)
+  | Try (st, _)
+  | Catch (st, _)
+  | Finally (st, _)
   | Return     (st, _)
   | ReturnExpr (st, _)
   (* no counter part in cocci *)

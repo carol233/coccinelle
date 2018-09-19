@@ -317,7 +317,25 @@ and pp_string_format (e,ii) =
 	| _ -> raise (Impossible 90))
     | Selection  (Switch (e, st)), [i1;i2;i3;iifakend] ->
         pr_elem i1; pr_space(); pr_elem i2; pp_expression e; pr_elem i3;
-	indent_if_needed st (function _-> pp_statement st); pr_elem iifakend
+    indent_if_needed st (function _-> pp_statement st); pr_elem iifakend
+    | Selection  (Try (st1, st2, st3)), [i1;i2;i3;i4;i5;iifakend] ->
+        pr_elem i1; pr_space(); 
+        indent_if_needed st1 (function _-> pp_statement st1); pr_elem i2; 
+        indent_if_needed st2 (function _-> pp_statement st2); pr_elem i3; 
+        (match st3 with 
+        | None -> failwith "selection list 4" 
+        | Some s ->  indent_if_needed s (function _-> pp_statement s));
+    
+        pr_elem iifakend
+    | Selection  (Try (st1, st2, st3)), [i1;i2;i3;i4;i5;] ->
+        pr_elem i1; pr_space(); 
+        indent_if_needed st1 (function _-> pp_statement st1); pr_elem i2; 
+        indent_if_needed st2 (function _-> pp_statement st2); pr_elem i3; 
+        (match st3 with 
+        | None -> ()
+        | Some s ->  failwith "selection list 5" );
+
+        pr_elem i5
     | Iteration  (While (e, st)), [i1;i2;i3;iifakend] ->
         pr_elem i1; pr_space(); pr_elem i2; pp_expression e; pr_elem i3;
 	indent_if_needed st (function _-> pp_statement st); pr_elem iifakend
@@ -398,6 +416,7 @@ and pp_string_format (e,ii) =
     | Labeled (CaseRange  (_,_,_)) | Labeled (Default _)
     | Compound _ | ExprStatement _
     | Selection  (If (_, _, _)) | Selection  (Switch (_, _))
+    | Selection (Try (_,  _, _))
     | Selection (Ifdef_Ite _) | Selection (Ifdef_Ite2 _)
     | Iteration  (While (_, _)) | Iteration  (DoWhile (_, _))
     | Iteration  (For (_, (_,_), (_, _), _))
@@ -1349,6 +1368,9 @@ and pp_init (init, iinit) =
 	pp_statement (Ast_c.mk_st (ExprStatement eopt) ii)
 
     | F.IfHeader (_, (e,ii)) -> pr2 "IfHeader"
+    | F.Try (_, (_,ii)) -> pr2 "Try"
+    | F.Catch (_, (_,ii)) -> pr2 "Catch"
+    | F.Finally (_, (_,ii)) -> pr2 "Finally"
     | F.SwitchHeader (_, (e,ii)) -> pr2 "SwitchHeader"
     | F.WhileHeader (_, (e,ii)) -> pr2 "WhileHeader"
     | F.DoWhileTail (e,ii) ->

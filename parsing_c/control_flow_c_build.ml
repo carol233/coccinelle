@@ -208,6 +208,25 @@ let compute_labels_and_create_them st =
   end
 
 
+
+let rec add_arc_all_stmt_in_try_to_except firstcatch firsttry lasttry  = 
+	(* recurse back until we hit firsttry*)
+	if firsttry = lasttry 
+	then ()
+  else begin
+    (match Control_flow_c.extract_fullstatement (Control_flow_c.KeyMap.find lasttry !g#nodes  ) with 
+    | Some stmt -> 
+      (let s = Ast_c.unwrap_st stmt in 
+      (match s with
+      | Ast_c.Labeled _ | Ast_c.Compound _| Ast_c.Decl _  | Ast_c.NestedFunc _ -> ()
+      | _ -> !g#add_arc ((lasttry, firstcatch), Direct)))
+    | None -> ());
+    
+    (!g#predecessors lasttry) |>
+      Control_flow_c.KeyEdgeSet.elements |>
+      List.hd |> (fun (key, edge) -> add_arc_all_stmt_in_try_to_except firstcatch firsttry key) 
+  end
+
 (* ctl_braces: *)
 let insert_all_braces xs starti nodety str =
   xs  +> List.fold_left (fun acc nodeinfo ->
@@ -347,7 +366,9 @@ let rec aux_statement : (nodei option * xinfo) -> statement -> nodei option =
 	  !g#add_arc a1;
 	  let a2 = ((afteri, endi), Control) in
 	  !g#add_arc a2;
-	  ret_afters := (afteri,a1,a2) :: !ret_afters) in
+	  ret_afters := (afteri,a1,a2) :: !ret_afters) 
+	  
+	  in
 
       let newxi = { xi_lbl with
             braces = Common.Left(endnode_dup,mkafter) :: xi_lbl.braces } in
@@ -384,7 +405,6 @@ let rec aux_statement : (nodei option * xinfo) -> statement -> nodei option =
             !g#add_arc ((finishi, endi), Direct);
             endi
            )
-
 
    (* ------------------------- *)
   | Labeled (Ast_c.Label (name, st)) ->
@@ -471,6 +491,8 @@ let rec aux_statement : (nodei option * xinfo) -> statement -> nodei option =
 
    (* ------------------------- *)
   | Selection (Ast_c.If _) -> snd (mk_If starti lbl xi_lbl stmt)
+
+  | Selection (Ast_c.Try (s1, s2, s3_opt))-> mk_Try starti lbl xi_lbl stmt
 
    (* ------------------------- *)
   | Selection  (Ast_c.Switch (e, st)) ->
@@ -1055,10 +1077,10 @@ and mk_If (starti :nodei option) (labels :int list) (xi_lbl :xinfo)
       let endnode =
         mk_node (EndStatement(Some iifakeend)) labels [] "[endif]" in
       let endnode_dup =
-        mk_node (EndStatement(Some iifakeend)) labels [] "[endif]" in
+        mk_node (EndStatement(Some iifakeend)) labels [] "[endif1]" in
 
       let ret_afters = ref [] in
-      let mkafter ty str lasti = begin
+	  let mkafter ty str lasti = begin
             (* if -> [after] -> [endif] *)
             let afteri = !g +> add_node (AfterNode ty) labels str in
             let a1 = ((newi, afteri), Control) in
@@ -1098,6 +1120,53 @@ and mk_If (starti :nodei option) (labels :int list) (xi_lbl :xinfo)
       end
     end
   | x -> error_cant_have x
+
+(* Mk_if for try/catch/finally *)
+(* Just return the endFinally node*)
+and mk_Try (starti :nodei option) (labels :int list) 
+           (xi_lbl :xinfo) (stmt :statement) : nodei option =
+
+	let ii = Ast_c.get_ii_st_take_care stmt in
+	match Ast_c.unwrap_st stmt with
+  | Selection (Ast_c.Try (st1, st2, st3)) ->
+    print_string "\n length of ii :  \n";
+    print_string (string_of_int (List.length ii));
+    let (i1,i2,i3,i4,i5) = tuple_of_list5 ii in
+  
+		let trynode =  add_node (Try (st1, ((), [i1]))) labels "try" !g in
+		let catchnode = add_node (Catch (st2, ((), [i1]))) labels "catch" !g in
+		let finallynode = match st3 with 
+			| Some finally_stmt ->  (!g +> add_node (Finally (finally_stmt, ((), [i1]))) labels "finally")
+			| None -> (!g +> add_node (EndStatement (None)) labels "finally")
+		in
+		!g +> add_arc_opt (starti, trynode);
+
+		let finaltry = aux_statement (Some trynode, xi_lbl) st1 in 
+		let finalcatch = aux_statement (Some catchnode, xi_lbl) st2 in
+      add_arc_opt (finaltry, finallynode) !g ;
+      add_arc_opt (finalcatch, finallynode) !g;
+    
+		let finalfinally = 
+				(match st3 with 
+				| Some stmt -> aux_statement (Some finallynode, xi_lbl) stmt
+				| None -> Some finallynode) 
+		
+		in	
+		(* link in nodes in st1 to `catch` *)
+		(* we don't do interprocedural analysis, 
+		 * potentially any statement in the try-block might throw *)
+		(match finaltry with 
+			| Some node -> add_arc_all_stmt_in_try_to_except catchnode trynode node
+			| None -> ());
+		
+		let endnode =
+			add_node (EndStatement(Some i3)) labels "[end-finally]" !g in
+    add_arc_opt (finalfinally, endnode) !g;
+    (* !g#add_arc ((finalfinally, endnode), Direct) *)
+		Some endnode
+
+	| x -> error_cant_have x
+    
 
 (* Builds the CFG for an Ifdef_Ite selection statement, i.e.
  *
@@ -1354,29 +1423,31 @@ let specialdeclmacro_to_stmt (s, args, ii) =
 
 
 let rec ast_to_control_flow e = 
-	(* globals (re)initialialisation *)
-	g := (new Control_flow_c.G.ograph_mutable);
-	let root = !g +> add_node TopNode lbl_0 "[class]" in 
+  (* globals (re)initialialisation *)
+  g := (new Control_flow_c.G.ograph_mutable);
+  let root = !g +> add_node TopNode lbl_0 "[class]" in 
   match e with
   | Ast_c.Namespace (defs, _) ->
 	
-	let rec loop defs =
-		match defs with
-		| [] -> Some !g
-		| def :: defs ->
-			(* TODO this assumes that each class only contains definitions, and definitions do not contain more nested stuff (both functions and more classes can be nested) *)
-			match ast_to_control_flow_not_namespace def root with
-			| None -> loop defs 
-				
-			| x -> loop defs 
-	in 
+    let rec loop defs =
+      match defs with
+      | [] -> Some !g
+      | def :: defs ->
+        (* TODO this assumes that each class only contains definitions, 
+        * and definitions do not contain more nested stuff 
+        *  (in reality, both functions and more classes can be nested) *)
+        match ast_to_control_flow_not_namespace def root with
+        | None -> loop defs 
+          
+        | x -> loop defs 
+    in 
 
-	let result = loop defs in 
-	result;
+    let result = loop defs in 
+    result;
   | _ ->
 
-	let result = ast_to_control_flow_not_namespace e root in 
-	result;
+    let result = ast_to_control_flow_not_namespace e root in 
+    result;
 
 
 and ast_to_control_flow_not_namespace e root =

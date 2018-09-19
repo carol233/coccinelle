@@ -74,6 +74,9 @@ type node = node1 * string (* For debugging. Used by print_graph *)
   | Label     of statement * name * unit wrap
   | Goto      of statement * name * unit wrap
 
+  | Try of statement * unit wrap
+  | Catch of statement * unit wrap
+  | Finally of statement * unit wrap
 
   | Asm of statement * asmbody wrap
   | MacroStmt of statement * unit wrap

@@ -1397,7 +1397,7 @@ val find_set : ('a -> bool) -> 'a list -> 'a
 
 val sort_set : ('a -> 'a -> int) -> 'a list -> 'a list
 
-val iter_set : ('a -> unit) -> 'a list -> unit
+val iter_set : ('a -> unit) -> 'a set -> unit
 
 val top_set : 'a set -> 'a
 
