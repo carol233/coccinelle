@@ -927,35 +927,6 @@ module StringMap : Map.S with type key = string = Map.Make(String)
 
 let header_cache = Common.create_bounded_cache 0(*disabled 300*) ("",None)
 
-(* For reconstructing parts of the tokens in a celem later, such as when we want to get an individual function from each class *)
-type token_counter = {
-  mutable tokens : Parser_c.token list
-}
-
-
-(* used for printer *)
-let print_buffer = Buffer.create 32 
-
-let write_to_buffer s = Buffer.add_string print_buffer (s ^ " ")
-
-
-(* Copied from simple pretty printer... *)
-let pr_elem info =
-  let s = Ast_c.str_of_info info in
-  
-  	write_to_buffer s;
- 
-and pr_space _ = ()
-
-and pr_nl _ = ()
-and pr_indent _ = ()
-and pr_outdent _ = ()
-and pr_unindent _ = ()
-  
-
-let  class_methods_printer = Pretty_print_c.mk_pretty_printers ~pr_elem ~pr_space ~pr_nl ~pr_indent ~pr_outdent ~pr_unindent
-
-
 let tree_stack = ref []
 let seen_files = ref []
 
@@ -1044,55 +1015,7 @@ and (_defs_builtins : (string, Cpp_token_c.define_def) Hashtbl.t ref)  =
   ref (Hashtbl.create 101)
 
 
-and true_tokens = {tokens = []} 
 
-  
-and mk_tokens tokens lexbuf  = 
-  true_tokens.tokens <- tokens;
-  
-  try
-	(* assume now that this is good enough. i.e. there are no blocks or lambdas *)
-	let take_tokens_until_closing_brace toks = 
-		(let (before, paren, after) = Common.split_when (fun a -> (TH.str_of_tok a) = "}") toks 
-		in (before @ [paren], after) )
-	in
-
-	(* TODO I can remove the mutable field in the global var (true_tokens) now *)
-	let result, updated_true_tokens  = take_tokens_until_closing_brace true_tokens.tokens in
-		true_tokens.tokens <- updated_true_tokens;
-		result;		
-    
-  with
-  | Lexer_c.Lexical s ->
-      failwith ("lexical error " ^ s ^ "\n =")
-  | e -> raise e
-
-(* actual parsed tokens -> c element -> (info list for each nested toplevel * remaining tokens) *)
-and infos_of_class_methods tokens toplevel  =
-  (
-    match toplevel with 
-    
-    | Ast_c.Definition (def , il) ->
-        class_methods_printer.toplevel toplevel;
-        let str = Buffer.contents print_buffer in 
-		let parsed_tokens = str |> Lexing.from_string |> (mk_tokens tokens ) in 
-		let _ = Buffer.clear print_buffer in 
-		
-		(
-			[(str, parsed_tokens)], 
-			true_tokens.tokens (* remaining tokens *)
-		) 
-        
-    | Ast_c.Namespace (toplevels, il) -> 
-        let infos = 
-          List.fold_left (fun (acc_infos, remaining_tokens) toplevel -> 
-            let (top_levels_infos, rest_tokens) = infos_of_class_methods tokens toplevel
-            in (acc_infos @ top_levels_infos, rest_tokens )
-          ) ([], []) toplevels
-        in infos
-    | _ -> ([], tokens)
-  ) 
-  
 
 and _parse_print_error_heuristic2bis saved_typedefs saved_macros
   parse_strings file use_header_cache =
