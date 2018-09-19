@@ -1,4 +1,4 @@
-class Ahhh<T> extends B {
+class Ahhh extends B {
 
     public T t;
 
@@ -30,6 +30,7 @@ class Ahhh<T> extends B {
         f(i);
         int j = 0;
         OtherClass.g(i);
+        globalObj = obj;
 
         i = OtherClass.staticValue;
 
@@ -55,6 +56,8 @@ class Ahhh<T> extends B {
             System.out.println("true");
 
         } 
+
+      
 
     }
 }
