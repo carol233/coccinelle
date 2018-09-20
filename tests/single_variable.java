@@ -1,7 +1,5 @@
 public class A{
     public int main() {
-        if (true) {
-       method(Integer.MAX_VALUE);
-        }
+       super.DoThing(Integer.MAX_VALUE);
     }
 }

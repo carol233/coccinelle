@@ -933,6 +933,8 @@ primary_expr:
  /*(* gccext: allow statement as expressions via ({ statement }) *)*/
  | TOPar compound TCPar  { mk_e(StatementExpr ($2)) [$1;$3] }
 
+ | Tsuper {  mk_e(Ident  (RegularName (("super", [$1])))) []  }
+
 string_fragments:
  | /* empty */ { [] }
  | string_fragment string_fragments { $1 :: $2 }
