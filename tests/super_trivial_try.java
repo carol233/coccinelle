@@ -6,7 +6,7 @@ class Tryy {
         try {
 
             j = 5;
-        } catch (IOException e) {
+        } catch (Custom | IOException e) {
             j = 5;
         }
         t(j);

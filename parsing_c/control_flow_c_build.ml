@@ -1129,9 +1129,13 @@ and mk_Try (starti :nodei option) (labels :int list)
 	let ii = Ast_c.get_ii_st_take_care stmt in
 	match Ast_c.unwrap_st stmt with
   | Selection (Ast_c.Try (st1, st2, st3)) ->
-    print_string "\n length of ii :  \n";
-    print_string (string_of_int (List.length ii));
-    let (i1,i2,i3,i4,i5) = tuple_of_list5 ii in
+    
+    let (i1,i2,i3,i4,i5) = if List.length ii = 5 then 
+      tuple_of_list5 ii else 
+      let (ii1, ii2, ii3, ii4, ii5, ii6) = tuple_of_list6 ii in 
+      (ii1, ii2, ii3, ii4, ii5)
+      
+      in
   
 		let trynode =  add_node (Try (st1, ((), [i1]))) labels "try" !g in
 		let catchnode = add_node (Catch (st2, ((), [i1]))) labels "catch" !g in
