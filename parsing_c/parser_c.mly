@@ -729,7 +729,7 @@ identifier:
 */
 identifier_cpp:
  | ident
-     { RegularName (mk_string_wrap $1) }
+     {RegularName (mk_string_wrap $1) }
  | ident_extra_cpp { $1 }
 
 ident_cpp:
@@ -866,7 +866,7 @@ new_argument:
 		      } )
      }
  | new_argument TOCro expr TCCro
-     {
+     { 
        match $1 with
 	 Left(e) -> Left(mk_e(ArrayAccess (e, $3)) [$2;$4])
        | Right(ArgType(ty)) -> (* lots of hacks to make the right type *)
@@ -896,6 +896,8 @@ postfix_expr:
      { mk_e(FunCall ($1, $3)) [$2;$4] }
  | postfix_expr TOPar  TCPar  { mk_e(FunCall ($1, [])) [$2;$3] }
  | postfix_expr TDot   ident_cpp { mk_e(RecordAccess   ($1,$3)) [$2] }
+ /*(* OtherClass.<Integer>method() *)*/
+ | postfix_expr TDot   generic_opt ident_cpp { mk_e(RecordAccess   ($1,$4)) [$2] }
  | postfix_expr TPtrOp ident_cpp { mk_e(RecordPtAccess ($1,$3)) [$2] }
  | postfix_expr TInc          { mk_e(Postfix ($1, Inc)) [$2] }
  | postfix_expr TDec          { mk_e(Postfix ($1, Dec)) [$2] }
@@ -1171,7 +1173,7 @@ exec_list:
 exec_ident:
     { function prev -> prev }
  | TDot   TIdent exec_ident
-     { print_string "record access" ;function prev ->
+     { function prev ->
        let fld = RegularName (mk_string_wrap $2) in
        $3 (mk_e(RecordAccess   (prev,fld)) [$1]) }
  | TPtrOp TIdent exec_ident
@@ -1285,6 +1287,7 @@ type_spec2:
      { let name = RegularName (mk_string_wrap $1) in
        Right3 (TypeName (name, Ast_c.noTypedefDef())),[] }
  | TypedefIdent generic_opt 
+ /*(* TODO The generic_opt part should become part of the type's name *)*/
     {
       let name = RegularName (mk_string_wrap $1) in
       Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
@@ -1625,6 +1628,7 @@ decl_spec2:
  | type_qualif        decl_spec2 { (fst $2, addQualifD  ($1, snd $2)) }
  | Tinline            decl_spec2 { (fst $2, addInlineD ((true, $1), snd $2)) }
  | attribute          decl_spec2 { ($1::(fst $2), snd $2) }
+ | generic_opt        decl_spec2 {$2}
 
 /*(* can simplify by putting all in _opt ? must have at least one otherwise
    *  decl_list is ambiguous ? (no cos have ';' between decl)
@@ -1664,12 +1668,16 @@ storage_class_spec:
 
 generic_opt:
  | TInf generic_list TSup {}
- | TInf ident TSup {}
+ | TInf TSup {}  /*(* diamond operator *)*/
  | /*(* empty *)*/ {}
 
+ident_parameterised_with_generic:
+ | ident { 	}
+ | ident TInf generic_list TSup {	}
+
 generic_list:
- | /*(* can be empty, for the diamond operator in usages where type inference can be used. Not always valid, but we are going to ignore generics anyway *)*/ {}
- | generic_list ident TComma {}
+ | ident_parameterised_with_generic {}
+ | ident_parameterised_with_generic TComma generic_list {}
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
@@ -1683,10 +1691,10 @@ decl_spec: decl_spec2    { dt "declspec" (); $1  }
 /*(*-----------------------------------------------------------------------*)*/
 init_declarator2:
  | declaratori                  { ($1, NoInit) }
- | declaratori teq initialize   { ($1, ValInit($2, $3)) }
+ | declaratori teq initialize   {  ($1, ValInit($2, $3)) }
  /* C++ only */
  | declaratori TOParCplusplusInit argument_list TCPar
-     { ($1, ConstrInit($3,[$2;$4])) }
+     {  ($1, ConstrInit($3,[$2;$4])) }
 
 
 /*(*----------------------------*)*/
@@ -1707,7 +1715,7 @@ declaratori:
        LP.add_ident (str_of_name (fst dec)); dec, attr, [] }
  /*(* gccext: *)*/
  | declarator gcc_asm_decl
-     { let (attr,dec) = $1 in
+     {let (attr,dec) = $1 in
        LP.add_ident (str_of_name (fst dec)); dec, attr, [] }
  /*(* gccext: *)*/
  | declarator end_attributes
@@ -1956,6 +1964,8 @@ start_fun2: decl_spec declaratorfd
        (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $1)@attrs)
      }
    | ctor_dtor { $1 }
+
+
 
 ctor_dtor:
  | Tconstructorname topar tcpar {

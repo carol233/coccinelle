@@ -860,11 +860,11 @@ rule token = parse
       }
   
   | cplusplus_ident
-      ('<' "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
-      (", " "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>') ?
+      ('<' ' ' * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
+      ("," " " * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * ' ' * '>') ?
     ("::~" cplusplus_ident
-      ('<' "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
-      (", " "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>') ?) +
+      ('<' ' ' * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
+      ("," " " * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * ' ' * '>') ?) +
 
       {
         let info = tokinfo lexbuf in
@@ -878,8 +878,8 @@ rule token = parse
 	  end
       }
   | cplusplus_ident
-      ('<' "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
-      (", " "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>')
+      ('<'' ' * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
+      ("," " " * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * ' ' * '>')
 
       {
         let info = tokinfo lexbuf in
@@ -896,15 +896,16 @@ rule token = parse
 
   | (cplusplus_ident as first)
       ('<' "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
-      (", " "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>') ?
+      ("," " " *  "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>') ?
     "::" (cplusplus_ident as second)
       ('<' "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
-      (", " "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>') ?
+      ("," " " * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>') ?
     ("::" cplusplus_ident
       ('<' "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
-      (", " "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>') ?) *
+      ("," " " * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>') ?) *
 
       {
+	      
         let info = tokinfo lexbuf in
         let s = tok lexbuf in
         if !Flag.c_plus_plus
@@ -922,11 +923,11 @@ rule token = parse
       }
 
    | "::" cplusplus_ident
-      ('<' "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
-      (", " "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>') ?
+      ('<' ' ' * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
+      ("," " " * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * ' ' * '>') ?
     ("::" cplusplus_ident
-      ('<' "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
-      (", " "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * '>') ?) *
+      ('<' ' ' * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
+      ("," " " * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * ' ' * '>') ?) *
 
       {
         let info = tokinfo lexbuf in
@@ -1046,7 +1047,7 @@ rule token = parse
         TIdent (tok lexbuf, tokinfo lexbuf)
       }
 
-(* gccext: http://gcc.gnu.org/onlinedocs/gcc/Binary-constants.html *)
+(* gccext: h  ttp://gcc.gnu.org/onlinedocs/gcc/Binary-constants.html *)
 (*
  | "0b" ['0'-'1'] { TInt (((tok lexbuf)<!!>(??,??)) +> int_of_stringbits) }
  | ['0'-'1']+'b' { TInt (((tok lexbuf)<!!>(0,-2)) +> int_of_stringbits) }

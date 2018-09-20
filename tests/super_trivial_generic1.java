@@ -1,5 +1,5 @@
 
-public class MyCollection1<T, K> {
+public class MyCollection1<T, K extends Comparable<K>> {
     public static void main1(T first, KT second) {
         int asd_asd = 10;
         int KKsdsdsKK = 15;

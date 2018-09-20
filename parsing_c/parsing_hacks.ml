@@ -2132,6 +2132,21 @@ let lookahead2 ~pass next before =
       msg_typedef s i1 2; LP.add_typedef_root s;
       TypedefIdent (s, i1)
 
+  (* xx < yy > *)
+  | (TIdent (s, i1):: TInf _ :: TIdent (s2, i2) :: TSup _ ::rest  , _) when not_struct_enum before
+  && ok_typedef s && not (is_macro_paren s2 rest)
+    ->
+    
+  msg_typedef s i1 2; LP.add_typedef_root s;
+  TypedefIdent (s, i1)
+
+   (* xx < yy , *)
+   | (TIdent (s, i1):: TInf _ :: TIdent (s2, i2) :: TComma _ ::rest  , _) when not_struct_enum before
+   && ok_typedef s && not (is_macro_paren s2 rest)
+     ->
+      
+   msg_typedef s i1 2; LP.add_typedef_root s;
+   TypedefIdent (s, i1)
 
   (* xx inline *)
   | (TIdent (s, i1)::Tinline i2::_  , _) when not_struct_enum before
