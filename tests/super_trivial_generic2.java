@@ -15,6 +15,10 @@ public class Generics {
 
 
         Map<String, Map<String, Integer > > map = new HashMap<>();
+        Map<Thing extends String, Map<String, Integer > > map = new HashMap<>();
+        Map<Thing super String, Map<String, Integer > > map = new HashMap<>();
+        Map<? super String, Map<String, Integer > > map = new HashMap<>();
+        Map<? extends String, Map<String, Integer > > map = new HashMap<>();
 
         weirdMap.containsKey("weirdKey");
 

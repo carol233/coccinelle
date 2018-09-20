@@ -724,6 +724,7 @@ module Parser_c :
       | Tfinally of Ast_c.info
       | Textends of Ast_c.info
       | Timplements of Ast_c.info
+      | Tsuper of Ast_c.info
       | Trestrict of Ast_c.info
       | Tasm of Ast_c.info
       | Tattribute of Ast_c.info

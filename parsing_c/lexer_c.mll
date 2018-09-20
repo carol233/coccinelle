@@ -161,6 +161,7 @@ let keyword_table = Common.hash_of_list [
   "try",     (fun ii -> Ttry ii);
   "catch",   (fun ii -> Tcatch ii);
   "finally", (fun ii -> Tfinally ii);
+  "super",   (fun ii -> Tsuper ii);
   (* // java *)
 
   "const",    (fun ii -> Tconst ii);
@@ -756,7 +757,7 @@ rule token = parse
   | '+' { TPlus(tokinfo lexbuf) }   | '*' { TMul(tokinfo lexbuf) }
   | '-' { TMinus(tokinfo lexbuf) }  | '/' { TDiv(tokinfo lexbuf) }
   | '%' { TMod(tokinfo lexbuf) }    | ">?" { TMax(tokinfo lexbuf) }
-  | "<?" { TMin(tokinfo lexbuf) }
+  
 
   | "++"{ TInc(tokinfo lexbuf) }    | "--"{ TDec(tokinfo lexbuf) }
 

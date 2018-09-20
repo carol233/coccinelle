@@ -497,7 +497,7 @@ let args_to_params l pb =
        Ttry Tcatch Tfinally
 
 %token <Ast_c.info>
-       Textends Timplements
+       Textends Timplements Tsuper 
 
 /*(* C99 *)*/
 %token <Ast_c.info>
@@ -1673,6 +1673,10 @@ generic_opt:
 
 ident_parameterised_with_generic:
  | ident { 	}
+ | ident Textends ident_parameterised_with_generic { 	}
+ | ident Tsuper ident_parameterised_with_generic { 	}
+ | TWhy Textends ident_parameterised_with_generic { 	}
+ | TWhy Tsuper ident_parameterised_with_generic { 	}
  | ident TInf generic_list TSup {	}
 
 generic_list:
