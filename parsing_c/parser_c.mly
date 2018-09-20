@@ -499,6 +499,9 @@ let args_to_params l pb =
 %token <Ast_c.info>
        Textends Timplements Tsuper 
 
+%token <Ast_c.info>
+       Tthrows Tthrow
+
 /*(* C99 *)*/
 %token <Ast_c.info>
        Trestrict
@@ -1140,6 +1143,7 @@ jump:
  | Treturn      { Return,         [$1] }
  | Treturn expr { ReturnExpr $2,  [$1] }
  | Tgoto TMul expr { GotoComputed $3, [$1;$2] }
+ | Tthrow expr { ReturnExpr ($2), [$1] }
 
 
 
@@ -1962,6 +1966,10 @@ function_def:
      ($1, $3, Some $2)
    }
 
+throws_opt:
+ | Tthrows ident {}
+ | {}
+
 start_fun: start_fun2
   { LP.new_scope();
     fix_add_params_ident $1;
@@ -1969,7 +1977,7 @@ start_fun: start_fun2
     $1
   }
 
-start_fun2: decl_spec declaratorfd
+start_fun2: decl_spec declaratorfd throws_opt
      { let (returnType,storage) = fixDeclSpecForFuncDef (snd $1) in
        let (id, attrs) = $2 in
        (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $1)@attrs)

@@ -162,6 +162,9 @@ let keyword_table = Common.hash_of_list [
   "catch",   (fun ii -> Tcatch ii);
   "finally", (fun ii -> Tfinally ii);
   "super",   (fun ii -> Tsuper ii);
+
+  "throws",   (fun ii -> Tthrows ii);
+  "throw",    (fun ii -> Tthrow ii);
   (* // java *)
 
   "const",    (fun ii -> Tconst ii);

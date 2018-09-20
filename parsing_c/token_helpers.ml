@@ -434,6 +434,9 @@ let info_of_tok = function
   | Ttransient           (i) -> i
 
   | Tsuper               (i) -> i
+  | Tthrows              (i) -> i
+  | Tthrow               (i) -> i
+
   | Trestrict            (i) -> i
 
   | Tclass               (i) -> i
@@ -624,6 +627,10 @@ let visitor_info_of_tok f = function
   | Textends             (i) -> Textends             (f i)
   | Timplements          (i) -> Timplements          (f i)
   | Tsuper               (i) -> Tsuper               (f i)
+  | Tthrows              (i) -> Tthrows              (f i)
+  | Tthrow               (i) -> Tthrow               (f i)
+
+
   | Trestrict            (i) -> Trestrict            (f i)
 
   | Tclass               (i) -> Tclass               (f i)
@@ -784,6 +791,8 @@ let string_of_token = function
   | TOParCplusplusInit _ -> "TOParCplusplusInit"
   | Tnamespace _ -> "Tnamespace"
   | Tsuper _ -> "Tsuper"
+  | Tthrows _ -> "Tthrows"
+  | Tthrow _ -> "Tthrow"
   | Trestrict _ -> "Trestrict"
   | Tasm _ -> "Tasm"
   | Tattribute _ -> "Tattribute"
