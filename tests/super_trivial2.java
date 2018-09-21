@@ -1,8 +1,8 @@
-package ahhh;
+package thing;
 
 import static java.lang.Math.sqrt;
-
 import java.util.ArrayList;
+
 
 class Ahhh {
 

@@ -17,6 +17,7 @@ class UnreachableCodeElimination {
      * @throws SourceMapParseException
      */
     @Override
+    @SuppressWarnings("fallthrough")
     public static SourceMapping parse(String contents)
         throws SourceMapParseException {
         return parse(contents, null);

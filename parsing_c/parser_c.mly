@@ -2305,8 +2305,8 @@ celem:
  | cpp_ifdef_directive /* (*external_declaration_list ...*)*/
      { IfdefTop $1 }
 
- | Tpackage expr TPtVirg {EmptyDef [$1]}
- | import {EmptyDef [$1]}
+ | Tpackage expr TPtVirg {EmptyDef ($1 :: (snd $2) @ [$3])  }
+ | import {EmptyDef $1}
 
  /*(* can have asm declaration at toplevel *)*/
  | Tasm TOPar asmbody TCPar TPtVirg             { EmptyDef [$1;$2;$4;$5] }
@@ -2323,8 +2323,8 @@ celem:
 
 /*(* Things to ignore *)*/
 import:
- | Timport Tstatic expr TPtVirg { $1 }
- | Timport expr TPtVirg { $1 }
+ | Timport Tstatic expr TPtVirg { [$1; $2; $4] }
+ | Timport expr TPtVirg { [$1; $3] }
 
 annotation:
  | Tannotate expr {}
