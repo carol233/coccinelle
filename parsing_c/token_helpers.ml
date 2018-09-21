@@ -437,6 +437,9 @@ let info_of_tok = function
   | Tthrows              (i) -> i
   | Tthrow               (i) -> i
 
+  | Timport              (i) -> i
+  | Tpackage             (i) -> i
+
   | Trestrict            (i) -> i
 
   | Tclass               (i) -> i
@@ -615,14 +618,14 @@ let visitor_info_of_tok f = function
   | Tprotected           (i) -> Tprotected           (f i)
   | Tfinal               (i) -> Tfinal               (f i)
   | Tabstract            (i) -> Tabstract            (f i)
-  | Tsynchronized        (i) -> Tsynchronized            (f i)
-  | Ttransient            (i) -> Ttransient            (f i)
+  | Tsynchronized        (i) -> Tsynchronized        (f i)
+  | Ttransient            (i) -> Ttransient          (f i)
 
   | Tconst               (i) -> Tconst               (f i)
   | Tvolatile            (i) -> Tvolatile            (f i)
   | Ttry                 (i) -> Ttry                 (f i)
-  | Tcatch               (i) -> Tcatch                 (f i)
-  | Tfinally             (i) -> Tfinally                 (f i)
+  | Tcatch               (i) -> Tcatch               (f i)
+  | Tfinally             (i) -> Tfinally             (f i)
 
   | Textends             (i) -> Textends             (f i)
   | Timplements          (i) -> Timplements          (f i)
@@ -630,6 +633,8 @@ let visitor_info_of_tok f = function
   | Tthrows              (i) -> Tthrows              (f i)
   | Tthrow               (i) -> Tthrow               (f i)
 
+  | Timport              (i) -> Timport              (f i)
+  | Tpackage             (i) -> Tpackage             (f i)
 
   | Trestrict            (i) -> Trestrict            (f i)
 
@@ -793,6 +798,8 @@ let string_of_token = function
   | Tsuper _ -> "Tsuper"
   | Tthrows _ -> "Tthrows"
   | Tthrow _ -> "Tthrow"
+  | Timport _ -> "Timport"
+  | Tpackage _ -> "Tpackage"
   | Trestrict _ -> "Trestrict"
   | Tasm _ -> "Tasm"
   | Tattribute _ -> "Tattribute"

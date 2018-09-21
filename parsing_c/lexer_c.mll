@@ -174,6 +174,9 @@ let keyword_table = Common.hash_of_list [
   "extends",    (fun ii -> Textends ii);
   "implements", (fun ii -> Timplements ii);
 
+  "import",  (fun ii -> Timport ii);
+  "package",  (fun ii -> Tpackage ii);
+
   "struct",  (fun ii -> Tstruct ii);
   "union",   (fun ii -> Tunion ii);
   "enum",    (fun ii -> Tenum ii);

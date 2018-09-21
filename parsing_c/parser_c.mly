@@ -502,6 +502,9 @@ let args_to_params l pb =
 %token <Ast_c.info>
        Tthrows Tthrow
 
+%token <Ast_c.info>
+       Timport Tpackage
+
 /*(* C99 *)*/
 %token <Ast_c.info>
        Trestrict
@@ -2279,6 +2282,9 @@ celem:
  | cpp_ifdef_directive /* (*external_declaration_list ...*)*/
      { IfdefTop $1 }
 
+ | Tpackage ident TPtVirg {EmptyDef [$1]}
+ | import {EmptyDef [$1]}
+
  /*(* can have asm declaration at toplevel *)*/
  | Tasm TOPar asmbody TCPar TPtVirg             { EmptyDef [$1;$2;$4;$5] }
 
@@ -2291,6 +2297,11 @@ celem:
 
 
  | EOF        { FinalDef $1 }
+
+/*(* Things to ignore *)*/
+import:
+ | Timport Tstatic expr TPtVirg { $1 }
+ | Timport expr TPtVirg { $1 }
 
 
 classname:
