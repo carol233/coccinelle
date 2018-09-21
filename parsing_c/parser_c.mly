@@ -1985,9 +1985,21 @@ start_fun2: decl_spec declaratorfd throws_opt
        let (id, attrs) = $2 in
        (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $1)@attrs)
      }
+   | java_ctor
+     { 
+         $1
+     }
    | ctor_dtor { $1 }
 
 
+java_ctor:
+ | declaratorfd throws_opt
+   {
+       
+       let (returnType,storage) = fixDeclSpecForFuncDef nullDecl in
+       let (id, attrs) = $1 in
+       (fst id, fixOldCDecl ((snd id) returnType) , storage, [])
+   }
 
 ctor_dtor:
  | Tconstructorname topar tcpar {
@@ -2282,7 +2294,7 @@ celem:
  | cpp_ifdef_directive /* (*external_declaration_list ...*)*/
      { IfdefTop $1 }
 
- | Tpackage ident TPtVirg {EmptyDef [$1]}
+ | Tpackage expr TPtVirg {EmptyDef [$1]}
  | import {EmptyDef [$1]}
 
  /*(* can have asm declaration at toplevel *)*/
