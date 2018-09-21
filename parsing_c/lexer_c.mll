@@ -738,7 +738,8 @@ rule token = parse
       { TDefParamVariadic (s, tokinfo lexbuf) }
 
 
-
+  (* Java annotation *)
+  | "@" { Tannotate(tokinfo lexbuf) }
 
 
   (* ----------------------------------------------------------------------- *)

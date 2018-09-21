@@ -381,6 +381,7 @@ let info_of_tok = function
   | TBang                (i) -> i
   | TEllipsis            (i) -> i
   | TDotDot              (i) -> i
+  | Tannotate            (i) -> i
   | TPtVirg              (i) -> i
   | TOrLog               (i) -> i
   | TAndLog              (i) -> i
@@ -576,6 +577,7 @@ let visitor_info_of_tok f = function
   | TBang                (i) -> TBang                (f i)
   | TEllipsis            (i) -> TEllipsis            (f i)
   | TDotDot              (i) -> TDotDot              (f i)
+  | Tannotate            (i) -> Tannotate            (f i)
   | TPtVirg              (i) -> TPtVirg              (f i)
   | TOrLog               (i) -> TOrLog               (f i)
   | TAndLog              (i) -> TAndLog              (f i)
@@ -720,6 +722,7 @@ let string_of_token = function
   | TBang _ -> "TBang"
   | TEllipsis _ -> "TEllipsis"
   | TDotDot _ -> "TDotDot"
+  | Tannotate _ -> "Tannotate"
   | TPtVirg _ -> "TPtVirg"
   | TOrLog _ -> "TOrLog"
   | TAndLog _ -> "TAndLog"

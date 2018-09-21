@@ -476,6 +476,8 @@ let args_to_params l pb =
 %token <Ast_c.info> TEllipsis
 %token <Ast_c.info> TDotDot
 
+%token <Ast_c.info> Tannotate
+
 %token <Ast_c.info> TPtVirg
 %token <Ast_c.info>
        TOrLog TAndLog TOr TXor TAnd  TEqEq TNotEq TInf TSup TInfEq TSupEq
@@ -1980,7 +1982,12 @@ start_fun: start_fun2
     $1
   }
 
-start_fun2: decl_spec declaratorfd throws_opt
+start_fun2: annotation decl_spec declaratorfd throws_opt
+     { let (returnType,storage) = fixDeclSpecForFuncDef (snd $2) in
+       let (id, attrs) = $3 in
+       (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $2)@attrs)
+     }
+   | decl_spec declaratorfd throws_opt
      { let (returnType,storage) = fixDeclSpecForFuncDef (snd $1) in
        let (id, attrs) = $2 in
        (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $1)@attrs)
@@ -2280,7 +2287,11 @@ celem:
          !LP._lexer_hint.context_stack <- [LP.InTopLevel];
        Namespace ($4, [$1; snd $2; $3; $5]) }
 
- | storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
+ | annotation storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
+    {  
+        !LP._lexer_hint.context_stack <- [LP.InTopLevel];
+        Namespace (fst $8, $3 :: (snd $8 @ [snd $4; $7; $9])) } 
+| storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
     {  
         !LP._lexer_hint.context_stack <- [LP.InTopLevel];
         Namespace (fst $7, $2 :: (snd $7 @ [snd $3; $6; $8])) } 
@@ -2315,6 +2326,9 @@ import:
  | Timport Tstatic expr TPtVirg { $1 }
  | Timport expr TPtVirg { $1 }
 
+annotation:
+ | Tannotate expr {}
+ | Tannotate expr annotation {}
 
 classname:
  | TypedefIdent { $1 }

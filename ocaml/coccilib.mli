@@ -649,6 +649,7 @@ module Parser_c :
       | TBang of Ast_c.info
       | TEllipsis of Ast_c.info
       | TDotDot of Ast_c.info
+      | Tannotate of Ast_c.info
       | TPtVirg of Ast_c.info
       | TOrLog of Ast_c.info
       | TAndLog of Ast_c.info
