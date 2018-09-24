@@ -15,7 +15,7 @@ public class Ahhh {
     @Target({ElementType.TYPE,ElementType.METHOD,
                 ElementType.CONSTRUCTOR,ElementType.ANNOTATION_TYPE,
                 ElementType.PACKAGE,ElementType.FIELD,ElementType.LOCAL_VARIABLE})
-                Object main1(String[] args) {
+                Object main1(String args) {
         super();
         int i = 50;
         f(i);
@@ -23,9 +23,26 @@ public class Ahhh {
         g(i);
 
         gg(j);
+        System.out.println(args);
     }
 
-    void main(@SuppressWarnings("abc")  String[] args) {
+    class EnglishGreeting implements HelloWorld {
+        String name = "world";
+        public void greet() {
+            greetSomeone("world");
+        }
+        public void greetSomeone(String someone) {
+            name = someone;
+            System.out.println("Hello " + name);
+            Object B = new Thing();
+            Object A = new Thing();
+            boolean b = A.equals(B);
+            boolean b1 = B.equals(A);
+        }
+    }
+      
+
+    void main(@SuppressWarnings("abc")  String... args) {
         super.main(args);
         f(i);
         int j = 0;
@@ -39,6 +56,9 @@ public class Ahhh {
         boolean b = A.equals(B);
         boolean b1 = B.equals(A);
         boolean b2 = A.equals(A);
+
+
+        System.out.println(args);
     }
 
 }

@@ -1433,25 +1433,32 @@ let rec ast_to_control_flow e =
   match e with
   | Ast_c.Namespace (defs, _) ->
 	
-    let rec loop defs =
-      match defs with
-      | [] -> Some !g
-      | def :: defs ->
-        (* TODO this assumes that each class only contains definitions, 
-        * and definitions do not contain more nested stuff 
-        *  (in reality, both functions and more classes can be nested) *)
-        match ast_to_control_flow_not_namespace def root with
-        | None -> loop defs 
-          
-        | x -> loop defs 
-    in 
-
-    let result = loop defs in 
-    result;
+    ast_to_control_flow_namespace defs root
   | _ ->
 
     let result = ast_to_control_flow_not_namespace e root in 
     result;
+
+and ast_to_control_flow_namespace defs root =
+  let rec loop defs =
+  match defs with
+  | [] -> Some !g
+  | def :: defs ->
+    match def with
+    | Ast_c.Namespace (nested_defs, _) -> 
+      (match ast_to_control_flow_namespace nested_defs root with 
+        | None -> loop defs 
+          
+        | x -> loop defs )
+    | _ ->
+      match ast_to_control_flow_not_namespace def root with
+      | None -> loop defs 
+        
+      | x -> loop defs 
+  in 
+
+  let result = loop defs in 
+  result;
 
 
 and ast_to_control_flow_not_namespace e root =

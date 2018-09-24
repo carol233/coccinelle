@@ -1518,7 +1518,8 @@ extends:
 class_body:
   | { ([], []) }
   | class_body function_definition {  (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
-  | class_body field_decls { $1 } /*(* drop field names. We'll just assume any non-local declaration is a field. *)*/
+  | class_body field_decls { $1 } /*(* drop field names. We'll assume any non-local declaration is a field. *)*/
+  | class_body class_decl { $2 :: (fst $1), snd $1 }
 
 
 /*(*----------------------------*)*/
@@ -2303,14 +2304,11 @@ celem:
          !LP._lexer_hint.context_stack <- [LP.InTopLevel];
        Namespace ($4, [$1; snd $2; $3; $5]) }
 
- | annotation_list storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
+ | class_decl
     {  
         !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-        Namespace (fst $8, $3 :: (snd $8 @ [snd $4; $7; $9])) } 
-| storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
-    {  
-        !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-        Namespace (fst $7, $2 :: (snd $7 @ [snd $3; $6; $8])) } 
+        $1 } 
+
  | external_declaration                         { $1 }
 
  /*(* cppext: *)*/
@@ -2336,6 +2334,17 @@ celem:
 
 
  | EOF        { FinalDef $1 }
+
+class_decl:
+ | annotation_list storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
+    {  
+        
+        Namespace (fst $8, $3 :: (snd $8 @ [snd $4; $7; $9])) } 
+ | storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
+    {  
+        
+        Namespace (fst $7, $2 :: (snd $7 @ [snd $3; $6; $8])) } 
+
 
 /*(* Things to ignore *)*/
 import:
