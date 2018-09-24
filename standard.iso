@@ -640,6 +640,15 @@ sizeof(T) => sizeof E
 // |
 // -   bcs->event |= 1 << ev; // the only case that is used
 
+// *********************************
+// Java stuff
+// *********************************
+
+Expression
+@java_equals@
+identifier A, B;
+@@
+A.equals(B) <=> B.equals(A)
 
 // ****************************************************************************
 // Everything that is required to be in last position, for ugly reasons ...
