@@ -499,7 +499,7 @@ let args_to_params l pb =
        Ttry Tcatch Tfinally
 
 %token <Ast_c.info>
-       Textends Timplements Tsuper 
+       Textends Timplements Tsuper
 
 %token <Ast_c.info>
        Tthrows Tthrow

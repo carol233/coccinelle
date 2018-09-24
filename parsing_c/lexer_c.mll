@@ -812,7 +812,7 @@ rule token = parse
    * truncate to 31 when compare and truncate to 6 and even lowerise
    * in the external linkage phase
    *)
-  | letter (letter | digit) *
+  | ("this.") ? (letter (letter | digit) * as identifier)
       { let info = tokinfo lexbuf in
         let s = tok lexbuf in
         Common.profile_code "C parsing.lex_ident" (fun () ->
@@ -848,7 +848,7 @@ rule token = parse
             * now done in parse_c.ml.
             *)
 
-		  | None -> TIdent (s, info)
+		  | None -> TIdent (identifier, info)
         )
       }
   (* gccext: apparently gcc allows dollar in variable names. found such
