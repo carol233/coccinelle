@@ -352,6 +352,17 @@ let fixFunc (typ, compound, old_style_opt) =
              "any parameter", fake_pi))
 
 
+
+let full_type = function 
+  | (Left3 x,ii)->
+      warning "unhandled" (nullQualif, (NoType, ii))
+
+  | (Middle3 q,ii)->
+      warning "unhandled" (nullQualif, (NoType, ii))
+
+  | (Right3 t,ii) ->
+      (nullQualif, (t, ii))
+
 (*-------------------------------------------------------------------------- *)
 (* parse_typedef_fix2 *)
 (*-------------------------------------------------------------------------- *)
@@ -1285,6 +1296,7 @@ type_spec2:
      { Right3 (Decimal($3,Some $5)), [$1;$2;$4;$6] }
  | Tdecimal TOPar const_expr TCPar
      { Right3 (Decimal($3,None)), [$1;$2;$4] }
+ | type_spec2 TOCro TCCro { Right3 (Array (None, (full_type $1))), snd $1 @ [$2; $3;] }
 
  /*
  (* parse_typedef_fix1: cant put: TIdent {} cos it make the grammar
