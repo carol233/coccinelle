@@ -1,5 +1,7 @@
+@Oervidde
 public class A{
-    public int main() {
-       super.DoThing(Integer.MAX_VALUE);
+    @Override
+    int main(@Retention String mylist) {
+        super.DoThing(Integer.MAX_VALUE, mylist);
     }
 }

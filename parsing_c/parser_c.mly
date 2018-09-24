@@ -1603,6 +1603,11 @@ decl2:
          )
          ),  ($3::iistart::snd storage))
      }
+ /* | storage_const_opt enum_spec 
+     {
+
+     } */
+
  /*(* cppext: *)*/
 
  | storage_const_opt TMacroDecl TOPar argument_list TCPar TPtVirg
@@ -1639,12 +1644,14 @@ decl_spec2:
  | type_qualif        { ([], {nullDecl with qualifD  = (fst $1, [snd $1]) }) }
  | Tinline            { ([], {nullDecl with inlineD = (true, [$1]) }) }
  | attribute          { ([$1], nullDecl) }
+ | annotation_list    { ([], nullDecl) }
  | storage_class_spec decl_spec2 { (fst $2, addStorageD ($1, snd $2)) }
  | type_spec          decl_spec2 { (fst $2, addTypeD    ($1, snd $2)) }
  | type_qualif        decl_spec2 { (fst $2, addQualifD  ($1, snd $2)) }
  | Tinline            decl_spec2 { (fst $2, addInlineD ((true, $1), snd $2)) }
  | attribute          decl_spec2 { ($1::(fst $2), snd $2) }
- | generic_opt        decl_spec2 {$2}
+ | generic_opt        decl_spec2 { $2}
+ | annotation_list    decl_spec2 { $2}
 
 /*(* can simplify by putting all in _opt ? must have at least one otherwise
    *  decl_list is ambiguous ? (no cos have ';' between decl)
@@ -1981,13 +1988,10 @@ start_fun: start_fun2
     (* toreput? !LP._lexer_hint.toplevel <- false;  *)
     $1
   }
+  
 
-start_fun2: annotation decl_spec declaratorfd throws_opt
-     { let (returnType,storage) = fixDeclSpecForFuncDef (snd $2) in
-       let (id, attrs) = $3 in
-       (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $2)@attrs)
-     }
-   | decl_spec declaratorfd throws_opt
+start_fun2: 
+   decl_spec declaratorfd throws_opt
      { let (returnType,storage) = fixDeclSpecForFuncDef (snd $1) in
        let (id, attrs) = $2 in
        (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $1)@attrs)
@@ -2287,7 +2291,7 @@ celem:
          !LP._lexer_hint.context_stack <- [LP.InTopLevel];
        Namespace ($4, [$1; snd $2; $3; $5]) }
 
- | annotation storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
+ | annotation_list storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
     {  
         !LP._lexer_hint.context_stack <- [LP.InTopLevel];
         Namespace (fst $8, $3 :: (snd $8 @ [snd $4; $7; $9])) } 
@@ -2327,8 +2331,19 @@ import:
  | Timport expr TPtVirg { [$1; $3] }
 
 annotation:
- | Tannotate expr {}
- | Tannotate expr annotation {}
+ | Tannotate { }
+ | Tannotate TOPar expr TCPar {}
+ | Tannotate TOPar comma_separated_assign_expr TCPar  {}
+ | Tannotate TOPar TOBrace comma_separated_assign_expr TCBrace TCPar {}
+
+annotation_list:
+ | annotation {}
+ | annotation annotation_list {}
+
+comma_separated_assign_expr:
+ | assign_expr {}
+ | assign_expr TComma comma_separated_assign_expr {}
+ | {}
 
 classname:
  | TypedefIdent { $1 }

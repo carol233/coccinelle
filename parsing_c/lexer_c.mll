@@ -739,7 +739,9 @@ rule token = parse
 
 
   (* Java annotation *)
-  | "@" { Tannotate(tokinfo lexbuf) }
+  | "@" letter (letter | digit) * {
+	   let info = tokinfo lexbuf in 
+	  Tannotate(info) }
 
 
   (* ----------------------------------------------------------------------- *)
