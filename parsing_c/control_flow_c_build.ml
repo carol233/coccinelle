@@ -973,6 +973,22 @@ let rec aux_statement : (nodei option * xinfo) -> statement -> nodei option =
      !g +> add_arc_opt (starti, newi);
      Some newi
 
+  | Ast_c.ClassDecl  classdef -> 
+    (* class delcarations aren't exactly part of the control flow *)
+    (* Maybe just make a dummy node, *)
+    let root = !g +> add_node TopNode lbl "[class]" in 
+     (* !g +> add_arc_opt (starti, root); *)
+
+     (match classdef with
+     	| Ast_c.Namespace (defs, _) -> ast_to_control_flow_namespace defs root; ()
+	| _ -> failwith "ClassDecl should contain  only a namespace"
+	
+    );
+
+    (* Return the prev node*)
+    starti
+
+
   (* ------------------------- *)
   | Ast_c.Asm body ->
       let newi = !g +> add_node (Asm (stmt, ((body,ii)))) lbl "asm;" in
@@ -1350,7 +1366,7 @@ and aux_statement_list starti (xi, newxi) statxs =
 (* Definition of function *)
 (*****************************************************************************)
 
-let aux_definition: nodei -> definition -> unit = fun topi funcdef ->
+and aux_definition: nodei -> definition -> unit = fun topi funcdef ->
 
   let lbl_start = [!counter_for_labels] in
 
@@ -1417,7 +1433,7 @@ let aux_definition: nodei -> definition -> unit = fun topi funcdef ->
  *
  * todo: update: now I do what I just described, so can remove this code ?
  *)
-let specialdeclmacro_to_stmt (s, args, ii) =
+and specialdeclmacro_to_stmt (s, args, ii) =
   let (iis, iiopar, iicpar, iiptvirg) = tuple_of_list4 ii in
   let ident = Ast_c.RegularName (s, [iis]) in
   let identfinal = Ast_c.mk_e (Ast_c.Ident (ident)) Ast_c.noii in
@@ -1426,7 +1442,8 @@ let specialdeclmacro_to_stmt (s, args, ii) =
   stmt,  (f, [iiptvirg])
 
 
-let rec ast_to_control_flow e = 
+
+and ast_to_control_flow e = 
   (* globals (re)initialialisation *)
   g := (new Control_flow_c.G.ograph_mutable);
   let root = !g +> add_node TopNode lbl_0 "[class]" in 

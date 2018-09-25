@@ -389,6 +389,7 @@ and pp_string_format (e,ii) =
         pr_elem i1; pr_elem i2; pp_expression e; pr_elem i3
 
     | Decl decl, [] -> pp_decl decl
+    | ClassDecl classdef, _ -> pp_toplevel classdef
     | Asm asmbody, ii ->
         (match ii with
         | [iasm;iopar;icpar;iptvirg] ->
@@ -1292,9 +1293,9 @@ and pp_init (init, iinit) =
 	loop ids
 
   and pp_define_param_list dparams =
-    pp_list (fun (s,iis) -> iis +> List.iter pr_elem) dparams in
+    pp_list (fun (s,iis) -> iis +> List.iter pr_elem) dparams 
 
-  let rec pp_toplevel = function
+  and pp_toplevel = function
     | Declaration decl -> pp_decl decl
     | Definition def -> pp_def def
 

@@ -447,6 +447,9 @@ and statement = statementbis wrap3
 	(* simplify cocci: only at the beginning of a compound normally *)
 	| Decl  of declaration
 
+  (* TODO simplify, move or stop using Namespace as toplevel? *)
+	| ClassDecl of toplevel
+
 	(* gccext: *)
 	| Asm of asmbody
 	| NestedFunc of definition

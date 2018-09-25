@@ -1,0 +1,5 @@
+@@
+identifier i;
+@@
+
+* i.length()

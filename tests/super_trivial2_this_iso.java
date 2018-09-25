@@ -24,18 +24,64 @@ public class Ahhh {
 
         gg(j);
         System.out.println(args);
+        class InnerEnglishGreeting implements HelloWorld {
+            String name = "world";
+            public void greet() {
+                greetSomeone("world");
+            }
+            public void greetSomeoneInnerEnglish(String someone) {
+                name = someone;
+                System.out.println("Hello " + name);
+                Object B = new Thing();
+                Thing A = new Thing();
+
+                if (bla_boolean_h()) {
+                    A.init();
+                } else {
+                    j = 0;
+                }
+                boolean b = A.equals(B);
+                boolean b1 = B.equals(A);
+            }
+        }
+
+        List<String> strings = new ArrayList<String>();
+        strings.add("AA");
+        strings.add("z");
+        Collections.sort(strings, new Comparator<String>(){
+                public int compare(String o1, String o2) {
+                    int i;
+                    if (o1.length() > 1) {
+                        i = 10;
+                    } else {
+                        i = 100;
+                    }
+                    int j = o2.length();
+
+                    if (i < j) {
+                        return 1
+                    }  if (i == j) {
+                        return 0;
+                    }
+                    return  1;
+                }
+            });
+        print(strings);
+        
     }
 
     class EnglishGreeting implements HelloWorld {
         String name = "world";
         public void greet() {
             greetSomeone("world");
+            int j = name.length();
+            int k = "world".length();
         }
-        public void greetSomeone(String someone) {
+        public void greetSomeoneEng(String someone) {
             name = someone;
             System.out.println("Hello " + name);
             Object B = new Thing();
-            Object A = new Thing();
+            Thing A = new Thing();
             boolean b = A.equals(B);
             boolean b1 = B.equals(A);
         }
@@ -52,7 +98,7 @@ public class Ahhh {
         g(k);
 
         Object B = new Thing();
-        Object A = new Thing();
+        Thing A = new Thing();
         boolean b = A.equals(B);
         boolean b1 = B.equals(A);
         boolean b2 = A.equals(A);

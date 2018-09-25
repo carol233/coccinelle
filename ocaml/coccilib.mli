@@ -209,6 +209,7 @@ module Ast_c :
       | Iteration of iteration
       | Jump of jump
       | Decl of declaration
+      | ClassDecl of toplevel
       | Asm of asmbody
       | NestedFunc of definition
       | MacroStmt

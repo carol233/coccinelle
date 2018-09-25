@@ -436,6 +436,7 @@ and vk_statement = fun bigf (st: Ast_c.statement) ->
     | Jump (GotoComputed e) -> vk_expr bigf e;
 
     | Decl decl -> vk_decl bigf decl
+    | ClassDecl classdef -> vk_toplevel bigf classdef; ();
     | Asm asmbody -> vk_asmbody bigf asmbody
     | NestedFunc def -> vk_def bigf def
     | MacroStmt -> ()
@@ -1337,6 +1338,7 @@ and vk_statement_s = fun bigf st ->
       | Jump (GotoComputed e) -> Jump (GotoComputed (vk_expr_s bigf e));
 
       | Decl decl -> Decl (vk_decl_s bigf decl)
+      | ClassDecl classdef -> ClassDecl (vk_toplevel_s bigf classdef); 
       | Asm asmbody -> Asm (vk_asmbody_s bigf asmbody)
       | NestedFunc def -> NestedFunc (vk_def_s bigf def)
       | MacroStmt -> MacroStmt

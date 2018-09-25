@@ -1025,6 +1025,7 @@ statement2:
  | selection       { Selection    (fst $1), snd $1 @ [fakeInfo()] }
  | iteration       { Iteration    (fst $1), snd $1 @ [fakeInfo()] }
  | jump TPtVirg    { Jump         (fst $1), snd $1 @ [$2] }
+ | class_as_expr   { ClassDecl    (fst $1), snd $1 }
 
  /*(* gccext: *)*/
  | Tasm TOPar asmbody TCPar TPtVirg             { Asm $3, [$1;$2;$4;$5] }
@@ -1162,6 +1163,8 @@ jump:
  | Tthrow expr { ReturnExpr ($2), [$1] }
 
 
+class_as_expr:
+ | class_decl { $1, [] }
 
 /*(*----------------------------*)*/
 /*(* gccext: *)*/
@@ -1644,6 +1647,8 @@ decl2:
        | None ->
 	   MacroDeclInit
 	     ((NoSto, fst $2, $4, $7), [snd $2;$3;$5;$6;$8;fakeInfo()]) }
+ /* | class_decl {} */
+
 
 storage_const_opt:
    storage_class_spec_nt TMacroDeclConst { Some (fst $1,[snd $1; $2]) }
@@ -2344,6 +2349,7 @@ class_decl:
     {  
         
         Namespace (fst $7, $2 :: (snd $7 @ [snd $3; $6; $8])) } 
+ | 
 
 
 /*(* Things to ignore *)*/

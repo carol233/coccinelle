@@ -110,7 +110,7 @@ and expressionbis =
   | Delete of bool (* true if [] *) * expression
   | Defined of name
 and argument = (expression, weird_argument) Common.either
-and weird_argument = ArgType of parameterType | ArgAction of action_macro
+and weird_argument = ArgType of parameterType | ArgAction of action_macro |
 and action_macro = ActMisc of il
 and constant =
     String of (string * isWchar)
@@ -156,6 +156,7 @@ and statementbis =
   | Iteration of iteration
   | Jump of jump
   | Decl of declaration
+  | ClassDecl of toplevel
   | Asm of asmbody
   | NestedFunc of definition
   | MacroStmt

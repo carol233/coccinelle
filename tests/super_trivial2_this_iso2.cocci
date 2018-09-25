@@ -1,5 +1,8 @@
+@ ok @
+Thing t;
+identifier i;
 @@
 
-@@
-
-* B.equals(A)
+j = 0;
+...  
+- t.equals(i)
