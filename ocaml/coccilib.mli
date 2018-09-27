@@ -133,6 +133,7 @@ module Ast_c :
       | New of argument wrap2 list option * argument
       | Delete of bool * expression
       | Defined of name
+      | AnonymousClassDecl  of toplevel
     and argument = (expression, weird_argument) Common.either
     and weird_argument =
       Ast_c.weird_argument =
@@ -638,6 +639,7 @@ module Parser_c :
       | TCBrace of Ast_c.info
       | TOCro of Ast_c.info
       | TCCro of Ast_c.info
+      
       | TDot of Ast_c.info
       | TComma of Ast_c.info
       | TPtrOp of Ast_c.info

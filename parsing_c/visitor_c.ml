@@ -342,6 +342,7 @@ let rec vk_expr = fun bigf expr ->
 	vk_argument bigf t
     | Delete (_,e) -> vk_expr bigf e
     | Defined name -> vk_name bigf name
+    | AnonymousClassDecl toplevel -> vk_toplevel bigf toplevel
 
 
   in exprf expr
@@ -1210,6 +1211,7 @@ let rec vk_expr_s = fun bigf expr ->
 	    vk_argument_s bigf e, iif ii)), vk_argument_s bigf t)
       | Delete (box,e) -> Delete (box,vk_expr_s bigf e)
       | Defined name  -> Defined (vk_name_s bigf name)
+      | AnonymousClassDecl toplevel -> AnonymousClassDecl (vk_toplevel_s bigf toplevel)
 
     in
     (e', typ'), (iif ii)

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Target({ElementType.TYPE})
-public class Ahhh {
+public static class Ahhh {
 
     @OverrideX(X = true, Y="ok")
     @OverrideY(A = 5, Y="ok")
@@ -29,6 +29,7 @@ public class Ahhh {
 	  f(i);
 	  int j = 0;
 	  g(i);
+    j = Constants.HELLO;
 	}
 
 }

@@ -361,6 +361,8 @@ and expression = (expressionbis * exp_info ref (* semantic: *)) wrap3
 	(* CPP [defined] operator, e.g. #if defined(A) *)
 	| Defined of name
 
+	| AnonymousClassDecl  of toplevel
+
 	(* cppext: IfdefExpr TODO *)
 
 	(* cppext: normally just expression *)

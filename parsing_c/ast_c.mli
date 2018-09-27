@@ -109,8 +109,9 @@ and expressionbis =
   | New of argument wrap2 list option * argument
   | Delete of bool (* true if [] *) * expression
   | Defined of name
+  | AnonymousClassDecl  of toplevel
 and argument = (expression, weird_argument) Common.either
-and weird_argument = ArgType of parameterType | ArgAction of action_macro |
+and weird_argument = ArgType of parameterType | ArgAction of action_macro
 and action_macro = ActMisc of il
 and constant =
     String of (string * isWchar)

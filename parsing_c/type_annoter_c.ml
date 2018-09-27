@@ -1035,6 +1035,9 @@ let annotater_expr_visitor_subpart = (fun (k,bigf) expr ->
 
     | Defined _ ->
 	make_info_def (type_of_s "int")
+    | AnonymousClassDecl _ -> 
+    	k expr;(* recurse to set the types-ref of sub expressions: are there any? *)
+    	Type_c.noTypeHere
 
   in
   Ast_c.set_type_expr expr ty

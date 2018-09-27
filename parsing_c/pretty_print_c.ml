@@ -187,7 +187,7 @@ let mk_pretty_printers
     | SizeOfExpr (_) | SizeOfType (_) | Cast (_,_)
     | StatementExpr (_) | Constructor _
     | ParenExpr (_) | New (_) | Delete (_,_)
-    | Defined (_)),_ -> raise (Impossible 95)
+    | Defined (_) | AnonymousClassDecl (_)) , _   -> raise (Impossible 95)
     );
 
     if !Flag_parsing_c.pretty_print_type_info
@@ -221,7 +221,7 @@ let mk_pretty_printers
     | Right weird ->
 	(match weird with
 	| ArgType param -> pp_param param
-	| ArgAction action -> pp_action action)
+    | ArgAction action -> pp_action action)
 
 (* ---------------------- *)
   and pp_name = function

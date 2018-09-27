@@ -981,7 +981,7 @@ let rec aux_statement : (nodei option * xinfo) -> statement -> nodei option =
 
      (match classdef with
      	| Ast_c.Namespace (defs, _) -> ast_to_control_flow_namespace defs root; ()
-	| _ -> failwith "ClassDecl should contain  only a namespace"
+	    | _ -> failwith "ClassDecl should contain  only a namespace"
 	
     );
 

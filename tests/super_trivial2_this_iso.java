@@ -24,26 +24,6 @@ public class Ahhh {
 
         gg(j);
         System.out.println(args);
-        class InnerEnglishGreeting implements HelloWorld {
-            String name = "world";
-            public void greet() {
-                greetSomeone("world");
-            }
-            public void greetSomeoneInnerEnglish(String someone) {
-                name = someone;
-                System.out.println("Hello " + name);
-                Object B = new Thing();
-                Thing A = new Thing();
-
-                if (bla_boolean_h()) {
-                    A.init();
-                } else {
-                    j = 0;
-                }
-                boolean b = A.equals(B);
-                boolean b1 = B.equals(A);
-            }
-        }
 
         List<String> strings = new ArrayList<String>();
         strings.add("AA");
@@ -70,22 +50,6 @@ public class Ahhh {
         
     }
 
-    class EnglishGreeting implements HelloWorld {
-        String name = "world";
-        public void greet() {
-            greetSomeone("world");
-            int j = name.length();
-            int k = "world".length();
-        }
-        public void greetSomeoneEng(String someone) {
-            name = someone;
-            System.out.println("Hello " + name);
-            Object B = new Thing();
-            Thing A = new Thing();
-            boolean b = A.equals(B);
-            boolean b1 = B.equals(A);
-        }
-    }
       
 
     void main(@SuppressWarnings("abc")  String... args) {

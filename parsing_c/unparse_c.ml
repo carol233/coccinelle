@@ -29,7 +29,7 @@ let default_indent = ref "\t"
 (*****************************************************************************)
 (* Wrappers *)
 (*****************************************************************************)
-let pr2, pr2_once = mk_pr2_wrappers Flag_parsing_c.verbose_unparsing
+let pr2, pr2_once = mk_pr2_wrappers (ref true)
 
 (*****************************************************************************)
 (* Types used during the intermediate phases of the unparsing *)
@@ -238,7 +238,7 @@ let get_fakeInfo_and_tokens celem toks =
       push2 (Fake1 info) toks_out
     | Ast_c.OriginTok _ | Ast_c.ExpandedTok _ ->
       (* get the associated comments/space/cppcomment tokens *)
-	  let (before, x, after) =
+    let (before, x, after) =
         !toks_in +> split_when (fun tok ->
           info = TH.info_of_tok tok)
       in

@@ -455,6 +455,7 @@ let rec expression e =
     | Ast_c.New (_, t) -> unary
     | Ast_c.Delete(_,t) -> unary
     | Ast_c.Defined _ -> primary
+    | Ast_c.AnonymousClassDecl _ -> primary
   in
 
   let rec loop e prec =

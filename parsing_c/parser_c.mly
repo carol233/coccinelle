@@ -368,7 +368,7 @@ let full_type = function
 (*-------------------------------------------------------------------------- *)
 
 let dt s () =
-  if !Flag_parsing_c.debug_etdt then pr2 ("<" ^ s);
+  if true then pr2 ("<" ^ s);
   LP.disable_typedef ()
 
 let et s () =
@@ -407,6 +407,8 @@ let fix_add_params_ident x =
 let mk_e e ii = Ast_c.mk_e e ii
 
 let mk_string_wrap (s,info) = (s, [info])
+
+
 
 (*-------------------------------------------------------------------------- *)
 (* support for functions with no return type *)
@@ -478,7 +480,7 @@ let args_to_params l pb =
  *)
 */
 
-%token <Ast_c.info> TOPar TCPar TOBrace TCBrace TOCro TCCro
+%token <Ast_c.info> TOPar TCPar TOBrace TCBrace TOCro TCCro 
 %token <Ast_c.info> TDot TComma TPtrOp
 %token <Ast_c.info> TInc TDec
 %token <Ast_c.assignOp> TAssign
@@ -674,13 +676,14 @@ let args_to_params l pb =
 /*(* Rules type declaration *)*/
 /*(*************************************************************************)*/
 
-%start main celem statement expr type_name
+%start main celem statement expr type_name storage_class_spec_opt_thing
 %type <Ast_c.program> main
 %type <Ast_c.toplevel> celem
 
 %type <Ast_c.statement> statement
 %type <Ast_c.expression> expr
 %type <Ast_c.fullType> type_name
+%type <Ast_c.toplevel> storage_class_spec_opt_thing
 
 %%
 /*(*************************************************************************)*/
@@ -838,14 +841,15 @@ attribute in the AST.
 */
 
 unary_expr:
- | postfix_expr                    { $1 }
+ | postfix_expr                    { print_string"unary -> postfix;\n" ;$1 }
  | TInc unary_expr                 { mk_e(Infix ($2, Inc))    [$1] }
  | TDec unary_expr                 { mk_e(Infix ($2, Dec))    [$1] }
  | unary_op cast_expr              { mk_e(Unary ($2, fst $1)) [snd $1] }
  | Tsizeof unary_expr              { mk_e(SizeOfExpr ($2))    [$1] }
  | Tsizeof topar2 type_name tcpar2 { mk_e(SizeOfType ($3))    [$1;$2;$4] }
- | Tnew new_argument               { mk_e(New (None, $2))     [$1] }
- | Tnew TOPar argument_list_ne TCPar new_argument { mk_e(New (Some $3, $5))             [$1; $2; $4] }
+ /* | class_decl { print_string " matched; \n"; mk_e(AnonymousClassDecl (snd ($1))) [] }  */
+ | Tnew new_argument               { print_string "unary_expr -> Tnew arugment;" ;mk_e(New (None, $2))     [$1] }
+ | Tnew TOPar argument_list_ne TCPar new_argument { print_string "unary_expr -> Tnew TOPar argument_list_ne TCPar new_argument  ; \n" ;mk_e(New (Some $3, $5))             [$1; $2; $4] }
  | Tdelete cast_expr               { mk_e(Delete(false, $2))  [$1] }
  | Tdelete TOCro TCCro cast_expr   { mk_e(Delete(true, $4))   [$1;$2;$3] }
  | Tdefined identifier_cpp         { mk_e(Defined $2)         [$1] }
@@ -853,30 +857,22 @@ unary_expr:
  { mk_e(Defined $3) [$1;$2;$4] }
 
 new_argument:
- | TIdent TOPar argument_list_ne TCPar
-     { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
-       Left (mk_e(FunCall (fn, $3)) [$2;$4]) }
- | TIdent TOPar TCPar
-     { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
-       Left(mk_e(FunCall (fn, [])) [$2;$3]) }
- | TypedefIdent TOPar argument_list_ne TCPar
-     { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
-       Left (mk_e(FunCall (fn, $3)) [$2;$4]) }
- | TypedefIdent TOPar TCPar
-     { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
-       Left (mk_e(FunCall (fn, [])) [$2;$3]) }
  | ident TInf TSup TOPar argument_list_ne TCPar
-    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+    { print_string "new argument -> ident TInf TSup TOPar argument_list_ne TCPar;\n";let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, $5)) [$4;$6]) }
  | ident TInf TSup TOPar TCPar
-    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+    { print_string "new argument -> ident TInf TSup TOPar TCPar;\n";let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, [])) [$4;$5]) }
  | ident generic_opt TOPar  argument_list_ne TCPar
-    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+    { print_string "new argument -> ident generic_opt TOPar  argument_list_ne TCPar;\n";let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, [])) [$3;$5]) }
-| ident generic_opt TOPar  TCPar
-    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+ | ident generic_opt TOPar  TCPar
+    { print_string "new argument ->ident generic_opt TOPar  TCPar;\n";let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, [])) [$3;$4]) }
+ | class_decl
+ {
+    Left (mk_e(AnonymousClassDecl (snd ($1))) [])
+ }
  | type_spec
      { let ty = addTypeD ($1,nullDecl) in
        let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam ty in
@@ -908,7 +904,7 @@ unary_op:
  | TAndLog { GetRefLabel, $1 }
 
 postfix_expr:
- | primary_expr               { $1 }
+ | primary_expr               { print_string "postfix_expr -> primary_expr ;\n"; $1 }
  | postfix_expr TOCro expr TCCro
      { mk_e(ArrayAccess ($1, $3)) [$2;$4] }
  | postfix_expr TOPar argument_list_ne TCPar
@@ -917,6 +913,8 @@ postfix_expr:
  | postfix_expr TDot   ident_cpp { mk_e(RecordAccess   ($1,$3)) [$2] }
  /*(* OtherClass.<Integer>method() *)*/
  | postfix_expr TDot   generic_opt ident_cpp { mk_e(RecordAccess   ($1,$4)) [$2] }
+ | postfix_expr TDot   new_argument { print_string "postfix_expr -> new_argument ;\n"; mk_e(New (None, $3))     [$2] }
+ | postfix_expr TDot   postfix_expr { mk_e(Postfix ($3, Dec)) [$2] }
  | postfix_expr TPtrOp ident_cpp { mk_e(RecordPtAccess ($1,$3)) [$2] }
  | postfix_expr TInc          { mk_e(Postfix ($1, Inc)) [$2] }
  | postfix_expr TDec          { mk_e(Postfix ($1, Dec)) [$2] }
@@ -953,6 +951,7 @@ primary_expr:
  | TOPar compound TCPar  { mk_e(StatementExpr ($2)) [$1;$3] }
 
  | Tsuper {  mk_e(Ident  (RegularName (("super", [$1])))) []  }
+ 
 
 string_fragments:
  | /* empty */ { [] }
@@ -1025,7 +1024,7 @@ statement2:
  | selection       { Selection    (fst $1), snd $1 @ [fakeInfo()] }
  | iteration       { Iteration    (fst $1), snd $1 @ [fakeInfo()] }
  | jump TPtVirg    { Jump         (fst $1), snd $1 @ [$2] }
- | class_as_expr   { ClassDecl    (fst $1), snd $1 }
+ | class_decl   { ClassDecl    (snd $1), []}
 
  /*(* gccext: *)*/
  | Tasm TOPar asmbody TCPar TPtVirg             { Asm $3, [$1;$2;$4;$5] }
@@ -1331,7 +1330,7 @@ type_spec2:
 /*(* workarounds *)*/
 /*(*----------------------------*)*/
 
-type_spec: type_spec2    { dt "type" (); $1   }
+type_spec: type_spec2    { dt "type" (); dt (List.fold_left (fun acc ii -> acc ^ (Ast_c.str_of_info ii)) "" (snd $1)) (); $1   }
 
 /*(*-----------------------------------------------------------------------*)*/
 /*(* Qualifiers *)*/
@@ -1469,12 +1468,13 @@ direct_abstract_declarator:
 /*(* Parameters (use decl_spec not type_spec just for 'register') *)*/
 /*(*-----------------------------------------------------------------------*)*/
 parameter_type_list:
- | parameter_list                  { ($1, (false, []))}
+ | parameter_list                  { print_string"parameter_type_list -> paramerer_list;" ; print_string"\n" ; ($1, (false, []))}
  | parameter_list TComma TEllipsis { ($1, (true,  [$2;$3])) }
 
 
 parameter_decl2:
    TKRParam {
+       print_string" parameter_decl2 -> TKRParam ; \n";
      let name = RegularName (mk_string_wrap $1) in
      LP.add_ident (str_of_name name);
      { p_namei = Some name;
@@ -1483,7 +1483,9 @@ parameter_decl2:
      }
    }
  | decl_spec declaratorp
-     { LP.kr_impossible();
+     { 
+         print_string" parameter_decl2 -> decl_spec declaratorp ; \n";
+         LP.kr_impossible();
        let ((returnType,hasreg),iihasreg) = fixDeclSpecForParam (snd $1) in
        let (name, ftyp) = $2 in
        { p_namei = Some (name);
@@ -1492,7 +1494,9 @@ parameter_decl2:
        }
      }
  | decl_spec abstract_declaratorp
-     { LP.kr_impossible();
+     { 
+         print_string" parameter_decl2 -> decl_spec abstract_declaratorp ;; \n";
+         LP.kr_impossible();
        let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam (snd $1) in
        { p_namei = None;
          p_type = $2 returnType;
@@ -1500,7 +1504,9 @@ parameter_decl2:
        }
      }
  | decl_spec
-     { LP.kr_impossible();
+     { 
+         print_string" parameter_decl2 -> decl_spec; \n";
+         LP.kr_impossible();
        let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam (snd $1) in
        { p_namei = None;
          p_type = returnType;
@@ -1520,9 +1526,9 @@ extends:
 
 class_body:
   | { ([], []) }
-  | class_body function_definition {  (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
-  | class_body field_decls { $1 } /*(* drop field names. We'll assume any non-local declaration is a field. *)*/
-  | class_body class_decl { $2 :: (fst $1), snd $1 }
+  | class_body function_definition { print_string"found fun def;\n"; (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
+  | class_body field_decls { print_string"found field def;\n";$1 } /*(* drop field names. We'll assume any non-local declaration is a field. *)*/
+  | class_body class_decl { print_string"found nested class def;\n"; (snd $2 :: (fst $1)), snd $1 }
 
 
 /*(*----------------------------*)*/
@@ -1664,7 +1670,7 @@ decl_spec2:
  | attribute          { ([$1], nullDecl) }
  | annotation_list    { ([], nullDecl) }
  | storage_class_spec decl_spec2 { (fst $2, addStorageD ($1, snd $2)) }
- | type_spec          decl_spec2 { (fst $2, addTypeD    ($1, snd $2)) }
+ | type_spec          decl_spec2 {(fst $2, addTypeD    ($1, snd $2)) }
  | type_qualif        decl_spec2 { (fst $2, addQualifD  ($1, snd $2)) }
  | Tinline            decl_spec2 { (fst $2, addInlineD ((true, $1), snd $2)) }
  | attribute          decl_spec2 { ($1::(fst $2), snd $2) }
@@ -1686,10 +1692,15 @@ storage_class_spec_nt:
  | Tprotected   { Sto [Protected],   $1}
  | Tfinal       { Sto [Final],   $1}
  | Tabstract    { Sto [Abstract],   $1}
- 
-storage_class_spec_opt:
- | storage_class_spec_nt storage_class_spec_opt { 
-     
+
+storage_class_spec_opt_thing:
+ | storage_class_spec_opt2 { FinalDef (snd $1) }
+
+
+ storage_class_spec_opt2:
+ | storage_class_spec_nt { print_string "match single;\n";fst $1, snd $1 }
+ | storage_class_spec_nt storage_class_spec_opt2 { 
+     print_string" does it even match here?\n";
     Sto ((
         match fst $1 with
         | Sto list -> list
@@ -1698,10 +1709,27 @@ storage_class_spec_opt:
         match fst $2 with
         | Sto list -> list
         | NoSto -> []
-        | _ -> internal_error "Shouldn't be possible that storage_class_spec_opt returns a non-Sto list or non-NoSto ";
+        | _ -> raise (Impossible 124)
+    )),
+    snd $1 }
+
+storage_class_spec_opt:
+ | storage_class_spec_nt { print_string "match single;\n";fst $1, [snd $1] }
+ | storage_class_spec_nt storage_class_spec_opt { 
+     print_string" does it even match here?\n";
+    Sto ((
+        match fst $1 with
+        | Sto list -> list
+        | _ -> raise (Impossible 123)
+    ) @ (
+        match fst $2 with
+        | Sto list -> list
+        | NoSto -> []
+        | _ -> raise (Impossible 124)
     )),
     snd $1 :: snd $2 }
- | /*(* empty *)*/ { (NoSto, []) }
+ 
+ 
 
 storage_class_spec:
  | storage_class_spec_nt { $1 }
@@ -2304,31 +2332,15 @@ external_declaration:
 
 
 celem:
- | Tnamespace TIdent TOBrace translation_unit TCBrace
-     {
-         !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-       Namespace ($4, [$1; snd $2; $3; $5]) }
 
  | class_decl
     {  
+
         !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-        $1 } 
-
- | external_declaration                         { $1 }
-
- /*(* cppext: *)*/
- | cpp_directive
-     { CppTop $1 }
- | cpp_other
-     { $1 }
- | cpp_ifdef_directive /* (*external_declaration_list ...*)*/
-     { IfdefTop $1 }
+        snd $1 } 
 
  | Tpackage expr TPtVirg {EmptyDef ($1 :: (snd $2) @ [$3])  }
  | import {EmptyDef $1}
-
- /*(* can have asm declaration at toplevel *)*/
- | Tasm TOPar asmbody TCPar TPtVirg             { EmptyDef [$1;$2;$4;$5] }
 
  /*
  (* in ~/kernels/src/linux-2.5.2/drivers/isdn/hisax/isdnl3.c sometimes
@@ -2337,19 +2349,27 @@ celem:
   *)*/
  | TPtVirg    { EmptyDef [$1] }
 
-
  | EOF        { FinalDef $1 }
 
 class_decl:
  | annotation_list storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
     {  
         
-        Namespace (fst $8, $3 :: (snd $8 @ [snd $4; $7; $9])) } 
+        fst $4, Namespace (fst $8, $3 :: (snd $8 @ [snd $4; $7; $9])) } 
  | storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
     {  
         
-        Namespace (fst $7, $2 :: (snd $7 @ [snd $3; $6; $8])) } 
- | 
+        fst $3, Namespace (fst $7, $2 :: (snd $7 @ [snd $3; $6; $8])) } 
+|  Tclass classname generic_opt extends TOBrace class_body TCBrace 
+    {  
+        
+        fst $2, Namespace (fst $6, $1 :: (snd $6 @ [snd $2; $5; $7])) } 
+ | Tnew classname TOPar TCPar TOBrace class_body TCBrace 
+    {
+
+        fst $2, Namespace (fst $6, $1 :: ([snd $2] @ [$3; $4;] @ snd $6 @ [$5; $7])) 
+    }
+
 
 
 /*(* Things to ignore *)*/
@@ -2500,8 +2520,8 @@ init_declarator_list:
 
 
 parameter_list:
- | parameter_decl                       { [$1, []] }
- | parameter_list TComma parameter_decl { $1 @ [$3,  [$2]] }
+ | parameter_decl                       { print_string "param list first\n"; [$1, []] }
+ | parameter_list TComma parameter_decl {  print_string "param list second\n";  $1 @ [$3,  [$2]] }
 
 taction_list_ne:
  | TAction                 { [$1] }
