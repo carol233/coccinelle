@@ -1,20 +1,9 @@
-public abstract class Single {
-    public static void main() {
+class Single {
 
-
-        wrap( new Thing() {
-                @Override
-                public int compare() {
-                    int i = 5;
-                    i = 6;
-                    return 1;
-                }
-            });
-
-        int i = 0;
-        i = 5;
-
+    void main() {
+        iFixedOffsetCache = new HashMap<String, List<Integer>>();
+        int i = 5;
+        i = 6;
     }
-
 }
 

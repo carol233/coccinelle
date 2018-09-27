@@ -9,6 +9,7 @@ import java.util.ArrayList;
 @Target({ElementType.TYPE})
 public static class Ahhh {
     int q = 5;
+    public static final THing t = new Thing("param0");
 
     static {
 
@@ -40,11 +41,12 @@ public static class Ahhh {
     j = Constants.HELLO;
        }
 
-       synchronized (this.q) {
-           int tt = 1;
-           tt = 15;
 
+       synchronized (Thing.class) {
+           int i = 6;
+           i = 7;
        }
+
 	}
 
 }

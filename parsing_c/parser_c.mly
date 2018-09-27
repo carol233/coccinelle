@@ -739,6 +739,7 @@ translation_unit:
 ident:
  | TIdent       { $1 }
  | TypedefIdent { $1 }
+ | TypedefIdent generic_opt { $1 }
 
 
 identifier:
@@ -755,10 +756,9 @@ identifier_cpp:
  | ident_extra_cpp { $1 }
 
 ident_cpp:
- | TIdent
+ | ident
      { RegularName (mk_string_wrap $1) }
- | TypedefIdent
-     { RegularName (mk_string_wrap $1) }
+
 
 
 ident_extra_cpp:
@@ -848,7 +848,7 @@ unary_expr:
  | Tsizeof unary_expr              { mk_e(SizeOfExpr ($2))    [$1] }
  | Tsizeof topar2 type_name tcpar2 { mk_e(SizeOfType ($3))    [$1;$2;$4] }
  /* | class_decl { print_string " matched; \n"; mk_e(AnonymousClassDecl (snd ($1))) [] }  */
- | Tnew new_argument               { mk_e(New (None, $2))     [$1] }
+ | Tnew new_argument               { print_string"\t Tnew new_argument; \n";mk_e(New (None, $2))     [$1] }
  | Tnew TOPar argument_list_ne TCPar new_argument { mk_e(New (Some $3, $5))             [$1; $2; $4] }
  | Tdelete cast_expr               { mk_e(Delete(false, $2))  [$1] }
  | Tdelete TOCro TCCro cast_expr   { mk_e(Delete(true, $4))   [$1;$2;$3] }
@@ -857,12 +857,7 @@ unary_expr:
  { mk_e(Defined $3) [$1;$2;$4] }
 
 new_argument:
- | ident TInf TSup TOPar argument_list_ne TCPar
-    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
-       Left (mk_e(FunCall (fn, $5)) [$4;$6]) }
- | ident TInf TSup TOPar TCPar
-    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
-       Left (mk_e(FunCall (fn, [])) [$4;$5]) }
+
  | ident generic_opt TOPar  argument_list_ne TCPar
     { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, [])) [$3;$5]) }
@@ -924,6 +919,8 @@ postfix_expr:
  | postfix_expr TPtrOp ident_cpp { mk_e(RecordPtAccess ($1,$3)) [$2] }
  | postfix_expr TInc          { mk_e(Postfix ($1, Inc)) [$2] }
  | postfix_expr TDec          { mk_e(Postfix ($1, Dec)) [$2] }
+
+ | postfix_expr TDot Tclass   { mk_e(RecordAccess   ($1, RegularName ("class", [$3])) )[$2] }
 
  /*(* gccext: also called compound literals *)*/
  | topar2 type_name tcpar2 TOBrace TCBrace
@@ -1077,7 +1074,7 @@ end_labeled:
 
 compound: 
  | tobrace compound2 tcbrace { $2, [$1; $3]  }
- | Tsynchronized TOPar  expr TCPar tobrace compound2 tcbrace  { $6, [$5; $7]  }
+ | Tsynchronized TOPar  unary_expr TCPar tobrace compound2 tcbrace  { $6, [$5; $7]  }
  | Tsynchronized tobrace compound2 tcbrace  { $3, [$2; $4]  }
 
 
@@ -1326,11 +1323,11 @@ type_spec2:
  | TypedefIdent
      { let name = RegularName (mk_string_wrap $1) in
        Right3 (TypeName (name, Ast_c.noTypedefDef())),[] }
- /* | TypedefIdent generic_opt 
+ | TypedefIdent generic_opt 
     {
       let name = RegularName (mk_string_wrap $1) in
       Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
-    } */
+    }
 
  | Ttypeof TOPar assign_expr TCPar { Right3 (TypeOfExpr ($3)), [$1;$2;$4] }
  | Ttypeof TOPar type_name   TCPar { Right3 (TypeOfType ($3)), [$1;$2;$4] }
@@ -1355,6 +1352,8 @@ type_qualif:
  | Tprotected  { {const=false ; volatile=false ; static=false ; access=AProtected ; synchronized=false ; transient=false},  $1 }
  | Tsynchronized  { {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=true ; transient=false},  $1 }
  | Ttransient { {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=true},  $1 }
+ | Tabstract { {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=true},  $1 }
+ | Tfinal { {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=true},  $1 }
  /*(* C99 *)*/
  | Trestrict { (* TODO *) {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=false},  $1 }
 
@@ -1708,43 +1707,17 @@ decl2:
 
  /*(* cppext: *)*/
 
- | storage_const_opt TMacroDecl TOPar argument_list TCPar TPtVirg
-     { function _ ->
-       match $1 with
-	 Some (sto,stoii) ->
-	   MacroDecl
-	     ((sto, fst $2, $4, true), (snd $2::$3::$5::$6::fakeInfo()::stoii))
-       | None ->
-	   MacroDecl
-	     ((NoSto, fst $2, $4, true), [snd $2;$3;$5;$6;fakeInfo()]) }
 
- | storage_const_opt
-     TMacroDecl TOPar argument_list TCPar teq initialize TPtVirg
-     { function _ ->
-       match $1 with
-	 Some (sto,stoii) ->
-	   MacroDeclInit
-	     ((sto, fst $2, $4, $7),
-	      (snd $2::$3::$5::$6::$8::fakeInfo()::stoii))
-       | None ->
-	   MacroDeclInit
-	     ((NoSto, fst $2, $4, $7), [snd $2;$3;$5;$6;$8;fakeInfo()]) }
  /* | class_decl {} */
 
 
-storage_const_opt:
-   storage_class_spec_nt TMacroDeclConst { Some (fst $1,[snd $1; $2]) }
- | storage_class_spec_nt { Some (fst $1,[snd $1]) }
- |                       { None }
 
 /*(*-----------------------------------------------------------------------*)*/
 decl_spec2:
- | storage_class_spec { ([], {nullDecl with storageD = (fst $1, [snd $1]) }) }
  | type_spec          { ([], addTypeD ($1,nullDecl)) }
  | type_qualif        { ([], {nullDecl with qualifD  = (fst $1, [snd $1]) }) }
  | Tinline            { ([], {nullDecl with inlineD = (true, [$1]) }) }
  | attribute          { ([$1], nullDecl) }
- | storage_class_spec decl_spec2 { (fst $2, addStorageD ($1, snd $2)) }
  | type_spec          decl_spec2 {(fst $2, addTypeD    ($1, snd $2)) }
  | type_qualif        decl_spec2 { (fst $2, addQualifD  ($1, snd $2)) }
  | Tinline            decl_spec2 { (fst $2, addInlineD ((true, $1), snd $2)) }
@@ -1757,55 +1730,10 @@ decl_spec2:
    *)*/
 
 
-storage_class_spec_nt:
- | Tstatic      { Sto [Static],  $1 }
- | Textern      { Sto [Extern],  $1 }
- | Tauto        { Sto [Auto],    $1 }
- | Tregister    { Sto [Register],$1 }
 
 
-storage_class_spec_opt_thing:
- | storage_class_spec_opt2 { FinalDef (snd $1) }
-
-
- storage_class_spec_opt2:
- | storage_class_spec_nt { print_string "match single;\n";fst $1, snd $1 }
- | storage_class_spec_nt storage_class_spec_opt2 { 
-     print_string" does it even match here?\n";
-    Sto ((
-        match fst $1 with
-        | Sto list -> list
-        | _ -> raise (Impossible 123)
-    ) @ (
-        match fst $2 with
-        | Sto list -> list
-        | NoSto -> []
-        | _ -> raise (Impossible 124)
-    )),
-    snd $1 }
-
-storage_class_spec_opt:
- | storage_class_spec_nt { print_string "match single;\n";fst $1, [snd $1] }
- | storage_class_spec_nt storage_class_spec_opt { 
-     print_string" does it even match here?\n";
-    Sto ((
-        match fst $1 with
-        | Sto list -> list
-        | _ -> raise (Impossible 123)
-    ) @ (
-        match fst $2 with
-        | Sto list -> list
-        | NoSto -> []
-        | _ -> raise (Impossible 124)
-    )),
-    snd $1 :: snd $2 }
  
  
-
-storage_class_spec:
- | storage_class_spec_nt { $1 }
- | Ttypedef     { StoTypedef,  $1 }
-
 generic_opt:
  | TInf generic_list TSup {}
  | TInf TSup {}  /*(* diamond operator *)*/
@@ -1816,11 +1744,11 @@ ident_parameterised_with_generic:
  | ident Tsuper ident_parameterised_with_generic { 	}
  | TWhy Textends ident_parameterised_with_generic { 	}
  | TWhy Tsuper ident_parameterised_with_generic { 	}
- | ident TInf generic_list TSup {	}
+ | ident_parameterised_with_generic TInf generic_list TSup {	}
 
 generic_list:
  | ident_parameterised_with_generic {}
- | ident_parameterised_with_generic TComma generic_list {}
+ | generic_list TComma ident_parameterised_with_generic {}
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
@@ -2447,6 +2375,10 @@ class_decl:
     {  
         
         fst $2, Namespace (fst $6, $1 :: (snd $6 @ [snd $2; $5; $7])) } 
+|  Tclass classname extends TOBrace class_body TCBrace 
+    {  
+        
+        fst $2, Namespace (fst $5, $1 :: (snd $5 @ [snd $2; $4; $6])) } 
  | Tnew classname TOPar TCPar TOBrace class_body TCBrace 
     {
 
