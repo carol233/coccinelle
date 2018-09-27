@@ -8,6 +8,12 @@ import java.util.ArrayList;
 @Documented
 @Target({ElementType.TYPE})
 public static class Ahhh {
+    int q = 5;
+
+    static {
+
+        q = 10;
+    }
 
     @OverrideX(X = true, Y="ok")
     @OverrideY(A = 5, Y="ok")
@@ -23,13 +29,22 @@ public static class Ahhh {
         g(i);
     }
 
-    void main(@SuppressWarnings("abc")  String[] args) {
+    static void main(@SuppressWarnings("abc") @Something({Ok.TYPE, thing.TYPE})  String[] args) {
        super.main(args);
+
+       synchronized {
     int i = 5;
 	  f(i);
 	  int j = 0;
 	  g(i);
     j = Constants.HELLO;
+       }
+
+       synchronized (this.q) {
+           int tt = 1;
+           tt = 15;
+
+       }
 	}
 
 }

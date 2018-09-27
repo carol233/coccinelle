@@ -676,14 +676,14 @@ let args_to_params l pb =
 /*(* Rules type declaration *)*/
 /*(*************************************************************************)*/
 
-%start main celem statement expr type_name storage_class_spec_opt_thing
+%start main celem statement expr type_name 
 %type <Ast_c.program> main
 %type <Ast_c.toplevel> celem
 
 %type <Ast_c.statement> statement
 %type <Ast_c.expression> expr
 %type <Ast_c.fullType> type_name
-%type <Ast_c.toplevel> storage_class_spec_opt_thing
+
 
 %%
 /*(*************************************************************************)*/
@@ -759,7 +759,7 @@ ident_cpp:
      { RegularName (mk_string_wrap $1) }
  | TypedefIdent
      { RegularName (mk_string_wrap $1) }
- | ident_extra_cpp { $1 }
+
 
 ident_extra_cpp:
  | TIdent TCppConcatOp identifier_cpp_list
@@ -848,8 +848,8 @@ unary_expr:
  | Tsizeof unary_expr              { mk_e(SizeOfExpr ($2))    [$1] }
  | Tsizeof topar2 type_name tcpar2 { mk_e(SizeOfType ($3))    [$1;$2;$4] }
  /* | class_decl { print_string " matched; \n"; mk_e(AnonymousClassDecl (snd ($1))) [] }  */
- | Tnew new_argument               { print_string "unary_expr -> Tnew arugment;" ;mk_e(New (None, $2))     [$1] }
- | Tnew TOPar argument_list_ne TCPar new_argument { print_string "unary_expr -> Tnew TOPar argument_list_ne TCPar new_argument  ; \n" ;mk_e(New (Some $3, $5))             [$1; $2; $4] }
+ | Tnew new_argument               { mk_e(New (None, $2))     [$1] }
+ | Tnew TOPar argument_list_ne TCPar new_argument { mk_e(New (Some $3, $5))             [$1; $2; $4] }
  | Tdelete cast_expr               { mk_e(Delete(false, $2))  [$1] }
  | Tdelete TOCro TCCro cast_expr   { mk_e(Delete(true, $4))   [$1;$2;$3] }
  | Tdefined identifier_cpp         { mk_e(Defined $2)         [$1] }
@@ -858,17 +858,23 @@ unary_expr:
 
 new_argument:
  | ident TInf TSup TOPar argument_list_ne TCPar
-    { print_string "new argument -> ident TInf TSup TOPar argument_list_ne TCPar;\n";let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, $5)) [$4;$6]) }
  | ident TInf TSup TOPar TCPar
-    { print_string "new argument -> ident TInf TSup TOPar TCPar;\n";let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, [])) [$4;$5]) }
  | ident generic_opt TOPar  argument_list_ne TCPar
-    { print_string "new argument -> ident generic_opt TOPar  argument_list_ne TCPar;\n";let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, [])) [$3;$5]) }
  | ident generic_opt TOPar  TCPar
-    { print_string "new argument ->ident generic_opt TOPar  TCPar;\n";let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, [])) [$3;$4]) }
+| ident  TOPar  argument_list_ne TCPar
+    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+       Left (mk_e(FunCall (fn, [])) [$2;$4]) }
+ | ident  TOPar  TCPar
+    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+       Left (mk_e(FunCall (fn, [])) [$2;$3]) }
  | class_decl
  {
     Left (mk_e(AnonymousClassDecl (snd ($1))) [])
@@ -904,7 +910,7 @@ unary_op:
  | TAndLog { GetRefLabel, $1 }
 
 postfix_expr:
- | primary_expr               { print_string "postfix_expr -> primary_expr ;\n"; $1 }
+ | primary_expr               { $1 }
  | postfix_expr TOCro expr TCCro
      { mk_e(ArrayAccess ($1, $3)) [$2;$4] }
  | postfix_expr TOPar argument_list_ne TCPar
@@ -913,7 +919,7 @@ postfix_expr:
  | postfix_expr TDot   ident_cpp { mk_e(RecordAccess   ($1,$3)) [$2] }
  /*(* OtherClass.<Integer>method() *)*/
  | postfix_expr TDot   generic_opt ident_cpp { mk_e(RecordAccess   ($1,$4)) [$2] }
- | postfix_expr TDot   new_argument { print_string "postfix_expr -> new_argument ;\n"; mk_e(New (None, $3))     [$2] }
+ | postfix_expr TDot   new_argument { mk_e(New (None, $3))     [$2] }
  | postfix_expr TDot   postfix_expr { mk_e(Postfix ($3, Dec)) [$2] }
  | postfix_expr TPtrOp ident_cpp { mk_e(RecordPtAccess ($1,$3)) [$2] }
  | postfix_expr TInc          { mk_e(Postfix ($1, Inc)) [$2] }
@@ -927,7 +933,7 @@ postfix_expr:
 
 
 primary_expr:
- | identifier_cpp  { mk_e(Ident  ($1)) [] }
+ | ident_cpp  { mk_e(Ident  ($1)) [] }
  | TInt
     { let (str,(sign,base)) = fst $1 in
       mk_e(Constant (Int (str,Si(sign,base)))) [snd $1] }
@@ -1069,7 +1075,10 @@ end_labeled:
 
 
 
-compound: tobrace compound2 tcbrace { $2, [$1; $3]  }
+compound: 
+ | tobrace compound2 tcbrace { $2, [$1; $3]  }
+ | Tsynchronized TOPar  expr TCPar tobrace compound2 tcbrace  { $6, [$5; $7]  }
+ | Tsynchronized tobrace compound2 tcbrace  { $3, [$2; $4]  }
 
 
 /*
@@ -1123,8 +1132,9 @@ selection:
  /* [Nasty Undisciplined Cpp] #ifdef A if e S1 else #else S2 #endif S3 */
  | TUifdef Tif TOPar expr TCPar statement Telse TUelseif statement TUendif statement
      { Ifdef_Ite2 ($4,$6,$9,$11), [$1;$2;$3;$5;$7;$8;$10] }
+| Ttry statement Tcatch TOPar union_type ident TCPar statement Tfinally statement { Try ($2, $8, Some $10), [$1;$3;$4;$7;$9;]  }
  | Ttry statement Tcatch TOPar union_type ident TCPar statement { Try ($2, $8, None), [$1;$3;$4;$7] } 
- | Ttry statement Tcatch TOPar union_type ident TCPar statement Tfinally statement { Try ($2, $8, Some $10), [$1;$3;$4;$7;$9;]  }
+ 
 
 union_type:
 /*(* Java supports union types for exceptions *)*/
@@ -1316,12 +1326,11 @@ type_spec2:
  | TypedefIdent
      { let name = RegularName (mk_string_wrap $1) in
        Right3 (TypeName (name, Ast_c.noTypedefDef())),[] }
- | TypedefIdent generic_opt 
- /*(* TODO The generic_opt part should become part of the type's name *)*/
+ /* | TypedefIdent generic_opt 
     {
       let name = RegularName (mk_string_wrap $1) in
       Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
-    }
+    } */
 
  | Ttypeof TOPar assign_expr TCPar { Right3 (TypeOfExpr ($3)), [$1;$2;$4] }
  | Ttypeof TOPar type_name   TCPar { Right3 (TypeOfType ($3)), [$1;$2;$4] }
@@ -1401,7 +1410,7 @@ tmul:
 
 
 direct_d:
- | identifier_cpp
+ | ident_cpp
      { ($1, fun x -> x) }
  | TOPar declarator TCPar      /*(* forunparser: old: $2 *)*/
      { let (attr,dec) = $2 in  (* attr gets ignored... *)
@@ -1484,7 +1493,7 @@ parameter_decl2:
    }
  | decl_spec declaratorp
      { 
-         print_string" parameter_decl2 -> decl_spec declaratorp ; \n";
+         
          LP.kr_impossible();
        let ((returnType,hasreg),iihasreg) = fixDeclSpecForParam (snd $1) in
        let (name, ftyp) = $2 in
@@ -1493,9 +1502,20 @@ parameter_decl2:
          p_register = (hasreg, iihasreg);
        }
      }
+ | annotation_list decl_spec declaratorp
+     { 
+         
+         LP.kr_impossible();
+       let ((returnType,hasreg),iihasreg) = fixDeclSpecForParam (snd $2) in
+       let (name, ftyp) = $3 in
+       { p_namei = Some (name);
+         p_type = ftyp returnType;
+         p_register = (hasreg, iihasreg);
+       }
+     }
  | decl_spec abstract_declaratorp
      { 
-         print_string" parameter_decl2 -> decl_spec abstract_declaratorp ;; \n";
+        
          LP.kr_impossible();
        let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam (snd $1) in
        { p_namei = None;
@@ -1503,9 +1523,19 @@ parameter_decl2:
          p_register = hasreg, iihasreg;
        }
      }
+| annotation_list decl_spec abstract_declaratorp
+     { 
+         
+         LP.kr_impossible();
+       let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam (snd $2) in
+       { p_namei = None;
+         p_type = $3 returnType;
+         p_register = hasreg, iihasreg;
+       }
+     }
  | decl_spec
      { 
-         print_string" parameter_decl2 -> decl_spec; \n";
+     
          LP.kr_impossible();
        let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam (snd $1) in
        { p_namei = None;
@@ -1513,7 +1543,16 @@ parameter_decl2:
          p_register = hasreg, iihasreg;
        }
      }
-
+ | annotation_list decl_spec
+     { 
+       
+         LP.kr_impossible();
+       let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam (snd $2) in
+       { p_namei = None;
+         p_type = returnType;
+         p_register = hasreg, iihasreg;
+       }
+     }
 
 field_decls:
   | decl {} /*(* parse and throw away*)*/
@@ -1526,10 +1565,15 @@ extends:
 
 class_body:
   | { ([], []) }
-  | class_body function_definition { print_string"found fun def;\n"; (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
-  | class_body field_decls { print_string"found field def;\n";$1 } /*(* drop field names. We'll assume any non-local declaration is a field. *)*/
-  | class_body class_decl { print_string"found nested class def;\n"; (snd $2 :: (fst $1)), snd $1 }
+  | class_body function_definition { (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
+  | class_body field_decls { $1 } /*(* drop field names. We'll assume any non-local declaration is a field. *)*/
+  | class_body class_decl { (snd $2 :: (fst $1)), snd $1 }
+  | class_body init_block { $1 } 
 
+
+init_block:
+ | Tstatic compound {}
+ | compound {}
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
@@ -1604,6 +1648,17 @@ decl2:
                 },[]],
                 ($2::iistart::snd storage))
      }
+| annotation_list decl_spec TPtVirg
+     { function local ->
+       let (returnType,storage) = fixDeclSpecForDecl (snd $2) in
+       let iistart = Ast_c.fakeInfo () in
+       DeclList ([{v_namei = None; v_type = returnType;
+                   v_storage = unwrap storage; v_local = local;
+                v_attr = fst $2; v_endattr = Ast_c.noattr;
+                   v_type_bis = ref None;
+                },[]],
+                ($3::iistart::snd storage))
+     }
  | decl_spec init_declarator_list TPtVirg
      { function local ->
        let (returnType,storage) = fixDeclSpecForDecl (snd $1) in
@@ -1624,6 +1679,27 @@ decl2:
            iivirg
          )
          ),  ($3::iistart::snd storage))
+     }
+| annotation_list decl_spec init_declarator_list TPtVirg
+     { function local ->
+       let (returnType,storage) = fixDeclSpecForDecl (snd $2) in
+       let iistart = Ast_c.fakeInfo () in
+       DeclList (
+         ($3 +> List.map (fun ((((name,f),attrs,endattrs), ini), iivirg) ->
+           let s = str_of_name name in
+	   if fst (unwrap storage) = StoTypedef
+	   then LP.add_typedef s;
+           {v_namei = Some (name, ini);
+            v_type = f returnType;
+            v_storage = unwrap storage;
+            v_local = local;
+            v_attr = (fst $2)@attrs;
+            v_endattr = endattrs;
+            v_type_bis = ref None;
+           },
+           iivirg
+         )
+         ),  ($4::iistart::snd storage))
      }
  /* | storage_const_opt enum_spec 
      {
@@ -1668,14 +1744,13 @@ decl_spec2:
  | type_qualif        { ([], {nullDecl with qualifD  = (fst $1, [snd $1]) }) }
  | Tinline            { ([], {nullDecl with inlineD = (true, [$1]) }) }
  | attribute          { ([$1], nullDecl) }
- | annotation_list    { ([], nullDecl) }
  | storage_class_spec decl_spec2 { (fst $2, addStorageD ($1, snd $2)) }
  | type_spec          decl_spec2 {(fst $2, addTypeD    ($1, snd $2)) }
  | type_qualif        decl_spec2 { (fst $2, addQualifD  ($1, snd $2)) }
  | Tinline            decl_spec2 { (fst $2, addInlineD ((true, $1), snd $2)) }
  | attribute          decl_spec2 { ($1::(fst $2), snd $2) }
  | generic_opt        decl_spec2 { $2}
- | annotation_list    decl_spec2 { $2}
+
 
 /*(* can simplify by putting all in _opt ? must have at least one otherwise
    *  decl_list is ambiguous ? (no cos have ';' between decl)
@@ -1687,11 +1762,7 @@ storage_class_spec_nt:
  | Textern      { Sto [Extern],  $1 }
  | Tauto        { Sto [Auto],    $1 }
  | Tregister    { Sto [Register],$1 }
- | Tpublic      { Sto [Public],   $1}
- | Tprivate     { Sto [Private],   $1}
- | Tprotected   { Sto [Protected],   $1}
- | Tfinal       { Sto [Final],   $1}
- | Tabstract    { Sto [Abstract],   $1}
+
 
 storage_class_spec_opt_thing:
  | storage_class_spec_opt2 { FinalDef (snd $1) }
@@ -1738,7 +1809,6 @@ storage_class_spec:
 generic_opt:
  | TInf generic_list TSup {}
  | TInf TSup {}  /*(* diamond operator *)*/
- | /*(* empty *)*/ {}
 
 ident_parameterised_with_generic:
  | ident { 	}
@@ -2042,6 +2112,11 @@ start_fun2:
        let (id, attrs) = $2 in
        (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $1)@attrs)
      }
+   | annotation_list  decl_spec declaratorfd throws_opt
+     { let (returnType,storage) = fixDeclSpecForFuncDef (snd $2) in
+       let (id, attrs) = $3 in
+       (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $2)@attrs)
+     }  
    | java_ctor
      { 
          $1
@@ -2352,14 +2427,22 @@ celem:
  | EOF        { FinalDef $1 }
 
 class_decl:
- | annotation_list storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
+ | annotation_list type_qualif_list Tclass classname generic_opt extends TOBrace class_body TCBrace 
     {  
         
         fst $4, Namespace (fst $8, $3 :: (snd $8 @ [snd $4; $7; $9])) } 
- | storage_class_spec_opt Tclass classname generic_opt extends TOBrace class_body TCBrace 
+ | annotation_list type_qualif_list Tclass classname extends TOBrace class_body TCBrace 
+    {  
+        
+        fst $4, Namespace (fst $7, $3 :: (snd $7 @ [snd $4; $6; $8])) } 
+ | type_qualif_list Tclass classname generic_opt extends TOBrace class_body TCBrace 
     {  
         
         fst $3, Namespace (fst $7, $2 :: (snd $7 @ [snd $3; $6; $8])) } 
+ | type_qualif_list Tclass classname  extends TOBrace class_body TCBrace 
+    {  
+        
+        fst $3, Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
 |  Tclass classname generic_opt extends TOBrace class_body TCBrace 
     {  
         
@@ -2379,18 +2462,16 @@ import:
 
 annotation:
  | Tannotate { }
- | Tannotate TOPar expr TCPar {}
  | Tannotate TOPar comma_separated_assign_expr TCPar  {}
  | Tannotate TOPar TOBrace comma_separated_assign_expr TCBrace TCPar {}
 
 annotation_list:
  | annotation {}
- | annotation annotation_list {}
+ | annotation_list annotation  {}
 
 comma_separated_assign_expr:
  | assign_expr {}
- | assign_expr TComma comma_separated_assign_expr {}
- | {}
+ | comma_separated_assign_expr  TComma assign_expr {}
 
 classname:
  | TypedefIdent { $1 }
