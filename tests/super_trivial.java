@@ -1,12 +1,14 @@
 public class Run {
-    void f(int q) {
-        return q;
-    }
 
- void Main(int i) {
-  f(i);
-  int j = 0;
-  g(i);
-  j = 0;
-}
+    @OverrideX(X = true, Y="ok")
+ void Main(int i ) {
+     super.main(args);
+     int i = 0;
+     i = 7;
+     Main(i);
+     synchronized (Thing) {
+         int i = 6;
+         i = 7;
+    }
+ }
 }

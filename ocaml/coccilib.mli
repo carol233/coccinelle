@@ -697,6 +697,7 @@ module Parser_c :
       | Tfinal of Ast_c.info
       | Tsynchronized of Ast_c.info
       | Ttransient of Ast_c.info
+      | Tsynchronizedblock of Ast_c.info
       | Ttypedef of Ast_c.info
       | Tconst of Ast_c.info
       | Tvolatile of Ast_c.info

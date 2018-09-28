@@ -503,6 +503,7 @@ let args_to_params l pb =
        Tauto Tregister Textern Tstatic
        Tpublic Tprivate Tprotected
        Tabstract Tfinal Tsynchronized Ttransient
+       Tsynchronizedblock
        Ttypedef
        Tconst Tvolatile
        Tstruct Tunion Tenum Tdecimal Texec
@@ -751,9 +752,8 @@ identifier:
  *)
 */
 identifier_cpp:
- | ident
+ | TIdent
      {RegularName (mk_string_wrap $1) }
- | ident_extra_cpp { $1 }
 
 ident_cpp:
  | ident
@@ -863,12 +863,6 @@ unary_expr:
 
 new_argument:
 
- | ident generic_opt TOPar  argument_list_ne TCPar
-    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
-       Left (mk_e(FunCall (fn, [])) [$3;$5]) }
- | ident generic_opt TOPar  TCPar
-    { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
-       Left (mk_e(FunCall (fn, [])) [$3;$4]) }
 | ident  TOPar  argument_list_ne TCPar
     { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, [])) [$2;$4]) }
@@ -919,8 +913,9 @@ postfix_expr:
  /* | postfix_expr TDot   ident_cpp { mk_e(RecordAccess   ($1,$3)) [$2] } */
  /*(* OtherClass.<Integer>method() *)*/
  | postfix_expr TDot   generic_opt ident_cpp { mk_e(RecordAccess   ($1,$4)) [$2] }
- | postfix_expr TDot   new_argument { mk_e(New (None, $3))     [$2] }
- | postfix_expr TDot   postfix_expr { mk_e(Postfix ($3, Dec)) [$2] }
+ /* | postfix_expr TDot   new_argument { mk_e(New (None, $3))     [$2] } */
+ | postfix_expr TDot ident_cpp { mk_e(RecordAccess ($1,$3)) [$2] }
+ /* | postfix_expr TDot   postfix_expr { mk_e(Postfix ($3, Dec)) [$2] } */
  | postfix_expr TPtrOp ident_cpp { mk_e(RecordPtAccess ($1,$3)) [$2] }
  | postfix_expr TInc          { mk_e(Postfix ($1, Inc)) [$2] }
  | postfix_expr TDec          { mk_e(Postfix ($1, Dec)) [$2] }
@@ -935,7 +930,7 @@ postfix_expr:
 
 
 primary_expr:
- | ident_cpp  { mk_e(Ident  ($1)) [] }
+ | identifier_cpp  { mk_e(Ident  ($1)) [] }
  | TInt
     { let (str,(sign,base)) = fst $1 in
       mk_e(Constant (Int (str,Si(sign,base)))) [snd $1] }
@@ -1032,7 +1027,7 @@ statement2:
  | selection       { Selection    (fst $1), snd $1 @ [fakeInfo()] }
  | iteration       { Iteration    (fst $1), snd $1 @ [fakeInfo()] }
  | jump TPtVirg    { Jump         (fst $1), snd $1 @ [$2] }
- | class_decl   { ClassDecl    (snd $1), []}
+ | class_decl      { ClassDecl    (snd $1), []}
 
  /*(* gccext: *)*/
  | Tasm TOPar asmbody TCPar TPtVirg             { Asm $3, [$1;$2;$4;$5] }
@@ -1048,7 +1043,7 @@ statement2:
    * a Case  (1, (Case (2, i++)))  :(
    *)*/
 labeled:
- | ident_cpp        TDotDot sw_stat_or_decl   { Label ($1, $3),  [$2] }
+ | identifier_cpp        TDotDot sw_stat_or_decl   { Label ($1, $3),  [$2] }
  | Tcase const_expr TDotDot sw_stat_or_decl   { Case ($2, $4),       [$1; $3] }
  | Tcase const_expr TEllipsis const_expr TDotDot sw_stat_or_decl
      { CaseRange ($2, $4, $6), [$1;$3;$5] } /*(* gccext: allow range *)*/
@@ -1066,8 +1061,8 @@ end_labeled:
     * update: julia fixed the problem by introducing end_labeled
     * and modifying below stat_or_decl_list
     *)*/
- | ident_cpp            TDotDot
-     { Label ($1, (mk_st (ExprStatement None) Ast_c.noii)), [$2] }
+ /* | ident_cpp            TDotDot
+     { Label ($1, (mk_st (ExprStatement None) Ast_c.noii)), [$2] } */
  | Tcase const_expr TDotDot
      { Case ($2, (mk_st (ExprStatement None) Ast_c.noii)), [$1;$3] }
  | Tdefault         TDotDot
@@ -1079,8 +1074,8 @@ end_labeled:
 
 compound: 
  | tobrace compound2 tcbrace { $2, [$1; $3]  }
- | Tsynchronized TOPar  unary_expr TCPar tobrace compound2 tcbrace  { $6, [$5; $7]  }
- | Tsynchronized tobrace compound2 tcbrace  { $3, [$2; $4]  }
+ | Tsynchronizedblock compound2 tcbrace  { LP.push_context LP.InFunction; LP.new_scope ();  $2, [$1; $3]  }
+ | Tsynchronizedblock compound2 tcbrace  { LP.push_context LP.InFunction; LP.new_scope ();  $2, [$1; $3]  }
 
 
 /*
@@ -1135,7 +1130,7 @@ selection:
  | TUifdef Tif TOPar expr TCPar statement Telse TUelseif statement TUendif statement
      { Ifdef_Ite2 ($4,$6,$9,$11), [$1;$2;$3;$5;$7;$8;$10] }
 | Ttry statement Tcatch TOPar union_type ident TCPar statement Tfinally statement { Try ($2, $8, Some $10), [$1;$3;$4;$7;$9;]  }
- | Ttry statement Tcatch TOPar union_type ident TCPar statement { Try ($2, $8, None), [$1;$3;$4;$7] } 
+ | Ttry statement Tcatch TOPar union_type ident TCPar statement %prec SHIFTHERE { Try ($2, $8, None), [$1;$3;$4;$7] } 
  
 
 union_type:
@@ -1429,7 +1424,7 @@ direct_d:
          (mk_ty (FunctionType (x,(([],(false, []))))) [$2;$3]))
      }
  | direct_d topar parameter_type_list tcpar
-     { (fst $1,fun x->(snd $1)
+     { print_string"direct_d: parameter_type_list appeared"; (fst $1,fun x->(snd $1)
        (mk_ty (FunctionType (x, $3)) [$2;$4]))
      }
 
@@ -1462,7 +1457,7 @@ direct_abstract_declarator:
  | TOPar TCPar
      { fun x -> mk_ty (FunctionType (x, ([], (false,  [])))) [$1;$2] }
  | topar parameter_type_list tcpar
-     { fun x -> mk_ty (FunctionType (x, $2))  [$1;$3] }
+     { print_string"direct_abstract_declarator: parameter_type_list appeared"; fun x -> mk_ty (FunctionType (x, $2))  [$1;$3] }
 /*(* subtle: here must also use topar, not TOPar, otherwise if have for
    * instance   (xxx ( * )(xxx)) cast, then the second xxx may still be a Tident
    * but we want to reduce topar, to set the InParameter so that
@@ -1497,7 +1492,7 @@ parameter_decl2:
    }
  | decl_spec declaratorp
      { 
-         
+         print_string" parameter_decl2 -> decl_spec declaratorp; \n";
          LP.kr_impossible();
        let ((returnType,hasreg),iihasreg) = fixDeclSpecForParam (snd $1) in
        let (name, ftyp) = $2 in
@@ -1539,7 +1534,7 @@ parameter_decl2:
      }
  | decl_spec
      { 
-     
+     print_string" parameter_decl2 -> decl_spec ; \n";
          LP.kr_impossible();
        let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam (snd $1) in
        { p_namei = None;
@@ -1727,7 +1722,7 @@ decl_spec2:
  | type_qualif        decl_spec2 { (fst $2, addQualifD  ($1, snd $2)) }
  | Tinline            decl_spec2 { (fst $2, addInlineD ((true, $1), snd $2)) }
  | attribute          decl_spec2 { ($1::(fst $2), snd $2) }
- | generic_opt        decl_spec2 { $2}
+
 
 
 /*(* can simplify by putting all in _opt ? must have at least one otherwise
@@ -2054,16 +2049,16 @@ start_fun2:
      { 
          $1
      }
-   | ctor_dtor { $1 }
+   /* | ctor_dtor { $1 } */
 
 
 java_ctor:
- | declaratorfd throws_opt
+ | decl_spec2 TOPar TCPar throws_opt
    {
        
-       let (returnType,storage) = fixDeclSpecForFuncDef nullDecl in
-       let (id, attrs) = $1 in
-       (fst id, fixOldCDecl ((snd id) returnType) , storage, [])
+       let (returnType,storage) = fixDeclSpecForFuncDef (snd $1) in
+   
+       (RegularName ("ctor", []), returnType, storage, (fst $1)@ Ast_c.noattr )
    }
 
 ctor_dtor:
@@ -2360,26 +2355,17 @@ celem:
  | EOF        { FinalDef $1 }
 
 class_decl:
- | annotation_list type_qualif_list Tclass ident generic_opt extends TOBrace class_body TCBrace 
-    {  
-        
-        fst $4, Namespace (fst $8, $3 :: (snd $8 @ [snd $4; $7; $9])) } 
+
  | annotation_list type_qualif_list Tclass ident extends TOBrace class_body TCBrace 
     {  
         
         fst $4, Namespace (fst $7, $3 :: (snd $7 @ [snd $4; $6; $8])) } 
- | type_qualif_list Tclass ident generic_opt extends TOBrace class_body TCBrace 
-    {  
-        
-        fst $3, Namespace (fst $7, $2 :: (snd $7 @ [snd $3; $6; $8])) } 
+ 
  | type_qualif_list Tclass ident  extends TOBrace class_body TCBrace 
     {  
         
         fst $3, Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
-|  Tclass ident generic_opt extends TOBrace class_body TCBrace 
-    {  
-        
-        fst $2, Namespace (fst $6, $1 :: (snd $6 @ [snd $2; $5; $7])) } 
+
 |  Tclass ident extends TOBrace class_body TCBrace 
     {  
         
@@ -2536,7 +2522,7 @@ init_declarator_list:
 
 
 parameter_list:
- | parameter_decl                       { print_string "param list first\n"; [$1, []] }
+ | parameter_decl                       { print_string "param list first\n"; print_string "\n"; [$1, []] }
  | parameter_list TComma parameter_decl {  print_string "param list second\n";  $1 @ [$3,  [$2]] }
 
 taction_list_ne:

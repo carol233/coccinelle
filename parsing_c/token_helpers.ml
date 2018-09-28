@@ -448,6 +448,7 @@ let info_of_tok = function
   | Tenum                (i) -> i
   | Tdecimal             (i) -> i
   | Texec                (i) -> i
+  | Tsynchronizedblock   (i) -> i
   | Ttypedef             (i) -> i
   | Tunion               (i) -> i
   | Tbreak               (i) -> i
@@ -645,6 +646,7 @@ let visitor_info_of_tok f = function
   | Tenum                (i) -> Tenum                (f i)
   | Tdecimal             (i) -> Tdecimal             (f i)
   | Texec                (i) -> Texec                (f i)
+  | Tsynchronizedblock   (i) -> Tsynchronizedblock   (f i)
   | Ttypedef             (i) -> Ttypedef             (f i)
   | Tunion               (i) -> Tunion               (f i)
   | Tbreak               (i) -> Tbreak               (f i)
@@ -772,6 +774,7 @@ let string_of_token = function
   | Tfinal _ -> "Tfinal"
   | Tsynchronized _ -> "Tsynchronized"
   | Ttransient _ -> "Ttransient"
+  | Tsynchronizedblock _ -> "Tsynchronizedblock"
   | Ttypedef _ -> "Ttypedef"
   | Tconst _ -> "Tconst"
   | Tvolatile _ -> "Tvolatile"

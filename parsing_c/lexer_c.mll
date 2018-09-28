@@ -743,6 +743,12 @@ rule token = parse
 	   let info = tokinfo lexbuf in 
 	  Tannotate(info) }
 
+  | ("synchronized" " " * ("(" (letter | ".") *   ")")*  " " * "{" ) {
+    let info = tokinfo lexbuf in 
+    Tsynchronizedblock(info)
+  }
+
+
 
   (* ----------------------------------------------------------------------- *)
   (* C symbols *)

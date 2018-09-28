@@ -638,11 +638,6 @@ let rec lexer_function ~pass tr = fun lexbuf ->
           | Parser_c.TCommentCpp _ -> lexer_function ~pass tr lexbuf
           | v ->
         tr.passed_clean <- extend_passed_clean v tr.passed_clean;
-        print_string "TOKEN;\n";
-        print_string (TH.str_of_tok v);
-        print_string ", ";
-        print_string (TH.string_of_token v);
-        print_string ", \n";
 
               v
       )

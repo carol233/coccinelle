@@ -1,8 +1,10 @@
+
 class Single {
 
     void main() {
-        iFixedOffsetCache = new HashMap<String, List<Integer>>();
-        int i = 5;
+        i = 10;
+        // nameProvider = (NameProvider) Class.forName(providerClass).newInstance();
+         nameProvider = ( NameProvided) newInstance();
         i = 6;
     }
 }
