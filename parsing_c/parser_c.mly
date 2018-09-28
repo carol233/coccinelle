@@ -833,7 +833,12 @@ arith_expr:
 
 cast_expr:
  | unary_expr                        { $1 }
- | topar2 type_name tcpar2 cast_expr { mk_e(Cast ($2, $4)) [$1;$3] }
+ /* | topar2 type_name tcpar2 cast_expr { mk_e(Cast ($2, $4)) [$1;$3] } */
+ | topar2 TypedefIdent tcpar2 cast_expr { let name = RegularName (mk_string_wrap $2) in
+                                        let type1 = Right3 (TypeName (name, Ast_c.noTypedefDef())) in
+                                        let tt=  addTypeD ( (type1, []), nullDecl) in
+                                        let (returnType, _) = fixDeclSpecForDecl tt  in
+                                        mk_e(Cast (returnType, $4)) [$1;$3] }
 /*
 It could be useful to have the following, but there is no place for the
 attribute in the AST.
@@ -911,7 +916,7 @@ postfix_expr:
  | postfix_expr TOPar argument_list_ne TCPar
      { mk_e(FunCall ($1, $3)) [$2;$4] }
  | postfix_expr TOPar  TCPar  { mk_e(FunCall ($1, [])) [$2;$3] }
- | postfix_expr TDot   ident_cpp { mk_e(RecordAccess   ($1,$3)) [$2] }
+ /* | postfix_expr TDot   ident_cpp { mk_e(RecordAccess   ($1,$3)) [$2] } */
  /*(* OtherClass.<Integer>method() *)*/
  | postfix_expr TDot   generic_opt ident_cpp { mk_e(RecordAccess   ($1,$4)) [$2] }
  | postfix_expr TDot   new_argument { mk_e(New (None, $3))     [$2] }
@@ -923,10 +928,10 @@ postfix_expr:
  | postfix_expr TDot Tclass   { mk_e(RecordAccess   ($1, RegularName ("class", [$3])) )[$2] }
 
  /*(* gccext: also called compound literals *)*/
- | topar2 type_name tcpar2 TOBrace TCBrace
+ /* | topar2 type_name tcpar2 TOBrace TCBrace
      { mk_e(Constructor ($2, (InitList [], [$4;$5]))) [$1;$3] }
  | topar2 type_name tcpar2 TOBrace initialize_list gcc_comma_opt_struct TCBrace
-     { mk_e(Constructor ($2, (InitList (List.rev $5),[$4;$7] @ $6))) [$1;$3] }
+     { mk_e(Constructor ($2, (InitList (List.rev $5),[$4;$7] @ $6))) [$1;$3] } */
 
 
 primary_expr:
@@ -943,7 +948,7 @@ primary_expr:
  | TChar   { mk_e(Constant (Char   (fst $1))) [snd $1] }
  | TDecimal { let (a,b,c) = fst $1 in
               mk_e(Constant (DecimalConst (a,b,c))) [snd $1] }
- | TOPar expr TCPar { mk_e(ParenExpr ($2)) [$1;$3] }  /*(* forunparser: *)*/
+ /* | TOPar expr TCPar { mk_e(ParenExpr ($2)) [$1;$3] }  (* forunparser: *) */
 
  /*(* gccext: cppext: TODO better ast ? *)*/
  | TMacroString { mk_e(Constant (MultiString [fst $1])) [snd $1] }
@@ -951,7 +956,7 @@ primary_expr:
      { mk_e(Constant (MultiString ["TODO: MultiString"])) ($1 @ $2) }
 
  /*(* gccext: allow statement as expressions via ({ statement }) *)*/
- | TOPar compound TCPar  { mk_e(StatementExpr ($2)) [$1;$3] }
+ /* | TOPar compound TCPar  { mk_e(StatementExpr ($2)) [$1;$3] } */
 
  | Tsuper {  mk_e(Ident  (RegularName (("super", [$1])))) []  }
  
@@ -1411,9 +1416,9 @@ tmul:
 direct_d:
  | ident_cpp
      { ($1, fun x -> x) }
- | TOPar declarator TCPar      /*(* forunparser: old: $2 *)*/
-     { let (attr,dec) = $2 in  (* attr gets ignored... *)
-       (fst dec, fun x -> mk_ty (ParenType ((snd dec) x)) [$1;$3]) }
+ /* | TOPar declarator TCPar      (* forunparser: old: $2 *) */
+     /* { let (attr,dec) = $2 in  (* attr gets ignored... *) */
+       /* (fst dec, fun x -> mk_ty (ParenType ((snd dec) x)) [$1;$3]) } */
  | direct_d tocro            tccro
      { (fst $1,fun x->(snd $1) (mk_ty (Array (None,x)) [$2;$3])) }
  | direct_d tocro const_expr tccro
@@ -2355,31 +2360,31 @@ celem:
  | EOF        { FinalDef $1 }
 
 class_decl:
- | annotation_list type_qualif_list Tclass classname generic_opt extends TOBrace class_body TCBrace 
+ | annotation_list type_qualif_list Tclass ident generic_opt extends TOBrace class_body TCBrace 
     {  
         
         fst $4, Namespace (fst $8, $3 :: (snd $8 @ [snd $4; $7; $9])) } 
- | annotation_list type_qualif_list Tclass classname extends TOBrace class_body TCBrace 
+ | annotation_list type_qualif_list Tclass ident extends TOBrace class_body TCBrace 
     {  
         
         fst $4, Namespace (fst $7, $3 :: (snd $7 @ [snd $4; $6; $8])) } 
- | type_qualif_list Tclass classname generic_opt extends TOBrace class_body TCBrace 
+ | type_qualif_list Tclass ident generic_opt extends TOBrace class_body TCBrace 
     {  
         
         fst $3, Namespace (fst $7, $2 :: (snd $7 @ [snd $3; $6; $8])) } 
- | type_qualif_list Tclass classname  extends TOBrace class_body TCBrace 
+ | type_qualif_list Tclass ident  extends TOBrace class_body TCBrace 
     {  
         
         fst $3, Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
-|  Tclass classname generic_opt extends TOBrace class_body TCBrace 
+|  Tclass ident generic_opt extends TOBrace class_body TCBrace 
     {  
         
         fst $2, Namespace (fst $6, $1 :: (snd $6 @ [snd $2; $5; $7])) } 
-|  Tclass classname extends TOBrace class_body TCBrace 
+|  Tclass ident extends TOBrace class_body TCBrace 
     {  
         
         fst $2, Namespace (fst $5, $1 :: (snd $5 @ [snd $2; $4; $6])) } 
- | Tnew classname TOPar TCPar TOBrace class_body TCBrace 
+ | Tnew ident TOPar TCPar TOBrace class_body TCBrace 
     {
 
         fst $2, Namespace (fst $6, $1 :: ([snd $2] @ [$3; $4;] @ snd $6 @ [$5; $7])) 
@@ -2405,9 +2410,7 @@ comma_separated_assign_expr:
  | assign_expr {}
  | comma_separated_assign_expr  TComma assign_expr {}
 
-classname:
- | TypedefIdent { $1 }
- | TIdent       { $1 }
+
 
 /*(*************************************************************************)*/
 /*(* some generic workarounds *)*/
