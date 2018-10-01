@@ -126,12 +126,32 @@ let default_hint () = {
 
 let _lexer_hint = ref (default_hint())
 
+let string_of_context ctx = 
+  match ctx with
+  | InTopLevel -> "InTopLevel \n"
+  | InFunction -> "InFunction \n"
+  | InStruct -> "InStruct \n"
+  | InParameter -> "InParameter \n"
+  | InInitializer -> "InInitializer \n"
+  | InEnum -> "InEnum \n"
+
 let current_context () = List.hd !_lexer_hint.context_stack
 let push_context ctx =
+  print_string "CONTEXT CHANGING;\n";
+  ctx |> string_of_context |> print_string ;
+  print_string "CONTEXT CHANGED END;\n";
   !_lexer_hint.context_stack <- ctx::!_lexer_hint.context_stack
-let pop_context () =
-  !_lexer_hint.context_stack <- List.tl !_lexer_hint.context_stack
 
+let pop_context () =
+  print_string "CONTEXT CHANGING DUE TO POP_CONTEXT;\n";
+  current_context () |> string_of_context |> print_string ;
+
+  print_string " ->\n";
+   List.tl !_lexer_hint.context_stack |> List.hd |> string_of_context |> print_string ;
+  print_string "CONTEXT CHANGED END;\n";
+  
+  !_lexer_hint.context_stack <- List.tl !_lexer_hint.context_stack
+ 
 
 
 let lexer_reset_typedef saved_typedefs =

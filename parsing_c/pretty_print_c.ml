@@ -180,6 +180,9 @@ let mk_pretty_printers
         pp_name name;
         pr_elem i3; (* ) *)
 
+    | AnonymousClassDecl (Namespace (ns, ii1)), ii ->
+        ns |> List.iter pp_toplevel;
+
     | (Ident (_) | Constant _ | StringConstant _ | FunCall (_,_)
     | CondExpr (_,_,_) | Sequence (_,_) | Assignment (_,_,_)
     | Postfix (_,_) | Infix (_,_) | Unary (_,_) | Binary (_,_,_)
@@ -187,7 +190,7 @@ let mk_pretty_printers
     | SizeOfExpr (_) | SizeOfType (_) | Cast (_,_)
     | StatementExpr (_) | Constructor _
     | ParenExpr (_) | New (_) | Delete (_,_)
-    | Defined (_) | AnonymousClassDecl (_)) , _   -> raise (Impossible 95)
+    | Defined (_)  | AnonymousClassDecl (_) ) , _   -> raise (Impossible 95)
     );
 
     if !Flag_parsing_c.pretty_print_type_info

@@ -1,11 +1,17 @@
 
 class Single {
 
-    void main() {
-        i = 10;
-        // nameProvider = (NameProvider) Class.forName(providerClass).newInstance();
-         nameProvider = ( NameProvided) newInstance();
-        i = 6;
+
+  
+    /**
+     * Constructor.
+     *
+     * @param id  the id to use
+     * @throws IllegalArgumentException if the id is null
+     */
+    protected DateTimeZone(String id) {
+          iID = id;
+          hello.hi();
     }
 }
 

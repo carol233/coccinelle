@@ -277,6 +277,30 @@ let is_macro_paren s rest = (* likely macro call *)
       TOPar _::TOPar _::_ -> true
     | _ -> false
 
+let is_type_qualifier t = 
+  match t with 
+  | Tconst _ -> true
+  | Tvolatile _ -> true
+  | Tstatic _ -> true
+  | Tprivate _ -> true
+  | Tpublic _ -> true
+  | Tprotected _ -> true
+  | Tsynchronized _ -> true
+  | Ttransient _ -> true
+  | Tabstract _ -> true
+  | Tfinal _ -> true
+  | _ -> false
+    
+let is_new t = 
+  match t with 
+  | Tnew _ -> true
+  | _ -> false
+
+let is_end_of_something t =
+  match t with 
+  | TCBrace _ -> true
+  | TPtVirg _ -> true
+  | _ -> false
 
 (*****************************************************************************)
 (* Helpers *)
@@ -1982,7 +2006,7 @@ let lookahead2 ~pass next before =
 
   (* c++ hacks *)
   (* yy xx(   and in function *)
-  | TOPar i1::_,              TIdent(s,i2)::TypedefIdent _::_
+  (* | TOPar i1::_,              TIdent(s,i2)::TypedefIdent _::_
       when !Flag.c_plus_plus && (LP.current_context () = (LP.InFunction)) ->
         pr2_cpp("constructed_object: "  ^s);
         TOParCplusplusInit i1
@@ -1991,7 +2015,7 @@ let lookahead2 ~pass next before =
 	  && pointer ~followed_by:(function TypedefIdent _ -> true | _ -> false) ptr
 	  && (LP.current_context () = (LP.InFunction)) ->
         pr2_cpp("constructed_object: "  ^s);
-        TOParCplusplusInit i1
+        TOParCplusplusInit i1 *)
   | TypedefIdent(s,i)::TOPar i1::_,_
       when !Flag.c_plus_plus && (LP.current_context () = (LP.InFunction)) ->
   TIdent(s,i)
@@ -2139,17 +2163,30 @@ let lookahead2 ~pass next before =
   | (TIdent (s, i1):: TInf _ :: TIdent (s2, i2) :: TSup _ ::rest  , _) when not_struct_enum before
   && ok_typedef s && not (is_macro_paren s2 rest)
     ->
-    
   msg_typedef s i1 2; LP.add_typedef_root s;
   TypedefIdent (s, i1)
+
+
+   | (TIdent (s, i1):: TInf _ :: TypedefIdent (s2, i2) ::rest  , _) when not_struct_enum before
+   && ok_typedef s && not (is_macro_paren s2 rest)
+     ->
+   msg_typedef s i1 2; LP.add_typedef_root s;
+   TypedefIdent (s, i1)
+ 
 
    (* xx < yy , *)
    | (TIdent (s, i1):: TInf _ :: TIdent (s2, i2) :: TComma _ ::rest  , _) when not_struct_enum before
    && ok_typedef s && not (is_macro_paren s2 rest)
      ->
-      
-   msg_typedef s i1 2; LP.add_typedef_root s;
+   msg_typedef s i1 2; LP.add_typedef_root s; msg_typedef s2 i2 2; LP.add_typedef_root s2; 
    TypedefIdent (s, i1)
+
+   | TShr i1 :: rest, TypedefIdent (_, _)  :: restbef
+     -> 
+     		
+     TShr (i1)
+
+
 
   (* xx inline *)
   | (TIdent (s, i1)::Tinline i2::_  , _) when not_struct_enum before
@@ -2355,7 +2392,26 @@ let lookahead2 ~pass next before =
       msg_typedef s i1 19;  LP.add_typedef_root s;
       TypedefIdent (s, i1)
 
+        (* fully qualified class access*)
+  | (TIdent (s, i1) :: TDot (i2) :: rest, 
+        (Tstatic _| Tprivate _| Tpublic _| Tprotected _ |
+         Tfinal _| Tabstract _| Tsynchronized _) :: _) 
+      -> 
+      TypedefIdent (s, i1)
+  | (TIdent (s, i1) :: TDot (i2) :: rest, _) 
+      when (LP.is_top_or_struct (LP.current_context ()))
+        -> 
+        TypedefIdent (s, i1)
+      
+  | (TypedefIdent (s, i1) :: TDot _ :: TIdent (s2,  i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
+                                                                                 not (LP.is_top_or_struct (LP.current_context ()))
+     ->
+     (* Trick it into thinking its a record access*)
+     TIdent(s, i1)
 
+  | TIdent (s, i1) :: rest, Tclass (i2) :: _   
+    ->
+    TypedefIdent (s, i1)
     (*  why need TOPar condition as stated in preceding rule ? really needed ? *)
     (*   YES cos at toplevel can have some expression !! for instance when *)
     (*   enter in the dimension of an array *)
@@ -2367,7 +2423,30 @@ let lookahead2 ~pass next before =
       !LP._lexer_hint = Some LP.Toplevel ->
       msg_typedef s 20; LP.add_typedef_root s;
       TypedefIdent s
-     *)
+    *)
+
+     (* constructor *)
+     (* TIdent will be the name of the function. This is fine since the preceding type qualifier allows the ctor to be a function *)
+  | TypedefIdent (s, i1) :: TOPar (i2) :: rest, (Tstatic _| Tprivate _| Tpublic _| Tprotected _ |
+                             Tfinal _| Tabstract _| Tsynchronized _) :: _ 
+    -> 
+    TIdent (s, i1)
+    (* constructor *)
+    (* in this case, emit a special token otherwise too much ambiguity *)
+  | (TIdent (s, i1) :: TOPar (i2) :: rest, prev :: _) when not (is_type_qualifier prev) &&
+                                                           not (is_new prev) &&
+                                                           is_end_of_something (prev) &&
+                                                           (LP.is_top_or_struct (LP.current_context ()) )
+    -> 
+    Tconstructorname (s, i1)
+  | (TypedefIdent (s, i1) :: TOPar (i2) :: rest, prev :: _) when  not (is_type_qualifier prev) &&
+                                                                  not (is_new prev) &&
+                                                                  is_end_of_something (prev) &&
+                                                                  (LP.is_top_or_struct (LP.current_context ()) )
+    -> 
+    Tconstructorname (s, i1)
+
+  
 
   (*  xx * yy =  *)
   | (TIdent (s, i1)::ptr , _)

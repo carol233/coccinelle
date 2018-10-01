@@ -19,9 +19,6 @@ public static class Ahhh {
     @OverrideX(X = true, Y="ok")
     @OverrideY(A = 5, Y="ok")
     @Deprecated
-    @Target({ElementType.TYPE,ElementType.METHOD,
-                ElementType.CONSTRUCTOR,ElementType.ANNOTATION_TYPE,
-                ElementType.PACKAGE,ElementType.FIELD,ElementType.LOCAL_VARIABLE})
     Object main1(String[] args) {
        super();
         int i = 5;
@@ -30,7 +27,7 @@ public static class Ahhh {
         g(i);
     }
 
-    static void main(@SuppressWarnings("abc") @Something({Ok.TYPE, thing.TYPE})  String[] args) {
+    static void main(@SuppressWarnings("abc")   String[] args) {
        super.main(args);
 
        synchronized {

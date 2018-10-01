@@ -533,7 +533,8 @@ let rec lexer_function ~pass tr = fun lexbuf ->
       (match v with
 	Parser_c.Texec _ -> in_exec := true
       |	Parser_c.TPtVirg _ -> if !in_exec then in_exec := false
-      |	_ -> ());
+      |	_ -> 
+      ());
 
       (match v with
 
@@ -638,7 +639,7 @@ let rec lexer_function ~pass tr = fun lexbuf ->
           | Parser_c.TCommentCpp _ -> lexer_function ~pass tr lexbuf
           | v ->
         tr.passed_clean <- extend_passed_clean v tr.passed_clean;
-
+  
               v
       )
     end
@@ -672,6 +673,8 @@ let get_one_elem ~pass tr =
 	Left (Parser_c.celem (lexer_function ~pass tr) lexbuf_fake)
       )
     with e ->
+     print_string "========\tTHROW\t==========\n";
+     
       LP.restore_typedef_state();
 
       (* must keep here, before the code that adjusts the tr fields *)
@@ -1086,7 +1089,6 @@ and _parse_print_error_heuristic2bis saved_typedefs saved_macros
       let pass1 =
         Common.profile_code "Parsing: 1st pass" (fun () ->
 		  let result = get_one_elem ~pass:1 tr in
-
 		result
         ) in
       match pass1 with
