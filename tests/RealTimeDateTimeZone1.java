@@ -148,7 +148,7 @@ public abstract class DateTimeZone implements Serializable {
                         }
                         if (temp == null) {
                             temp = forTimeZone(TimeZone.getDefault());
-                        }
+                        }   
                     } catch (IllegalArgumentException ex) {
                         // ignored
                     }
@@ -1284,17 +1284,6 @@ public abstract class DateTimeZone implements Serializable {
             iID = id;
         }
 
-        private void writeObject(ObjectOutputStream out) throws IOException {
-            out.writeUTF(iID);
-        }
-
-        private void readObject(ObjectInputStream in) throws IOException {
-            iID = in.readUTF();
-        }
-
-        private Object readResolve() throws ObjectStreamException {
-            return forID(iID);
-        }
     }
 
 }

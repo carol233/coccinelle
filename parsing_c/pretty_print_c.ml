@@ -228,6 +228,9 @@ let mk_pretty_printers
 
 (* ---------------------- *)
   and pp_name = function
+    | RegularName ("", []) ->
+        (* ctor *)
+        ()
     | RegularName (s, ii) ->
         let (i1) = Common.tuple_of_list1 ii in
         pr_elem i1
@@ -682,7 +685,20 @@ and pp_string_format (e,ii) =
           | _ -> raise (Impossible 106)
 	  )
 
-      | (Pointer _ | (*ParenType _ |*) Array _ | FunctionType _ | Decimal _
+      | (Array (eopt, t), iis) ->
+	      print_sto_qu (sto, qu);
+	      (match iis with
+		| [iopar;icpar] ->
+			pp_type t;
+			pr_elem iopar;
+			pr_elem icpar;
+		(* | [iotype; iopar;icpar] ->
+			pp_type t;
+			pr_elem iopar;
+			pr_elem icpar; *)
+		| _ -> raise (Impossible 106)
+	      )
+      | (Pointer _ | (*ParenType _ |*) FunctionType _ | Decimal _
             (* | StructUnion _ | Enum _ | BaseType _ *)
             (* | StructUnionName _ | EnumName _ | TypeName _  *)
             (* | TypeOfExpr _ | TypeOfType _ *)
@@ -892,7 +908,10 @@ and pp_string_format (e,ii) =
 
           pp_type_right fullt;
 
-
+       (* | (Array (eopt, t), [i1; i2; i3;]) ->
+       		pp_type_left fullt;
+		       print_ident ident;
+		       pp_type_right fullt; *)
       | (FunctionType _ | Array _ | ParenType _ | Pointer _), _ ->
 	  raise (Impossible 109)
 
@@ -922,6 +941,7 @@ and pp_string_format (e,ii) =
       | FieldType (_, _, _), _ -> ()
       | TypeOfType _, _ -> ()
       | TypeOfExpr _, _ -> ()
+      (* | (Array (eopt, t), [i1;i2i;i3]) -> pp_type_left t *)
 
       | (FunctionType _ | Array _ | Pointer _), _ -> raise (Impossible 110)
 
@@ -980,6 +1000,10 @@ and pp_string_format (e,ii) =
 
     | TypeOfType _, _ -> ()
     | TypeOfExpr _, _ -> ()
+    (* | (Array (eopt, t), [i1;i2; i3]) ->
+    	pp_type_right t;
+        pr_elem i1;
+        pr_elem i2; *)
 
     | (FunctionType _ | Array _ | Pointer _), _ -> raise (Impossible 111)
 

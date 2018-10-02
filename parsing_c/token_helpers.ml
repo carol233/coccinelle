@@ -189,7 +189,7 @@ let is_start_of_something = function
 let is_binary_operator = function
   | TOrLog _ | TAndLog _ |  TOr _ |  TXor _ |  TAnd _
   | TEqEq _ |  TNotEq _  | TInf _ |  TSup _ |  TInfEq _ |  TSupEq _
-  | TShl _ | TShr _
+  | TShl _ | TShr _ | TZeroFillShr _ 
   | TPlus _ |  TMinus _ |  TMul _ |  TDiv _ |  TMod _ | TMax _ | TMin _
         -> true
   | _ -> false
@@ -396,6 +396,7 @@ let info_of_tok = function
   | TSupEq               (i) -> i
   | TShl                 (i) -> i
   | TShr                 (i) -> i
+  | TZeroFillShr         (i) -> i
   | TPlus                (i) -> i
   | TMinus               (i) -> i
   | TMul                 (i) -> i
@@ -444,6 +445,8 @@ let info_of_tok = function
   | Trestrict            (i) -> i
 
   | Tclass               (i) -> i
+  | Tinterface           (i) -> i
+  | Tinstanceof           (i) -> i
   | Tstruct              (i) -> i
   | Tenum                (i) -> i
   | Tdecimal             (i) -> i
@@ -593,6 +596,7 @@ let visitor_info_of_tok f = function
   | TSupEq               (i) -> TSupEq               (f i)
   | TShl                 (i) -> TShl                 (f i)
   | TShr                 (i) -> TShr                 (f i)
+  | TZeroFillShr         (i) -> TZeroFillShr                 (f i)
   | TPlus                (i) -> TPlus                (f i)
   | TMinus               (i) -> TMinus               (f i)
   | TMul                 (i) -> TMul                 (f i)
@@ -642,6 +646,8 @@ let visitor_info_of_tok f = function
   | Trestrict            (i) -> Trestrict            (f i)
 
   | Tclass               (i) -> Tclass               (f i)
+  | Tinterface           (i) -> Tinterface           (f i)
+  | Tinstanceof          (i) -> Tinstanceof          (f i)
   | Tstruct              (i) -> Tstruct              (f i)
   | Tenum                (i) -> Tenum                (f i)
   | Tdecimal             (i) -> Tdecimal             (f i)
@@ -739,6 +745,7 @@ let string_of_token = function
   | TSupEq _ -> "TSupEq"
   | TShl _ -> "TShl"
   | TShr _ -> "TShr"
+  | TZeroFillShr _ -> "TZeroFillShr"
   | TPlus _ -> "TPlus"
   | TMinus _ -> "TMinus"
   | TMul _ -> "TMul"
@@ -813,6 +820,8 @@ let string_of_token = function
   | Tinline _ -> "Tinline"
   | Ttypeof _ -> "Ttypeof"
   | Tclass _  -> "Tclass"
+  | Tinterface _  -> "Tinterface"
+  | Tinstanceof _  -> "Tinstanceof"
   | TDefine _ -> "TDefine"
   | TDefParamVariadic _ -> "TDefParamVariadic"
   | TCppEscapedNewline _ -> "TCppEscapedNewline"

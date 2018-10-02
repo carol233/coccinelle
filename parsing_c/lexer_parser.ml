@@ -74,11 +74,17 @@ let new_scope() = Common.new_scope_h _typedef
 let del_scope() = Common.del_scope_h _typedef
 
 let add_typedef  s =
+  print_string "ADD TYPEDEF\n";
+  print_string s;
+  print_string "\n";
   Common.add_in_scope_h _typedef (s, TypeDefI)
 let add_ident s    = 
   Common.add_in_scope_h _typedef (s, IdentI)
 
 let add_typedef_root s =
+  print_string "ADD TYPEDEF\n";
+  print_string s;
+  print_string "\n";
   if !Flag_parsing_c.add_typedef_root
   then
     Hashtbl.add !_typedef.scoped_h s TypeDefI
@@ -137,18 +143,18 @@ let string_of_context ctx =
 
 let current_context () = List.hd !_lexer_hint.context_stack
 let push_context ctx =
-  print_string "CONTEXT CHANGING;\n";
+  (* print_string "CONTEXT CHANGING;\n";
   ctx |> string_of_context |> print_string ;
-  print_string "CONTEXT CHANGED END;\n";
+  print_string "CONTEXT CHANGED END;\n"; *)
   !_lexer_hint.context_stack <- ctx::!_lexer_hint.context_stack
 
 let pop_context () =
-  print_string "CONTEXT CHANGING DUE TO POP_CONTEXT;\n";
+  (* print_string "CONTEXT CHANGING DUE TO POP_CONTEXT;\n";
   current_context () |> string_of_context |> print_string ;
 
   print_string " ->\n";
    List.tl !_lexer_hint.context_stack |> List.hd |> string_of_context |> print_string ;
-  print_string "CONTEXT CHANGED END;\n";
+  print_string "CONTEXT CHANGED END;\n"; *)
   
   !_lexer_hint.context_stack <- List.tl !_lexer_hint.context_stack
  

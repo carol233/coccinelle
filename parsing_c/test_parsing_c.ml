@@ -196,6 +196,8 @@ let test_parse_gen xs ext =
 
 let test_parse_c xs =
   test_parse_gen xs "c"
+let test_parse_java xs =
+    test_parse_gen xs "java"
 let test_parse_h xs =
   test_parse_gen xs "h"
 let test_parse_ch xs =
@@ -591,6 +593,8 @@ let actions () = [
   Common.mk_action_1_arg test_tokens_c;
   "--parse-c", "   <file or dir>",
   Common.mk_action_n_arg test_parse_c;
+  "--parse-java", "   <file or dir>",
+  Common.mk_action_n_arg test_parse_java;
   "--parse-h", "   <file or dir>",
   Common.mk_action_n_arg test_parse_h;
   "--parse-ch", "   <file or dir>",

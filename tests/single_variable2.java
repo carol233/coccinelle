@@ -1,21 +1,36 @@
-class Thing {
+public interface PeriodConverter extends Converter {
      
-    // private static int parseOffset(String i) {
-      
-    //     new BaseChronology() {
-    //            DateTimeZone getZone() {
-    //                // return 1;
-    //            }
-    //            }.hodor(); 
-    //         DateTimeZone dd = 5;
-    // }
-
-   
     
-     protected DateTimeZone() {
-          ok = new Thing();
-        String id = System.getProperty("user.timezone");
+    private static final DateTimeFieldType[] FIELD_TYPES = new DateTimeFieldType[] {
+        DateTimeFieldType.year(),
+        DateTimeFieldType.monthOfYear(),
+    };
+
+    int[] values = new int[size];
+    String[][] zoneStringsEn = DateTimeUtils.getDateFormatSymbols(Locale.ENGLISH).getZoneStrings();
+    private HashMap<Locale, Map<String, Map<String, Object>>> iByLocaleCache = createCache();
+    private static final Map<DateTimeZone, ArrayList<GJChronology>> cCache = new HashMap<DateTimeZone, ArrayList<GJChronology>>();
+    protected static int between(ReadableInstant start, ReadableInstant end, DurationFieldType field) {
+               if (start == null || end == null) {
+                   throw new IllegalArgumentException("ReadableInstant objects must not be null");
+               }
+               i = 5;
+                DateTimeFieldType[] result = new DateTimeFieldType[size];
+
+                Class.forname("ok");
+    }
+    public Class<?> getSupportedType() {
         int i = 5;
+        int a = Integer.MAX_VALUE.MAX;
+               return ReadablePeriod.class;
+    }
+    DateTimeZone() {
+        //   ok = new Thing();
+        // String id = System.getProperty("user.timezone");
+        // int i = 5;
         i = 6;
+        for (String i : strings) {
+            System.out.println("hello");
+        }
     }
 }

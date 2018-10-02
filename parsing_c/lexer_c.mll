@@ -171,6 +171,8 @@ let keyword_table = Common.hash_of_list [
   "volatile", (fun ii -> Tvolatile ii);
 
   "class",      (fun ii -> Tclass ii);
+  "interface",      (fun ii -> Tinterface ii);
+  "instanceof",      (fun ii -> Tinstanceof ii);
   "extends",    (fun ii -> Textends ii);
   "implements", (fun ii -> Timplements ii);
 
@@ -326,7 +328,7 @@ let extended_letter = ['A'-'Z' 'a'-'z' '_' ':' '<' '>' '~'](*for c++, not used*)
 let digit  = ['0'-'9']
 
 let cplusplus_ident = (letter | '$') (letter | digit | '$') *
-let cplusplus_ident_ext = (letter | '~' | '$') (letter | digit | '~' | '$') *
+let cplusplus_ident_ext = (letter | '~' | '$' | '?') (letter | digit | '~' | '$') *
 
 (* not used for the moment *)
 let punctuation = ['!' '\"' '#' '%' '&' '\'' '(' ')' '*' '+' ',' '-' '.' '/' ':'
@@ -796,7 +798,7 @@ rule token = parse
   | "<"  { TInf(tokinfo lexbuf) }   | ">"  { TSup(tokinfo lexbuf) }
 
   | "&&" { TAndLog(tokinfo lexbuf) } | "||" { TOrLog(tokinfo lexbuf) }
-  | ">>" { TShr(tokinfo lexbuf) }    | "<<" { TShl(tokinfo lexbuf) }
+  | ">>" { TShr(tokinfo lexbuf) }    | "<<" { TShl(tokinfo lexbuf) } | ">>>" { TZeroFillShr(tokinfo lexbuf) }
   | "&"  { TAnd(tokinfo lexbuf) }    | "|" { TOr(tokinfo lexbuf) }
   | "^"  { TXor(tokinfo lexbuf) }
   | "..." { TEllipsis(tokinfo lexbuf) }

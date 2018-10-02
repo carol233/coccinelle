@@ -300,6 +300,7 @@ let is_end_of_something t =
   match t with 
   | TCBrace _ -> true
   | TPtVirg _ -> true
+  | TOBrace _ -> true
   | _ -> false
 
 (*****************************************************************************)
@@ -2016,9 +2017,9 @@ let lookahead2 ~pass next before =
 	  && (LP.current_context () = (LP.InFunction)) ->
         pr2_cpp("constructed_object: "  ^s);
         TOParCplusplusInit i1 *)
-  | TypedefIdent(s,i)::TOPar i1::_,_
+  (* | TypedefIdent(s,i)::TOPar i1::_,_
       when !Flag.c_plus_plus && (LP.current_context () = (LP.InFunction)) ->
-  TIdent(s,i)
+  TIdent(s,i) *)
 
   (* Java *)
 
@@ -2404,10 +2405,29 @@ let lookahead2 ~pass next before =
         TypedefIdent (s, i1)
       
   | (TypedefIdent (s, i1) :: TDot _ :: TIdent (s2,  i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
-                                                                                 not (LP.is_top_or_struct (LP.current_context ()))
+                                                                                 (* not (LP.is_top_or_struct (LP.curent_context ())) *)
+                                                                                 not (is_end_of_something prev)
      ->
      (* Trick it into thinking its a record access*)
      TIdent(s, i1)
+  | (TypedefIdent (s, i1) :: TDot _ :: TypedefIdent (s2,  i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
+     (* not (LP.is_top_or_struct (LP.curent_context ())) *)
+     not (is_end_of_something prev)
+    ->
+    (* Trick it into thinking its a record access*)
+    TIdent(s, i1)
+
+  (* array type declaration*)
+  | (TIdent (s, i1) :: TOCro _ :: TCCro _ :: rest, _)
+    -> 
+    LP.add_typedef_root s;
+    TypedefIdent (s, i1) 
+
+
+  | (TIdent (s, i1)) :: rest, Tnew _ :: _ 
+    ->
+    LP.add_typedef_root s;
+    TypedefIdent (s, i1) 
 
   | TIdent (s, i1) :: rest, Tclass (i2) :: _   
     ->

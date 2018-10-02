@@ -238,6 +238,13 @@ let get_fakeInfo_and_tokens celem toks =
       push2 (Fake1 info) toks_out
     | Ast_c.OriginTok _ | Ast_c.ExpandedTok _ ->
       (* get the associated comments/space/cppcomment tokens *)
+      (* let _ = print_string "GONNA split ;\n" in
+      let _ =print_string (Ast_c.str_of_info info) in
+      let _ = print_string "\ntok_ins in = ;\n" in
+      let _ =  (!toks_in |> List.fold_left (fun acc x -> acc ^ (TH.str_of_tok x)) "" )|> print_string  in
+      let _ = print_string ";\n" in *)
+
+      
     let (before, x, after) =      
         !toks_in +> split_when (fun tok ->
           info = TH.info_of_tok tok)
