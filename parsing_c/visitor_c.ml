@@ -415,7 +415,7 @@ and vk_statement = fun bigf (st: Ast_c.statement) ->
     | Selection  (Switch (e, st)) ->
         vk_expr bigf e; statf st;
     | Selection (Try (s1, s2, s3)) ->
-        statf s1; statf s2; s3 |> do_option (fun s -> statf s);
+        statf s1;  s2 |> do_option (fun s -> statf s); s3 |> do_option (fun s -> statf s);
     | Iteration  (While (e, st)) ->
         vk_expr bigf e; statf st;
     | Iteration  (DoWhile (st, e)) -> statf st; vk_expr bigf e;
@@ -1290,7 +1290,7 @@ and vk_statement_s = fun bigf st ->
       | Selection (Switch (e, st))   ->
           Selection  (Switch ((vk_expr_s bigf) e, statf st))
       | Selection (Try (s1, s2, s3)) -> 
-      Selection  (Try (statf s1, statf s2, s3 |> map_option (statf)))
+      Selection  (Try (statf s1,  s2 |> map_option (statf), s3 |> map_option (statf)))
       | Iteration (While (e, st))    ->
           Iteration  (While ((vk_expr_s bigf) e, statf st))
       | Iteration (DoWhile (st, e))  ->

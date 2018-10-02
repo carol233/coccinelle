@@ -238,7 +238,7 @@ module Ast_c :
         If of expression * statement * statement
       | Switch of expression * statement
       (* try/catch/finally *)
-      | Try    of statement * statement * statement option
+      | Try    of statement * statement option * statement option
       | Ifdef_Ite of expression * statement * statement
       | Ifdef_Ite2 of expression * statement * statement * statement
     and iteration =
@@ -667,6 +667,7 @@ module Parser_c :
       | TSupEq of Ast_c.info
       | TShl of Ast_c.info
       | TShr of Ast_c.info
+      | TZeroFillShr of Ast_c.info
       | TPlus of Ast_c.info
       | TMinus of Ast_c.info
       | TMul of Ast_c.info
@@ -741,6 +742,8 @@ module Parser_c :
       | Tinline of Ast_c.info
       | Ttypeof of Ast_c.info
       | Tclass of Ast_c.info
+      | Tinterface of Ast_c.info
+      | Tinstanceof of Ast_c.info
       | TDefine of Ast_c.info
       | TDefParamVariadic of (string * Ast_c.info)
       | TCppEscapedNewline of Ast_c.info

@@ -327,21 +327,42 @@ and pp_string_format (e,ii) =
     | Selection  (Try (st1, st2, st3)), [i1;i2;i3;i4;i5;iifakend] ->
         pr_elem i1; pr_space(); 
         indent_if_needed st1 (function _-> pp_statement st1); pr_elem i2; 
-        indent_if_needed st2 (function _-> pp_statement st2); pr_elem i3; 
+	
+	(match st2 with 
+        | None -> failwith "selection list 4a" 
+	| Some s ->  indent_if_needed s (function _-> pp_statement s)); 
+	
+	pr_elem i3; 
         (match st3 with 
-        | None -> failwith "selection list 4" 
+        | None -> failwith "selection list 4b" 
         | Some s ->  indent_if_needed s (function _-> pp_statement s));
     
         pr_elem iifakend
     | Selection  (Try (st1, st2, st3)), [i1;i2;i3;i4;i5;] ->
         pr_elem i1; pr_space(); 
         indent_if_needed st1 (function _-> pp_statement st1); pr_elem i2; 
-        indent_if_needed st2 (function _-> pp_statement st2); pr_elem i3; 
+	
+	(match st2 with 
+        | None -> failwith "selection list 5a"
+	| Some s ->  indent_if_needed s (function _-> pp_statement s)); 
+	pr_elem i3; 
         (match st3 with 
         | None -> ()
-        | Some s ->  failwith "selection list 5" );
+        | Some s ->  failwith "selection list 5b" );
 
-        pr_elem i5
+	pr_elem i5
+    | Selection  (Try (st1, st2, st3)), [i1;i2;] ->
+        pr_elem i1; pr_space(); 
+        indent_if_needed st1 (function _-> pp_statement st1); pr_elem i2; 
+	
+	(match st2 with 
+        | None -> ()
+        | Some s -> failwith "selection list 6a");
+        (match st3 with 
+        | None -> failwith "selection list 6b" 
+        | Some s -> indent_if_needed s (function _-> pp_statement s) );
+
+        pr_elem i2;
     | Iteration  (While (e, st)), [i1;i2;i3;iifakend] ->
         pr_elem i1; pr_space(); pr_elem i2; pp_expression e; pr_elem i3;
 	indent_if_needed st (function _-> pp_statement st); pr_elem iifakend

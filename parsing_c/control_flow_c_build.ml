@@ -1154,7 +1154,11 @@ and mk_Try (starti :nodei option) (labels :int list)
       in
   
 		let trynode =  add_node (Try (st1, ((), [i1]))) labels "try" !g in
-		let catchnode = add_node (Catch (st2, ((), [i1]))) labels "catch" !g in
+    (* let catchnode = add_node (Catch (st2, ((), [i1]))) labels "catch" !g in *)
+    let catchnode = match st2 with 
+			| Some catch_stmt ->  add_node (Catch (catch_stmt, ((), [i1]))) labels "catch" !g
+			| None -> (!g +> add_node (EndStatement (None)) labels "catch")
+		in
 		let finallynode = match st3 with 
 			| Some finally_stmt ->  (!g +> add_node (Finally (finally_stmt, ((), [i1]))) labels "finally")
 			| None -> (!g +> add_node (EndStatement (None)) labels "finally")
@@ -1162,9 +1166,14 @@ and mk_Try (starti :nodei option) (labels :int list)
 		!g +> add_arc_opt (starti, trynode);
 
 		let finaltry = aux_statement (Some trynode, xi_lbl) st1 in 
-		let finalcatch = aux_statement (Some catchnode, xi_lbl) st2 in
-      add_arc_opt (finaltry, finallynode) !g ;
-      add_arc_opt (finalcatch, finallynode) !g;
+    (* let finalcatch = aux_statement (Some catchnode, xi_lbl) st2 in *)
+    let finalcatch = 
+      (match st2 with 
+      | Some stmt -> aux_statement (Some catchnode, xi_lbl) stmt
+      | None -> Some finallynode) in
+
+    add_arc_opt (finaltry, finallynode) !g ;
+    add_arc_opt (finalcatch, finallynode) !g;
     
 		let finalfinally = 
 				(match st3 with 

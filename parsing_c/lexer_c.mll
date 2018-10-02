@@ -142,7 +142,7 @@ let keyword_table = Common.hash_of_list [
   "ptrdiff_t", (fun ii -> Tptrdiff_t ii);
 
   "unsigned", (fun ii -> Tunsigned ii);
-  "signed",   (fun ii -> Tsigned ii);
+  (* "signed",   (fun ii -> Tsigned ii); *)
 
   "auto",     (fun ii -> Tauto ii);
   "register", (fun ii -> Tregister ii);

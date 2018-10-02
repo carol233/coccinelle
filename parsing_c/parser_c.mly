@@ -369,7 +369,7 @@ let full_type t ii =
 (*-------------------------------------------------------------------------- *)
 
 let dt s () =
-  if true then pr2 ("<" ^ s);
+  if !Flag_parsing_c.debug_etdt then pr2 ("<" ^ s);
   LP.disable_typedef ()
 
 let et s () =
@@ -868,7 +868,7 @@ attribute in the AST.
      let fn = mk_e(Ident ($3)) [] in
      mk_e(FunCall (fn,$5)) [$4; $6;] 
     }
- | cast_expr TDot Tclass   { mk_e(RecordAccess   ($1, RegularName ("class", [$3])) )[$2] }
+ /*(*| cast_expr TDot Tclass   { mk_e(RecordAccess   ($1, RegularName ("class", [$3])) )[$2] } *)*/
  | cast_expr TDot generic_opt ident_cpp { mk_e(RecordAccess   ($1,$4)) [$2] }
  /*(* TODO need new AST node*)*/
  | cast_expr Tinstanceof ident  { mk_e(Ident  (RegularName ("instanceof", [$2]))) [] }
@@ -904,6 +904,15 @@ new_argument:
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
 
+ | typedef_ident_generic TDot nested_field_access TOPar  TCPar 
+  {
+    let fn = mk_e(Ident ($3)) [] in
+       Left (mk_e(FunCall (fn, [])) [$4;$5]) }
+ | typedef_ident_generic TDot nested_field_access TOPar argument_list_ne  TCPar 
+  {
+      let fn = mk_e(Ident ($3)) [] in
+       Left (mk_e(FunCall (fn, $5)) [$4;$6]) 
+       }
   /* | type_spec
      { let ty = addTypeD ($1,nullDecl) in
        let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam ty in
@@ -945,7 +954,9 @@ primitive_types_and_typedef:
 | Tint { "int", [$1] }
 | Tfloat { "float", [$1]}
 | Tdouble { "double", [$1]}
+| Tlong { "long", [$1]}
 | TypedefIdent { mk_string_wrap $1 }
+
 
 unary_op:
  | TAnd   { GetRef,     $1 }
@@ -985,7 +996,10 @@ postfix_expr:
 
 nested_field_access:
  | ident { RegularName (mk_string_wrap $1) }
+ /*(* maybe some reflection thing, or operation on X.class? *)*/
+ | Tclass { RegularName ("class", [$1]) }
  | nested_field_access TDot ident { RegularName (mk_string_wrap $3)}
+ 
 
 primary_expr:
  | identifier_cpp  { mk_e(Ident  ($1)) [] }
@@ -1188,9 +1202,15 @@ selection:
  /* [Nasty Undisciplined Cpp] #ifdef A if e S1 else #else S2 #endif S3 */
  | TUifdef Tif TOPar expr TCPar statement Telse TUelseif statement TUendif statement
      { Ifdef_Ite2 ($4,$6,$9,$11), [$1;$2;$3;$5;$7;$8;$10] }
-| Ttry statement Tcatch TOPar union_type ident TCPar statement Tfinally statement { Try ($2, $8, Some $10), [$1;$3;$4;$7;$9;]  }
- | Ttry statement Tcatch TOPar union_type ident TCPar statement %prec SHIFTHERE { Try ($2, $8, None), [$1;$3;$4;$7] } 
+ /* | Ttry statement Tcatch TOPar union_type ident TCPar statement Tfinally statement { Try ($2, Some $8, Some $10), [$1;$3;$4;$7;$9;]  } */
+ | Ttry statement multiple_catches Tfinally statement { Try ($2, Some (fst $3), Some $5), [$1;] @ (snd $3)  @ [ $4; ]  }
+ /* | Ttry statement Tcatch TOPar union_type ident TCPar statement %prec SHIFTHERE { Try ($2, Some $8, None), [$1;$3;$4;$7] }  */
+ | Ttry statement multiple_catches %prec SHIFTHERE { Try ($2, Some (fst $3), None), [$1;] @ (snd $3) } 
+ | Ttry statement Tfinally statement { Try ($2, None, None), [$1;$3;] } 
  
+multiple_catches:
+ | Tcatch TOPar union_type ident TCPar statement { $6, [$1; $2; $5] }
+ | multiple_catches Tcatch TOPar union_type ident TCPar statement {$7, [$2; $3; $6]}
 
 union_type:
 /*(* Java supports union types for exceptions *)*/
@@ -1247,6 +1267,7 @@ jump:
  | Tgoto ident_cpp  { Goto ($2),  [$1] }
  | Tcontinue    { Continue,       [$1] }
  | Tbreak       { Break,          [$1] }
+ | Tbreak ident_cpp   { Break,          [$1] } /*(* This functions more as a goto though *)*/
  | Treturn      { Return,         [$1] }
  | Treturn expr { ReturnExpr $2,  [$1] }
  | Treturn TypedefIdent TDot Tclass { Return,  [$1] } /*(* probably uninteresting case *)*/
@@ -1385,7 +1406,7 @@ type_spec2:
  | Tunsigned            { Left3 UnSigned, [$1]}
  | struct_or_union_spec { Right3 (fst $1), snd $1 }
  /*(* | TIdent               { Right3 (StructUnionName (Struct, fst $1)), [snd $1] } class, treat it as a struct *)*/
- | enum_spec            { Right3 (fst $1), snd $1 }
+ /* | enum_spec            { Right3 (fst $1), snd $1 } */
  | Tdecimal TOPar const_expr TComma const_expr TCPar
      { Right3 (Decimal($3,Some $5)), [$1;$2;$4;$6] }
  | Tdecimal TOPar const_expr TCPar
@@ -1673,7 +1694,7 @@ field_decls:
 
 extends: 
   | /*(* empty *)*/ { }
-  | extends Textends ident {  } /*(* TODO *)*/
+  | extends Textends comma_separated_ident {  } /*(* TODO *)*/ 
   | extends Timplements comma_separated_ident { }
 
 
@@ -1684,21 +1705,57 @@ class_body:
   | class_body class_decl { (snd $2 :: (fst $1)), snd $1 }
   | class_body init_block { $1 } 
 
+enum_body:
+  | { ([], []) }
+  | enum_body function_definition { (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
+  | enum_body enum_constants   {  $1 }
+  | enum_body field_decls { $1 } /*(* drop field names. We'll assume any non-local declaration is a field. *)*/
+  | enum_body class_decl { (snd $2 :: (fst $1)), snd $1 }
+  | enum_body init_block { $1 } 
+
+enum_constants:
+ | TIdent TPtVirg {}
+ | TIdent TComma enum_constants {}
 
 init_block:
  | Tstatic compound {}
  | compound {}
 
 comma_separated_ident_or_values:
- | comma_separated_ident_or_values TComma comma_separated_ident_or_value {}
+ | comma_separated_ident_or_values TComma ident_or_value {}
  | comma_separated_ident_or_values TComma {}
- | comma_separated_ident_or_value {}
+ | ident_or_value {}
 
-comma_separated_ident_or_value:
+ident_or_value:
  | ident_or_fun_call  {}
  | TInt {}
  | TString {}
  | TFloat {}
+ | unary_op ident_or_value {} 
+ | ident_or_value binary_op ident_or_value {}
+
+binary_op:
+ | TMul {}
+ | TDiv {}
+ | TMin {}
+ | TMax {}
+ | TMod {}
+ | TPlus {}
+ | TMinus {}
+ | TShl {}
+ | TShr {}
+ | TZeroFillShr {}
+ | TInf {}
+ | TSup {}
+ | TInfEq {}
+ | TSupEq {}
+ | TEqEq {}
+ | TNotEq {}
+ | TAnd {}
+ | TOr {}
+ | TXor {}
+ | TAndLog {}
+ | TOrLog {}
 
 comma_separated_ident:
  | comma_separated_ident TComma ident_or_fun_call {}
@@ -2132,13 +2189,13 @@ struct_decl_list_gcc:
 /*(*************************************************************************)*/
 /*(* enum *)*/
 /*(*************************************************************************)*/
-enum_spec:
+/* enum_spec:
  | Tenum        tobrace_enum enumerator_list gcc_comma_opt_struct tcbrace_enum
      { Enum (None,    $3),           [$1;$2;$5] @ $4 }
  | Tenum ident  tobrace_enum enumerator_list gcc_comma_opt_struct tcbrace_enum
      { Enum (Some (fst $2), $4),     [$1; snd $2; $3;$6] @ $5 }
  | Tenum ident
-     { EnumName (fst $2),       [$1; snd $2] }
+     { EnumName (fst $2),       [$1; snd $2] } */
 
 enumerator:
  | idente                 { $1, None     }
@@ -2568,6 +2625,11 @@ class_decl:
 
         fst $2, Namespace (fst $6, $1 :: ([snd $2] @ [$3; $4;] @ snd $6 @ [$5; $7])) 
     } */
+  | decl_spec Tenum ident extends TOBrace enum_body TCBrace  {
+	  fst $3, Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
+  | Tenum ident extends TOBrace enum_body TCBrace  {
+	  fst $2, Namespace (fst $5, $1 :: (snd $5 @ [snd $2; $4; $6])) } 
+  	
 
 class_or_interface:
  | Tclass {$1}

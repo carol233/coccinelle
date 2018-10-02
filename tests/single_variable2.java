@@ -32,5 +32,10 @@ public interface PeriodConverter extends Converter {
         for (String i : strings) {
             System.out.println("hello");
         }
+        Method method = DateFormatSymbols.class.getMethod("getInstance", new Class[] {Locale.class});
+        /** The length of the long month in millis. */
+           private static final long MILLIS_PER_MONTH = (long) (29.53056 * DateTimeConstants.MILLIS_PER_DAY);
+
+        return new java.util.SimpleTimeZone(iWallOffset, getID());
     }
 }

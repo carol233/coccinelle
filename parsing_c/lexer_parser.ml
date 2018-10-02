@@ -74,17 +74,11 @@ let new_scope() = Common.new_scope_h _typedef
 let del_scope() = Common.del_scope_h _typedef
 
 let add_typedef  s =
-  print_string "ADD TYPEDEF\n";
-  print_string s;
-  print_string "\n";
   Common.add_in_scope_h _typedef (s, TypeDefI)
 let add_ident s    = 
   Common.add_in_scope_h _typedef (s, IdentI)
 
 let add_typedef_root s =
-  print_string "ADD TYPEDEF\n";
-  print_string s;
-  print_string "\n";
   if !Flag_parsing_c.add_typedef_root
   then
     Hashtbl.add !_typedef.scoped_h s TypeDefI

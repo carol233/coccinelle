@@ -534,11 +534,7 @@ let rec lexer_function ~pass tr = fun lexbuf ->
 	Parser_c.Texec _ -> in_exec := true
       |	Parser_c.TPtVirg _ -> if !in_exec then in_exec := false
       |	_ -> 
-      print_string "CURR CONTEXT: ";
-       Lexer_parser.current_context () |> Lexer_parser.string_of_context |> print_string;
-      print_string"TOKEN START \t"; print_string (TH.str_of_tok v);
-      print_string "\t\t,\t\t";
-      print_string (TH.string_of_token v);print_string "\n";());
+    ());
 
       (match v with
 
@@ -613,12 +609,7 @@ let rec lexer_function ~pass tr = fun lexbuf ->
           end
 
       | _ ->
-      print_string "PRE_HACK: \t";
-        print_string (TH.str_of_tok v);
-        print_string "\t\t,\t\t";
-        print_string (TH.string_of_token v);
-        print_string "\n";
-
+      
           (* typedef_fix1 *)
           let v = match v with
 			| Parser_c.TIdent (s, ii) ->
@@ -648,12 +639,7 @@ let rec lexer_function ~pass tr = fun lexbuf ->
           | Parser_c.TCommentCpp _ -> lexer_function ~pass tr lexbuf
           | v ->
         tr.passed_clean <- extend_passed_clean v tr.passed_clean;
-        print_string "\tTOKEN: \t";
-        print_string (TH.str_of_tok v);
-        print_string "\t\t,\t\t";
-        print_string (TH.string_of_token v);
-        print_string "\n";
-
+        
               v
       )
     end

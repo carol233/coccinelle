@@ -2399,17 +2399,27 @@ let lookahead2 ~pass next before =
          Tfinal _| Tabstract _| Tsynchronized _) :: _) 
       -> 
       TypedefIdent (s, i1)
-  | (TIdent (s, i1) :: TDot (i2) :: rest, _) 
-      when (LP.is_top_or_struct (LP.current_context ()))
+  | (TIdent (s, i1) :: TDot (i2) :: rest, prev :: _) 
+      when
+      (*  (LP.is_top_or_struct (LP.current_context ())) &&  *)
+      is_new prev
+
         -> 
         TypedefIdent (s, i1)
       
   | (TypedefIdent (s, i1) :: TDot _ :: TIdent (s2,  i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
                                                                                  (* not (LP.is_top_or_struct (LP.curent_context ())) *)
-                                                                                 not (is_end_of_something prev)
+                                                                                 not (is_end_of_something prev) &&
+                                                                                 not (is_new prev)
      ->
      (* Trick it into thinking its a record access*)
      TIdent(s, i1)
+  | (TypedefIdent (s, i1) :: TDot _ :: Tclass (i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
+          (* not (LP.is_top_or_struct (LP.curent_context ())) *)
+          not (is_end_of_something prev)
+      ->
+      (* Trick it into thinking its a record access*)
+      TIdent(s, i1)
   | (TypedefIdent (s, i1) :: TDot _ :: TypedefIdent (s2,  i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
      (* not (LP.is_top_or_struct (LP.curent_context ())) *)
      not (is_end_of_something prev)
@@ -2424,7 +2434,8 @@ let lookahead2 ~pass next before =
     TypedefIdent (s, i1) 
 
 
-  | (TIdent (s, i1)) :: rest, Tnew _ :: _ 
+  | (TIdent (s, i1) :: next :: rest, Tnew _ :: _ )
+    when not (is_new next)
     ->
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 

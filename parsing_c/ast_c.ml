@@ -514,7 +514,7 @@ and statement = statementbis wrap3
 	 | If     of expression * statement * statement
 	 | Switch of expression * statement
 	 (* try/catch/finally *)
-	 | Try    of statement * statement * statement option
+	 | Try    of statement * statement option * statement option
 	 (* #ifdef A if e S1 else #endif S2 *)
 	 | Ifdef_Ite of expression * statement * statement
 	 (* #ifdef A if e S1 else #else S2 #endif S3 *)
