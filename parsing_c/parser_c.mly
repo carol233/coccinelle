@@ -859,19 +859,6 @@ attribute in the AST.
  | topar2 attributes type_name tcpar2 cast_expr { failwith "bad" }
 */
 
-| cast_expr TDot nested_field_access { mk_e(RecordAccess ($1,$3)) [$2] }
- | cast_expr TDot nested_field_access TOPar TCPar {
-     let fn = mk_e(Ident ($3)) [] in
-    mk_e(FunCall (fn,[])) [$4; $5;] 
-    }
- | cast_expr TDot nested_field_access TOPar argument_list_ne TCPar { 
-     let fn = mk_e(Ident ($3)) [] in
-     mk_e(FunCall (fn,$5)) [$4; $6;] 
-    }
- /*(*| cast_expr TDot Tclass   { mk_e(RecordAccess   ($1, RegularName ("class", [$3])) )[$2] } *)*/
- | cast_expr TDot generic_opt ident_cpp { mk_e(RecordAccess   ($1,$4)) [$2] }
- /*(* TODO need new AST node*)*/
- | cast_expr Tinstanceof ident  { mk_e(Ident  (RegularName ("instanceof", [$2]))) [] }
 
 unary_expr:
  | postfix_expr                    { $1 }
@@ -881,13 +868,12 @@ unary_expr:
  | Tsizeof unary_expr              { mk_e(SizeOfExpr ($2))    [$1] }
  | Tsizeof topar2 type_name tcpar2 { mk_e(SizeOfType ($3))    [$1;$2;$4] }
  
- | Tnew new_argument               { mk_e(New (None, $2))     [$1] }
- | Tnew TOPar argument_list_ne TCPar new_argument { mk_e(New (Some $3, $5))             [$1; $2; $4] }
  | Tdelete cast_expr               { mk_e(Delete(false, $2))  [$1] }
  | Tdelete TOCro TCCro cast_expr   { mk_e(Delete(true, $4))   [$1;$2;$3] }
  | Tdefined identifier_cpp         { mk_e(Defined $2)         [$1] }
  | Tdefined TOPar identifier_cpp TCPar
  { mk_e(Defined $3) [$1;$2;$4] }
+
 
 new_argument:
 
@@ -986,6 +972,23 @@ postfix_expr:
  | postfix_expr TInc          { mk_e(Postfix ($1, Inc)) [$2] }
  | postfix_expr TDec          { mk_e(Postfix ($1, Dec)) [$2] }
 
+
+ | Tnew new_argument               { mk_e(New (None, $2))     [$1] }
+ | Tnew TOPar argument_list_ne TCPar new_argument { mk_e(New (Some $3, $5))             [$1; $2; $4] }
+ 
+ | postfix_expr TDot nested_field_access { mk_e(RecordAccess ($1,$3)) [$2] }
+ /* | postfix_expr TDot nested_field_access TOPar TCPar {
+     let fn = mk_e(Ident ($3)) [] in
+    mk_e(FunCall (fn,[])) [$4; $5;] 
+    } */
+ /* | postfix_expr TDot nested_field_access TOPar argument_list_ne TCPar { 
+     let fn = mk_e(Ident ($3)) [] in
+     mk_e(FunCall (fn,$5)) [$4; $6;] 
+    } */
+ /*(*| postfix_expr TDot Tclass   { mk_e(RecordAccess   ($1, RegularName ("class", [$3])) )[$2] } *)*/
+ | postfix_expr TDot generic_opt ident_cpp { mk_e(RecordAccess   ($1,$4)) [$2] }
+ /*(* TODO need new AST node*)*/
+ | postfix_expr Tinstanceof ident  { mk_e(Ident  (RegularName ("instanceof", [$2]))) [] }
 
 
  /*(* gccext: also called compound literals *)*/
@@ -1209,13 +1212,14 @@ selection:
  | Ttry statement Tfinally statement { Try ($2, None, None), [$1;$3;] } 
  
 multiple_catches:
- | Tcatch TOPar union_type ident TCPar statement { $6, [$1; $2; $5] }
- | multiple_catches Tcatch TOPar union_type ident TCPar statement {$7, [$2; $3; $6]}
+ | Tcatch TOPar union_type TIdent TCPar statement { $6, [$1; $2; $5] }
+ | multiple_catches Tcatch TOPar union_type TIdent TCPar statement {$7, [$2; $3; $6]}
 
 union_type:
 /*(* Java supports union types for exceptions *)*/
  | ident {}
  | ident TOr union_type {}
+ | type_qualif union_type {}
 
 iteration:
  | Twhile TOPar expr TCPar statement
@@ -1439,7 +1443,11 @@ type_spec2:
       let name = RegularName (mk_string_wrap $1) in
       Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
     }
-
+| TypedefIdent TDot nested_field_access generic_opt
+    {
+      let name = RegularName (mk_string_wrap $1) in
+      Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
+    }
  | Ttypeof TOPar assign_expr TCPar { Right3 (TypeOfExpr ($3)), [$1;$2;$4] }
  | Ttypeof TOPar type_name   TCPar { Right3 (TypeOfType ($3)), [$1;$2;$4] }
 
@@ -1563,6 +1571,7 @@ direct_d:
        (fst $1,fun x->(snd $1)
        (mk_ty (FunctionType (x, $3)) [$2;$4]))
      }
+ 
 
 
 /*(*----------------------------*)*/
@@ -1687,6 +1696,26 @@ parameter_decl2:
          p_register = hasreg, iihasreg;
        }
      }
+| TDefParamVariadic declaratorp
+      {
+	let name = RegularName (mk_string_wrap $1) in
+	{ 
+		p_namei = Some name;
+		(* TODO type is array*)
+		p_type = mk_ty NoType [];
+		p_register = (false, []);
+	}
+       }
+| type_qualif TDefParamVariadic declaratorp
+      {
+	let name = RegularName (mk_string_wrap $2) in
+	{ 
+		p_namei = Some name;
+		(* TODO type is array*)
+		p_type = mk_ty NoType [];
+		p_register = (false, []);
+	}
+       }
 
 field_decls:
   | decl {} /*(* parse and throw away*)*/
@@ -1913,11 +1942,12 @@ decl_spec2:
  | type_qualif        { ([], {nullDecl with qualifD  = (fst $1, [snd $1]) }) }
  | Tinline            { ([], {nullDecl with inlineD = (true, [$1]) }) }
  | attribute          { ([$1], nullDecl) }
+ 
  | decl_spec2 type_spec           {(fst $1, addTypeD    ($2, snd $1)) }
  | decl_spec2 type_qualif         { (fst $1, addQualifD  ($2, snd $1)) }
  | decl_spec2 Tinline             { (fst $1, addInlineD ((true, $2), snd $1)) }
  | decl_spec2 attribute           { ($2::(fst $1), snd $1) }
-
+ | decl_spec2 generic_opt         { $1 }
 
 
 /*(* can simplify by putting all in _opt ? must have at least one otherwise
@@ -2262,6 +2292,7 @@ start_fun2:
        let (id, attrs) = $3 in
        (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $2)@attrs)
      }  
+
    | Tconstructorname topar            tcpar throws_opt 
    {
        let returnType = mk_ty (TypeName (RegularName (fst $1, [snd $1]), Ast_c.noTypedefDef())) [] in 
