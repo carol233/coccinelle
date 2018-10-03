@@ -2518,6 +2518,12 @@ let lookahead2 ~pass next before =
     ->
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
+  (* for (X.Y . X needs to be a typedef *)
+  | (TIdent (s, i1) :: TDot _ :: identlike :: rest, (TOPar _) :: Tfor _ ::  _ )
+	when is_ident identlike
+	->
+	LP.add_typedef_root s;
+	TypedefIdent (s, i1) 
 
  
 

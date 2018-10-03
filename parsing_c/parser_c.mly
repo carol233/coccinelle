@@ -1020,7 +1020,7 @@ postfix_expr:
      { mk_e(Constructor ($2, (InitList (List.rev $5),[$4;$7] @ $6))) [$1;$3] } */
 
 nested_field_access:
- | ident { RegularName (mk_string_wrap $1) }
+ | ident {  RegularName (mk_string_wrap $1) }
  /*(* maybe some reflection thing, or operation on X.class? *)*/
  | Tclass { RegularName ("class", [$1]) }
  | nested_field_access TDot ident { RegularName (mk_string_wrap $3)}
@@ -2721,8 +2721,9 @@ class_or_interface:
 
 /*(* Things to ignore *)*/
 import:
- | Timport Tstatic expr TPtVirg { [$1; $2; $4] }
- | Timport Tstatic TypedefIdent TDot nested_field_access  TPtVirg { [$1; $2; $4] }
+  | Timport Tstatic ident TDot nested_field_access TPtVirg { [$1; $6] }
+ | Timport Tstatic ident TDot nested_field_access TDot TMul TPtVirg { [$1; $6] }
+ | Timport Tstatic ident TDot TMul TPtVirg { [$1; $6] }
  /* | Timport TIdent TPtVirg { [$1; $3] } */
  | Timport ident TDot nested_field_access TPtVirg { [$1; $5] }
  | Timport ident TDot nested_field_access TDot TMul TPtVirg { [$1; $5] }

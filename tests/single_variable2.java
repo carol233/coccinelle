@@ -61,7 +61,10 @@ public interface PeriodConverter extends Converter {
     @Test(expected = IllegalArgumentException.class)
     public void testMedian_emptyItems() {
         assert 1 == 1;
+        for (Map.Entry<String, BackgroundInitializer<?>> e : inits.entrySet()) {
         ObjectUtils.<String> median();
+
+        }
     }
 
 }

@@ -91,15 +91,13 @@ import java.util.concurrent.ExecutorService;
  * by {@code MultiBackgroundInitializer} waits forever.
  * </p>
  *
- * @since 3.0
  * @version $Id$
  */
 public class MultiBackgroundInitializer
         extends
         BackgroundInitializer<MultiBackgroundInitializer.MultiBackgroundInitializerResults> {
     /** A map with the child initializers. */
-    private final Map<String, BackgroundInitializer<?>> childInitializers =
-        new HashMap<String, BackgroundInitializer<?>>();
+    private final Map<String, BackgroundInitializer<?>> childInitializers = new HashMap<String, BackgroundInitializer<?>>();
 
     /**
      * Creates a new instance of {@code MultiBackgroundInitializer}.
@@ -115,7 +113,7 @@ public class MultiBackgroundInitializer
      * @param exec the {@code ExecutorService} for executing the background
      * tasks
      */
-    public MultiBackgroundInitializer(final ExecutorService exec) {
+    public MultiBackgroundInitializer(ExecutorService exec) {
         super(exec);
     }
 
@@ -131,7 +129,7 @@ public class MultiBackgroundInitializer
      * @throws IllegalArgumentException if a required parameter is missing
      * @throws IllegalStateException if {@code start()} has already been called
      */
-    public void addInitializer(final String name, final BackgroundInitializer<?> init) {
+    public void addInitializer(String name, BackgroundInitializer<?> init) {
         if (name == null) {
             throw new IllegalArgumentException(
                     "Name of child initializer must not be null!");
@@ -164,7 +162,7 @@ public class MultiBackgroundInitializer
     protected int getTaskCount() {
         int result = 1;
 
-        for (final BackgroundInitializer<?> bi : childInitializers.values()) {
+        for (BackgroundInitializer<?> bi : childInitializers.values()) {
             result += bi.getTaskCount();
         }
 
@@ -191,8 +189,8 @@ public class MultiBackgroundInitializer
         }
 
         // start the child initializers
-        final ExecutorService exec = getActiveExecutor();
-        for (final BackgroundInitializer<?> bi : inits.values()) {
+        ExecutorService exec = getActiveExecutor();
+        for (BackgroundInitializer<?> bi : inits.values()) {
             if (bi.getExternalExecutor() == null) {
                 // share the executor service if necessary
                 bi.setExternalExecutor(exec);
@@ -201,12 +199,12 @@ public class MultiBackgroundInitializer
         }
 
         // collect the results
-        final Map<String, Object> results = new HashMap<String, Object>();
-        final Map<String, ConcurrentException> excepts = new HashMap<String, ConcurrentException>();
-        for (final Map.Entry<String, BackgroundInitializer<?>> e : inits.entrySet()) {
+        Map<String, Object> results = new HashMap<String, Object>();
+        Map<String, ConcurrentException> excepts = new HashMap<String, ConcurrentException>();
+        for (Map.Entry<String, BackgroundInitializer<?>> e : inits.entrySet()) {
             try {
                 results.put(e.getKey(), e.getValue().get());
-            } catch (final ConcurrentException cex) {
+            } catch (ConcurrentException cex) {
                 excepts.put(e.getKey(), cex);
             }
         }
@@ -244,9 +242,9 @@ public class MultiBackgroundInitializer
          * @param excepts the exceptions
          */
         private MultiBackgroundInitializerResults(
-                final Map<String, BackgroundInitializer<?>> inits,
-                final Map<String, Object> results,
-                final Map<String, ConcurrentException> excepts) {
+                Map<String, BackgroundInitializer<?>> inits,
+                Map<String, Object> results,
+                Map<String, ConcurrentException> excepts) {
             initializers = inits;
             resultObjects = results;
             exceptions = excepts;
@@ -260,7 +258,7 @@ public class MultiBackgroundInitializer
          * @return the {@code BackgroundInitializer} with this name
          * @throws NoSuchElementException if the name cannot be resolved
          */
-        public BackgroundInitializer<?> getInitializer(final String name) {
+        public BackgroundInitializer<?> getInitializer(String name) {
             return checkName(name);
         }
 
@@ -276,7 +274,7 @@ public class MultiBackgroundInitializer
          * BackgroundInitializer}
          * @throws NoSuchElementException if the name cannot be resolved
          */
-        public Object getResultObject(final String name) {
+        public Object getResultObject(String name) {
             checkName(name);
             return resultObjects.get(name);
         }
@@ -289,7 +287,7 @@ public class MultiBackgroundInitializer
          * @return a flag whether this initializer caused an exception
          * @throws NoSuchElementException if the name cannot be resolved
          */
-        public boolean isException(final String name) {
+        public boolean isException(String name) {
             checkName(name);
             return exceptions.containsKey(name);
         }
@@ -304,7 +302,7 @@ public class MultiBackgroundInitializer
          * @return the exception thrown by this initializer
          * @throws NoSuchElementException if the name cannot be resolved
          */
-        public ConcurrentException getException(final String name) {
+        public ConcurrentException getException(String name) {
             checkName(name);
             return exceptions.get(name);
         }
@@ -339,8 +337,8 @@ public class MultiBackgroundInitializer
          * @return the initializer with this name
          * @throws NoSuchElementException if the name is unknown
          */
-        private BackgroundInitializer<?> checkName(final String name) {
-            final BackgroundInitializer<?> init = initializers.get(name);
+        private BackgroundInitializer<?> checkName(String name) {
+            BackgroundInitializer<?> init = initializers.get(name);
             if (init == null) {
                 throw new NoSuchElementException(
                         "No child initializer with name " + name);
