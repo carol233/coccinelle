@@ -517,7 +517,7 @@ let args_to_params l pb =
        Textends Timplements Tsuper
 
 %token <Ast_c.info>
-       Tthrows Tthrow
+       Tthrows Tthrow Tassert
 
 %token <Ast_c.info>
        Timport Tpackage
@@ -889,6 +889,12 @@ new_argument:
     Left (mk_e(AnonymousClassDecl (Namespace (fst $5,  []) )) [])
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
+  | typedef_ident_generic TOPar argument_list_ne TCPar TOBrace class_body TCBrace 
+    
+ {
+    Left (mk_e(AnonymousClassDecl (Namespace (fst $6,  []) )) [])
+    (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
+ }
 
  | typedef_ident_generic TDot nested_field_access TOPar  TCPar 
   {
@@ -916,32 +922,47 @@ new_argument:
 	   Right(ArgType pty)
        | _ -> raise (Impossible 88)
      } */
- | primitive_types_and_typedef TOCro TCCro /*(* declaring new array: e.g. new String[] *)*/
+ | primitive_types_and_typedef array_types /*(* declaring new array: e.g. new String[] *)*/
  {
 	 (* TODO maybe new syntax in AST is needed here *)
 	  let fn = mk_e(Ident (RegularName ( $1))) [] in
-       Left (mk_e(FunCall (fn, [])) [$2;$3]) 
+       Left (mk_e(FunCall (fn, [])) $2) 
  }
-  | primitive_types_and_typedef TOCro expr TCCro /*(* declaring new array: e.g. new String[] *)*/
- {
-	 (* TODO maybe new syntax in AST is needed here *)
-	  let fn = mk_e(Ident (RegularName ( $1))) [] in
-       Left (mk_e(FunCall (fn, [])) [$2;$4]) 
- }
-  | primitive_types_and_typedef TOCro TCCro TOBrace comma_separated_ident_or_values TCBrace  /*(* declaring new array: e.g. new String[] {"hello, "world"} *)*/
- {
-	 (* TODO maybe new syntax in AST is needed here *)
-	  let fn = mk_e(Ident (RegularName ( $1))) [] in
-       Left (mk_e(FunCall (fn, [])) [$2;$4]) 
- }
+
+
+array_types:
+ | TOCro TCCro  { [$1; $2;] }
+ | TOCro expr TCCro { [$1; $3;]}
+ | array_types TOCro TCCro  {[$2; $3;]}
+ | array_types TOCro expr TCCro  {[$2; $4;]}
+ | array_types brace_wrapped_comma_separated_ident_or_values  /*(* initializing *)*/
+   {$1}
+
+/*(* TODO this is wrong, but i am too tired now to figure this out *)*/
+brace_wrapped_comma_separated_ident_or_values:
+
+ | TOBrace comma_separated_ident_or_values TCBrace {}
+ | TOBrace brace_wrapped_comma_separated_ident_or_values TComma brace_wrapped_comma_separated_ident_or_values TCBrace {}
+ | TOBrace brace_wrapped_comma_separated_ident_or_values TComma brace_wrapped_comma_separated_ident_or_values TComma TCBrace {}
+
+ /* brace_wrapped_comma_separated_ident_or_values2:
+ | {}
+ | brace_wrapped_comma_separated_ident_or_values2 TCBrace {}
+ | comma_separated_ident_or_values TComma  brace_wrapped_comma_separated_ident_or_values2 {}
+  */
 
 primitive_types_and_typedef:
 | Tchar { "char", [$1] }
 | Tint { "int", [$1] }
 | Tfloat { "float", [$1]}
 | Tdouble { "double", [$1]}
+| Tshort { "short", [$1]}
 | Tlong { "long", [$1]}
 | TypedefIdent { mk_string_wrap $1 }
+/* | primitive_types_and_typedef TOCro TCCro { $1 }
+| primitive_types_and_typedef TOCro expr TCCro { $1 }
+| primitive_types_and_typedef TOCro expr TCCro TOBrace comma_separated_ident_or_values TCBrace  /*(* declaring new array: e.g. new String[] {"hello, "world"} *)*/
+  /* { $1 } */ 
 
 
 unary_op:
@@ -975,7 +996,7 @@ postfix_expr:
 
  | Tnew new_argument               { mk_e(New (None, $2))     [$1] }
  | Tnew TOPar argument_list_ne TCPar new_argument { mk_e(New (Some $3, $5))             [$1; $2; $4] }
- 
+
  | postfix_expr TDot nested_field_access { mk_e(RecordAccess ($1,$3)) [$2] }
  /* | postfix_expr TDot nested_field_access TOPar TCPar {
      let fn = mk_e(Ident ($3)) [] in
@@ -988,7 +1009,8 @@ postfix_expr:
  /*(*| postfix_expr TDot Tclass   { mk_e(RecordAccess   ($1, RegularName ("class", [$3])) )[$2] } *)*/
  | postfix_expr TDot generic_opt ident_cpp { mk_e(RecordAccess   ($1,$4)) [$2] }
  /*(* TODO need new AST node*)*/
- | postfix_expr Tinstanceof ident  { mk_e(Ident  (RegularName ("instanceof", [$2]))) [] }
+ | postfix_expr Tinstanceof type_spec  { mk_e(Ident  (RegularName ("instanceof", [$2]))) [] }
+ 
 
 
  /*(* gccext: also called compound literals *)*/
@@ -1270,6 +1292,7 @@ iteration:
 jump:
  | Tgoto ident_cpp  { Goto ($2),  [$1] }
  | Tcontinue    { Continue,       [$1] }
+ | Tcontinue  ident_cpp  { Continue,       [$1] }
  | Tbreak       { Break,          [$1] }
  | Tbreak ident_cpp   { Break,          [$1] } /*(* This functions more as a goto though *)*/
  | Treturn      { Return,         [$1] }
@@ -1277,6 +1300,7 @@ jump:
  | Treturn TypedefIdent TDot Tclass { Return,  [$1] } /*(* probably uninteresting case *)*/
  | Tgoto TMul expr { GotoComputed $3, [$1;$2] }
  | Tthrow expr { ReturnExpr ($2), [$1] }
+ | Tassert expr { ReturnExpr ($2), [$1] } /*(* TODO Wrong, but this shouldn't affect analysis that much.. **/
 
 
 class_as_expr:
@@ -1415,7 +1439,7 @@ type_spec2:
      { Right3 (Decimal($3,Some $5)), [$1;$2;$4;$6] }
  | Tdecimal TOPar const_expr TCPar
      { Right3 (Decimal($3,None)), [$1;$2;$4] }
- | type_spec2 TOCro TCCro { Right3 (Array (None, (full_type $1 [$2; $3;]))), [$2; $3;] }
+ | type_spec2 TOCro TCCro {  Right3 (Array (None, (full_type $1 [$2; $3;]))), [$2; $3;] }
 
  /*
  (* parse_typedef_fix1: cant put: TIdent {} cos it make the grammar
@@ -1450,6 +1474,8 @@ type_spec2:
     }
  | Ttypeof TOPar assign_expr TCPar { Right3 (TypeOfExpr ($3)), [$1;$2;$4] }
  | Ttypeof TOPar type_name   TCPar { Right3 (TypeOfType ($3)), [$1;$2;$4] }
+
+ /* | enum_spec { Right3 (fst $1), snd $1 } */
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
@@ -1744,6 +1770,7 @@ enum_body:
 
 enum_constants:
  | TIdent TPtVirg {}
+ | TIdent {}
  | TIdent TComma enum_constants {}
 
 init_block:
@@ -1942,12 +1969,13 @@ decl_spec2:
  | type_qualif        { ([], {nullDecl with qualifD  = (fst $1, [snd $1]) }) }
  | Tinline            { ([], {nullDecl with inlineD = (true, [$1]) }) }
  | attribute          { ([$1], nullDecl) }
- 
+  
  | decl_spec2 type_spec           {(fst $1, addTypeD    ($2, snd $1)) }
  | decl_spec2 type_qualif         { (fst $1, addQualifD  ($2, snd $1)) }
  | decl_spec2 Tinline             { (fst $1, addInlineD ((true, $2), snd $1)) }
  | decl_spec2 attribute           { ($2::(fst $1), snd $1) }
  | decl_spec2 generic_opt         { $1 }
+
 
 
 /*(* can simplify by putting all in _opt ? must have at least one otherwise
@@ -1960,7 +1988,7 @@ decl_spec2:
  
  
 generic_opt:
- | TInf generic_list  {}
+ | TInf generic_list  { }
  | TInf TSup {}
  /* | TInf TIdent TSup {} */
  /*(*
@@ -1979,7 +2007,8 @@ generic_list:
 
 
 ident_or_wildcard:
-  | ident {}
+  | ident {  }
+  | ident TDot ident_or_wildcard {}
   | ident TOCro TCCro {}
   | ident Textends ident_or_wildcard {   }
   | ident Tsuper ident_or_wildcard {     }
@@ -2227,6 +2256,13 @@ struct_decl_list_gcc:
  | Tenum ident
      { EnumName (fst $2),       [$1; snd $2] } */
 
+enum_spec:
+ | Tenum ident  tobrace_enum enumerator_list gcc_comma_opt_struct tcbrace_enum
+     { Enum (Some (fst $2), $4),     [$1; snd $2; $3;$6] @ $5 }
+
+
+ 
+
 enumerator:
  | idente                 { $1, None     }
  | idente  TEq const_expr { $1, Some ($2, $3) }
@@ -2300,12 +2336,26 @@ start_fun2:
        let ty = mk_ty (FunctionType (returnType, (([], (false, []))))) [$2;$3] in
        (RegularName ("", Ast_c.noii), ty, ((NoSto, false),[] ), Ast_c.noattr )
    }
+   | decl_spec Tconstructorname topar            tcpar throws_opt 
+   {
+       let returnType = mk_ty (TypeName (RegularName (fst $2, [snd $2]), Ast_c.noTypedefDef())) [] in 
+       (*let ret = mk_ty NoType [] in*)
+       let ty = mk_ty (FunctionType (returnType, (([], (false, []))))) [$3;$4] in
+       (RegularName ("", Ast_c.noii), ty, ((NoSto, false),[] ), Ast_c.noattr )
+   }
 
    | Tconstructorname topar parameter_type_list tcpar throws_opt 
    {
        let returnType = mk_ty (TypeName (RegularName (fst $1, [snd $1]), Ast_c.noTypedefDef())) [] in 
        (*let ret = mk_ty NoType [] in*)
        let ty = mk_ty (FunctionType (returnType, $3)) [$2;$4] in
+       (RegularName ("", Ast_c.noii ), ty, ((NoSto, false),[] ), Ast_c.noattr )
+   }
+   | decl_spec Tconstructorname topar parameter_type_list tcpar throws_opt 
+   {
+       let returnType = mk_ty (TypeName (RegularName (fst $2, [snd $2]), Ast_c.noTypedefDef())) [] in 
+       (*let ret = mk_ty NoType [] in*)
+       let ty = mk_ty (FunctionType (returnType, $4)) [$3;$5] in
        (RegularName ("", Ast_c.noii ), ty, ((NoSto, false),[] ), Ast_c.noattr )
    }
 
@@ -2658,6 +2708,8 @@ class_decl:
     } */
   | decl_spec Tenum ident extends TOBrace enum_body TCBrace  {
 	  fst $3, Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
+  | annotation_list decl_spec Tenum ident extends TOBrace enum_body TCBrace  {
+	  fst $4, Namespace (fst $7, $3 :: (snd $7 @ [snd $4; $6; $8])) } 
   | Tenum ident extends TOBrace enum_body TCBrace  {
 	  fst $2, Namespace (fst $5, $1 :: (snd $5 @ [snd $2; $4; $6])) } 
   	
@@ -2670,8 +2722,11 @@ class_or_interface:
 /*(* Things to ignore *)*/
 import:
  | Timport Tstatic expr TPtVirg { [$1; $2; $4] }
- | Timport expr TPtVirg { [$1; $3] }
- | Timport TypedefIdent TDot nested_field_access TPtVirg { [$1; $5] }
+ | Timport Tstatic TypedefIdent TDot nested_field_access  TPtVirg { [$1; $2; $4] }
+ /* | Timport TIdent TPtVirg { [$1; $3] } */
+ | Timport ident TDot nested_field_access TPtVirg { [$1; $5] }
+ | Timport ident TDot nested_field_access TDot TMul TPtVirg { [$1; $5] }
+ | Timport ident TDot TMul TPtVirg { [$1; $5] }
 
 annotation:
  | Tannotate { }

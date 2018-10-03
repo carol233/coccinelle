@@ -296,11 +296,26 @@ let is_new t =
   | Tnew _ -> true
   | _ -> false
 
+let is_definite_type_indicator t =
+  match t with 
+  | Tinstanceof _ 
+  | Textends _ 
+  | Timplements _ 
+   -> true
+  | _ -> false
+
 let is_end_of_something t =
   match t with 
   | TCBrace _ -> true
   | TPtVirg _ -> true
   | TOBrace _ -> true
+  (* | TOPar _ -> true *)
+  | _ -> false
+
+let is_ident t  =
+  match t with 
+  | TIdent _ -> true
+  | TypedefIdent _ -> true
   | _ -> false
 
 (*****************************************************************************)
@@ -2398,41 +2413,118 @@ let lookahead2 ~pass next before =
         (Tstatic _| Tprivate _| Tpublic _| Tprotected _ |
          Tfinal _| Tabstract _| Tsynchronized _) :: _) 
       -> 
+      LP.add_typedef_root s;
       TypedefIdent (s, i1)
   | (TIdent (s, i1) :: TDot (i2) :: rest, prev :: _) 
       when
       (*  (LP.is_top_or_struct (LP.current_context ())) &&  *)
       is_new prev
 
-        -> 
+	-> 
+	LP.add_typedef_root s;
         TypedefIdent (s, i1)
       
   | (TypedefIdent (s, i1) :: TDot _ :: TIdent (s2,  i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
                                                                                  (* not (LP.is_top_or_struct (LP.curent_context ())) *)
                                                                                  not (is_end_of_something prev) &&
-                                                                                 not (is_new prev)
+										 not (is_new prev) &&
+										 not (is_definite_type_indicator prev)
      ->
      (* Trick it into thinking its a record access*)
+     
      TIdent(s, i1)
+
+     (* e.g. X.<String>method *)
+  | (TypedefIdent (s, i1) :: TDot _ :: TInf _ :: TIdent (s2, i2) :: TSup _ :: TIdent (s3,  i3) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
+	(* not (LP.is_top_or_struct (LP.curent_context ())) *)
+	(* not (is_end_of_something prev) && *)
+	not (is_new prev) &&
+	not (is_definite_type_indicator prev)
+	->
+	(* Trick it into thinking its a record access*)
+
+	TIdent(s, i1)
+  (* return X.Y *)
+  | (TypedefIdent (s, i1) :: TDot _ :: rest, Treturn _  :: _ )
+    ->
+    (* Trick it into thinking its a record access*)
+    
+    TIdent (s, i1) 
   | (TypedefIdent (s, i1) :: TDot _ :: Tclass (i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
           (* not (LP.is_top_or_struct (LP.curent_context ())) *)
-          not (is_end_of_something prev)
+          not (is_end_of_something prev) 
+	  
       ->
       (* Trick it into thinking its a record access*)
+      
       TIdent(s, i1)
   | (TypedefIdent (s, i1) :: TDot _ :: TypedefIdent (s2,  i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
      (* not (LP.is_top_or_struct (LP.curent_context ())) *)
-     not (is_end_of_something prev)
+     not (is_end_of_something prev)  && 
+     not (is_definite_type_indicator prev)
     ->
     (* Trick it into thinking its a record access*)
+    
     TIdent(s, i1)
+(* X.Something() *)
+  | (TypedefIdent (s, i1) :: TDot _ :: TIdent (s2,  i2) :: TOPar _ :: rest, prev :: _ )   
+   ->
+   (* Trick it into thinking its a record access*)
+   
+   TIdent(s, i1)
+ 
+  | (TIdent (s, i1) :: TInf i2 :: rest, prev :: _) when is_type_qualifier prev 
+    -> 
+    (* something like "final X<" is part of a type declaration*)
+    LP.add_typedef_root s;
+    TypedefIdent (s, i1)
+  | (TIdent (s, i1) :: TIdent i2 :: rest, prev :: _) when is_type_qualifier prev 
+    -> 
+    (* something like "final X Y" -> X must be a type*)
+    LP.add_typedef_root s;
+    TypedefIdent (s, i1)
+  | (TIdent (s, i1)  :: TOCro _ :: TCCro _ :: rest, prev :: _) when is_type_qualifier prev 
+    -> 
+    (* something like "final X[] " -> X must be a type*)
+    LP.add_typedef_root s;
+    TypedefIdent (s, i1)
 
   (* array type declaration*)
-  | (TIdent (s, i1) :: TOCro _ :: TCCro _ :: rest, _)
+  | (TIdent (s, i1) :: TOCro _ :: TCCro _ :: rest, prev :: _)
+    (* it is legal Java to do  something like int p[] however, so check this is the start *)
+    when is_end_of_something prev 
     -> 
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
 
+  (* type casting to array, probably not very common. Should be ok to handle here *)
+  | (TIdent (s, i1) :: TOCro _ :: TCCro _ :: TCPar _ :: rest, TOPar _ :: _)
+    -> 
+    LP.add_typedef_root s;
+    TypedefIdent (s, i1) 
+   (* any 'ident < ?' must mean that the  ident is a type*)
+  | (TIdent (s, i1) :: TInf _  :: TWhy _ ::  next :: rest, _) 
+    -> 
+    LP.add_typedef_root s;
+    TypedefIdent (s, i1) 
+    (* T[] somename() *)
+  | (TIdent (s, i1) :: TOCro _  :: TCCro _ :: TIdent _ :: TOPar _ :: next :: rest, _) 
+    -> 
+    LP.add_typedef_root s;
+    TypedefIdent (s, i1) 
+    
+  (* extends/implements/instanceof X -> X is a type*)
+  | (TIdent (s, i1) :: rest, (Textends _ | Timplements _ | Tinstanceof _) :: _ )
+    ->
+    LP.add_typedef_root s;
+    TypedefIdent (s, i1) 
+
+ 
+
+  | (TIdent ("byte", i1) :: rest, _ )
+    ->
+    LP.add_typedef_root "byte";
+    TypedefIdent ("byte", i1) 
 
   | (TIdent (s, i1) :: next :: rest, Tnew _ :: _ )
     when not (is_new next)
@@ -2442,7 +2534,20 @@ let lookahead2 ~pass next before =
 
   | TIdent (s, i1) :: rest, Tclass (i2) :: _   
     ->
+    LP.add_typedef_root s;
     TypedefIdent (s, i1)
+
+  (* type cast to some ident separated by dot. e.g. Map.Entry<String, Integer> *)
+  | (TIdent (s, i1) :: TDot i2 :: TypedefIdent (s2, i3) :: TCPar (i4) :: next :: rest, TOPar i5 :: _)
+    when is_ident next
+    ->  LP.add_typedef_root s; TypedefIdent (s, i1)
+(* < X >  means X is almost definitely a type*)
+  | (TIdent (s, i1) :: TSup _ :: rest, TInf i3 :: _)
+    
+    ->  LP.add_typedef_root s; TypedefIdent (s, i1)
+
+
+
     (*  why need TOPar condition as stated in preceding rule ? really needed ? *)
     (*   YES cos at toplevel can have some expression !! for instance when *)
     (*   enter in the dimension of an array *)
@@ -2461,6 +2566,7 @@ let lookahead2 ~pass next before =
   | TypedefIdent (s, i1) :: TOPar (i2) :: rest, (Tstatic _| Tprivate _| Tpublic _| Tprotected _ |
                              Tfinal _| Tabstract _| Tsynchronized _) :: _ 
     -> 
+    
     TIdent (s, i1)
     (* constructor *)
     (* in this case, emit a special token otherwise too much ambiguity *)
@@ -2476,6 +2582,11 @@ let lookahead2 ~pass next before =
                                                                   (LP.is_top_or_struct (LP.current_context ()) )
     -> 
     Tconstructorname (s, i1)
+    (* <V> Name( *)
+  | (TypedefIdent (s, i1) :: TOPar (i2) :: rest, TSup _ :: _) when 
+	(LP.is_top_or_struct (LP.current_context ()) )
+	-> 
+	Tconstructorname (s, i1)
 
   
 

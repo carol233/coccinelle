@@ -733,6 +733,7 @@ module Parser_c :
       | Tsuper of Ast_c.info
       | Tthrows of Ast_c.info
       | Tthrow of Ast_c.info
+      | Tassert of Ast_c.info
       | Timport of Ast_c.info
       | Tpackage of Ast_c.info
       | Trestrict of Ast_c.info

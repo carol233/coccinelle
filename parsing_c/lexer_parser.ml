@@ -35,7 +35,7 @@ open Common
 (* parse_typedef_fix *)
 let _handle_typedef = ref true
 
-let _always_look_typedef = ref false
+let _always_look_typedef = ref true
 
 (* parse_typedef_fix2 *)
 let enable_typedef ()  = _handle_typedef := true
@@ -62,6 +62,7 @@ let (_typedef : (string, identkind) Common.scoped_h_env ref) =
   ref (Common.empty_scoped_h_env ())
 
 let is_typedef s  =
+
   if !_handle_typedef || !_always_look_typedef then
   (match (Common.optionise (fun () -> Common.lookup_h_env s !_typedef)) with
   | Some TypeDefI -> true
@@ -74,11 +75,13 @@ let new_scope() = Common.new_scope_h _typedef
 let del_scope() = Common.del_scope_h _typedef
 
 let add_typedef  s =
+  
   Common.add_in_scope_h _typedef (s, TypeDefI)
 let add_ident s    = 
   Common.add_in_scope_h _typedef (s, IdentI)
 
 let add_typedef_root s =
+  
   if !Flag_parsing_c.add_typedef_root
   then
     Hashtbl.add !_typedef.scoped_h s TypeDefI

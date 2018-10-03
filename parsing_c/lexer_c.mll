@@ -145,7 +145,7 @@ let keyword_table = Common.hash_of_list [
   (* "signed",   (fun ii -> Tsigned ii); *)
 
   "auto",     (fun ii -> Tauto ii);
-  "register", (fun ii -> Tregister ii);
+  (* "register", (fun ii -> Tregister ii); *)
   "extern",   (fun ii -> Textern ii);
   "static",   (fun ii -> Tstatic ii);
 
@@ -165,6 +165,7 @@ let keyword_table = Common.hash_of_list [
 
   "throws",   (fun ii -> Tthrows ii);
   "throw",    (fun ii -> Tthrow ii);
+  "assert",    (fun ii -> Tassert ii);
   (* // java *)
 
   "const",    (fun ii -> Tconst ii);
@@ -249,7 +250,7 @@ let keyword_table = Common.hash_of_list [
 let cpp_keyword_table = Common.hash_of_list [
   "namespace", (fun ii -> Tnamespace ii);
   "new",       (fun ii -> Tnew ii);
-  "delete",    (fun ii -> Tdelete ii);
+  (* "delete",    (fun ii -> Tdelete ii); *)
   "using",     (fun ii -> TComment ii) ]
 
 let ibm_keyword_table = Common.hash_of_list [
@@ -738,7 +739,10 @@ rule token = parse
   (* the ... next to id, e.g. arg..., works with ##, e.g. ##arg *)
   | ((id as s)  "...")
       { TDefParamVariadic (s, tokinfo lexbuf) }
-
+  | ((cplusplus_ident
+      ('<'' ' * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
+      ("," " " * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * ' ' * '>') as s)  "...")
+      { TDefParamVariadic (s, tokinfo lexbuf) }
 
   (* Java annotation *)
   | "@" letter (letter | digit) * {
@@ -820,7 +824,7 @@ rule token = parse
    * truncate to 31 when compare and truncate to 6 and even lowerise
    * in the external linkage phase
    *)
-  | ("this.") ? (letter (letter | digit) * as identifier)
+  | (((letter (letter | digit) *) "." ) ?  "this.") ? (letter (letter | digit) * as identifier)
       { let info = tokinfo lexbuf in
         let s = tok lexbuf in
         Common.profile_code "C parsing.lex_ident" (fun () ->

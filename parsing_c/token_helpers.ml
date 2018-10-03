@@ -438,6 +438,7 @@ let info_of_tok = function
   | Tsuper               (i) -> i
   | Tthrows              (i) -> i
   | Tthrow               (i) -> i
+  | Tassert              (i) -> i
 
   | Timport              (i) -> i
   | Tpackage             (i) -> i
@@ -639,6 +640,7 @@ let visitor_info_of_tok f = function
   | Tsuper               (i) -> Tsuper               (f i)
   | Tthrows              (i) -> Tthrows              (f i)
   | Tthrow               (i) -> Tthrow               (f i)
+  | Tassert              (i) -> Tassert              (f i)
 
   | Timport              (i) -> Timport              (f i)
   | Tpackage             (i) -> Tpackage             (f i)
@@ -811,6 +813,7 @@ let string_of_token = function
   | Tsuper _ -> "Tsuper"
   | Tthrows _ -> "Tthrows"
   | Tthrow _ -> "Tthrow"
+  | Tassert _ -> "Tassert"
   | Timport _ -> "Timport"
   | Tpackage _ -> "Tpackage"
   | Trestrict _ -> "Trestrict"
