@@ -61,10 +61,15 @@ public interface PeriodConverter extends Converter {
     @Test(expected = IllegalArgumentException.class)
     public void testMedian_emptyItems() {
         assert 1 == 1;
-        for (Map.Entry<String, BackgroundInitializer<?>> e : inits.entrySet()) {
+        for (Map.Entry e : inits.entrySet()) {
         ObjectUtils.<String> median();
 
         }
+        Class<?>[] array1s = new Class[] {String.class};
+        Object[] params = new Object[] {"other", new Byte((byte) 128)};
+        java.util.TimeZone tz = zone.toTimeZone();
+
+        Object[] array = new Object[] {null, base, new int[] {3, 6}};
     }
 
 }

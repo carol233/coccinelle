@@ -945,11 +945,7 @@ brace_wrapped_comma_separated_ident_or_values:
  | TOBrace brace_wrapped_comma_separated_ident_or_values TComma brace_wrapped_comma_separated_ident_or_values TCBrace {}
  | TOBrace brace_wrapped_comma_separated_ident_or_values TComma brace_wrapped_comma_separated_ident_or_values TComma TCBrace {}
 
- /* brace_wrapped_comma_separated_ident_or_values2:
- | {}
- | brace_wrapped_comma_separated_ident_or_values2 TCBrace {}
- | comma_separated_ident_or_values TComma  brace_wrapped_comma_separated_ident_or_values2 {}
-  */
+
 
 primitive_types_and_typedef:
 | Tchar { "char", [$1] }
@@ -1298,6 +1294,7 @@ jump:
  | Treturn      { Return,         [$1] }
  | Treturn expr { ReturnExpr $2,  [$1] }
  | Treturn TypedefIdent TDot Tclass { Return,  [$1] } /*(* probably uninteresting case *)*/
+ | Treturn TypedefIdent { Return, [$1] }
  | Tgoto TMul expr { GotoComputed $3, [$1;$2] }
  | Tthrow expr { ReturnExpr ($2), [$1] }
  | Tassert expr { ReturnExpr ($2), [$1] } /*(* TODO Wrong, but this shouldn't affect analysis that much.. **/
@@ -1789,6 +1786,8 @@ ident_or_value:
  | TFloat {}
  | unary_op ident_or_value {} 
  | ident_or_value binary_op ident_or_value {}
+ | Tnew new_argument {}
+ /* | Tnew ident_or_fun_call {} */
 
 binary_op:
  | TMul {}
@@ -1821,9 +1820,11 @@ comma_separated_ident:
 
 ident_or_fun_call: 
  | ident {}
- | ident TDot nested_field_access {}
- | ident TDot nested_field_access TOPar TCPar  {}  
- | ident TDot nested_field_access TOPar argument_list_ne TCPar  {}  
+ | ident_or_fun_call TOPar TCPar  {}  
+ | ident_or_fun_call TOPar argument_list_ne TCPar  {}  
+ | ident_or_fun_call TDot ident_or_fun_call {}
+ | ident_or_fun_call TDot Tclass {}
+
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/

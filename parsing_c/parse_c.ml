@@ -534,6 +534,7 @@ let rec lexer_function ~pass tr = fun lexbuf ->
 	Parser_c.Texec _ -> in_exec := true
       |	Parser_c.TPtVirg _ -> if !in_exec then in_exec := false
       |	_ -> 
+      
       ());
 
       (match v with

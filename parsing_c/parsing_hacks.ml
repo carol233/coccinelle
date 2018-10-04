@@ -1952,6 +1952,54 @@ let pointer ?(followed_by=fun _ -> true)
   | TAnd _ :: rest when !Flag.c_plus_plus -> loop rest
   | _ -> false
 
+let is_part_of_method_call rest =
+  let rec loop ts = 
+    (match ts with 
+    | TDot _ :: rest -> loop rest
+    | TIdent _ :: rest -> loop rest
+    | Tclass _ :: rest -> loop rest
+    | TypedefIdent _ :: rest ->  loop rest
+    | TOPar _  :: _ -> true
+    | _ -> false)
+  in
+  loop rest 
+
+let is_part_of_assignment rest =
+  let rec loop ts = 
+    (match ts with 
+    | TDot _ :: rest -> loop rest
+    | TIdent _ :: rest -> loop rest
+    | Tclass _ :: rest -> loop rest
+    | TypedefIdent _ :: rest ->  loop rest
+    | TEq _  :: _ -> true
+    | _ -> false)
+  in
+loop rest 
+
+let is_part_of_type_declaration rest =
+  let rec loop ts = 
+	(match ts with 
+	
+	| TIdent _ :: TDot _ :: rest -> loop rest
+	| TypedefIdent _ :: TDot _ :: rest ->  loop rest
+	| (TypedefIdent _ | TIdent _)  :: (TypedefIdent _ | TIdent _)  :: rest -> true
+	| _ -> false)
+  in
+  loop rest 
+
+let is_part_of_init rest =
+	let rec loop ts = 
+		(match ts with 
+		| TDot _ :: rest -> loop rest
+		| TIdent _ :: rest -> loop rest
+		| Tclass _ :: rest -> loop rest
+		| TypedefIdent _ :: rest ->  loop rest
+		| TComma _  :: _ -> true
+		| _ -> false)
+	      in
+	    loop rest 
+
+
 let ident = function
     TIdent _ -> true
   | _ -> false
@@ -2197,11 +2245,19 @@ let lookahead2 ~pass next before =
    msg_typedef s i1 2; LP.add_typedef_root s; msg_typedef s2 i2 2; LP.add_typedef_root s2; 
    TypedefIdent (s, i1)
 
-   | TShr i1 :: rest, TypedefIdent (_, _)  :: restbef
-     -> 
-     		
-     TShr (i1)
+   (* xx.yy zz , *)
+   | (TIdent (s, i1):: TDot _ :: TIdent (s2, i2) :: TIdent  _ ::rest  , _) when not_struct_enum before
+   && ok_typedef s && not (is_macro_paren s2 rest)
+     ->
+   msg_typedef s i1 2; LP.add_typedef_root s; 
+   TypedefIdent (s, i1)
 
+  (* xx.yy.zz zz , *)
+   | (TIdent (s, i1):: TDot _ :: TIdent (s2, i2) ::TDot _ :: ident3 :: TIdent  _ ::rest  , _) when not_struct_enum before
+      && ok_typedef s && not (is_macro_paren s2 rest) && is_ident ident3
+	->
+      msg_typedef s i1 2; LP.add_typedef_root s; 
+      TypedefIdent (s, i1)
 
 
   (* xx inline *)
@@ -2422,7 +2478,28 @@ let lookahead2 ~pass next before =
 
 	-> 
 	LP.add_typedef_root s;
-        TypedefIdent (s, i1)
+	TypedefIdent (s, i1)
+
+  | (TypedefIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_method_call rest
+	-> 
+	
+	TIdent(s, i1) 
+
+   | (TypedefIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_assignment rest
+	-> 
+	
+	TIdent(s, i1)
+| (TypedefIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_init rest
+	-> 
+	
+	TIdent(s, i1) 
+	
+  | (TIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_type_declaration rest
+	-> 
+	
+	LP.add_typedef_root s;
+	TypedefIdent(s, i1)
+	
       
   | (TypedefIdent (s, i1) :: TDot _ :: TIdent (s2,  i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
                                                                                  (* not (LP.is_top_or_struct (LP.curent_context ())) *)
@@ -2442,7 +2519,7 @@ let lookahead2 ~pass next before =
 	not (is_definite_type_indicator prev)
 	->
 	(* Trick it into thinking its a record access*)
-
+	
 	TIdent(s, i1)
   (* return X.Y *)
   | (TypedefIdent (s, i1) :: TDot _ :: rest, Treturn _  :: _ )
@@ -2458,10 +2535,13 @@ let lookahead2 ~pass next before =
       (* Trick it into thinking its a record access*)
       
       TIdent(s, i1)
-  | (TypedefIdent (s, i1) :: TDot _ :: TypedefIdent (s2,  i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
+  | (TypedefIdent (s, i1) :: TDot _ :: TypedefIdent (s2,  i2) :: rest, prev :: prev2 :: _ ) when not (is_type_qualifier prev) &&
      (* not (LP.is_top_or_struct (LP.curent_context ())) *)
      not (is_end_of_something prev)  && 
-     not (is_definite_type_indicator prev)
+     not (is_definite_type_indicator prev) && 
+     (match prev2 with  (* needed to prevent `for (T.X`'s T to turn into an ident`*)
+      | Tfor _ -> false 
+      | _ -> true)
     ->
     (* Trick it into thinking its a record access*)
     
