@@ -252,7 +252,7 @@ let regexp_declare = Str.regexp
 
 (* linuxext: *)
 let regexp_foreach = Str.regexp_case_fold
-  ".*\\(for_?each\\|for_?all\\|iterate\\|loop\\|walk\\|scan\\|each\\|for\\)"
+  ".*\\(for_?each\\|for_?all\\|iterate\\|loop\\|walk\\|scan\\)"
 
 let regexp_typedef = Str.regexp
   ".*_t$"
@@ -1974,15 +1974,41 @@ let is_part_of_assignment rest =
     | TEq _  :: _ -> true
     | _ -> false)
   in
-loop rest 
+  loop rest 
+
+let is_primitive_type_array_class_access rest = 
+  let rec loop ts = 
+    (match ts with 
+    | TOCro _ :: TCCro _ :: rest -> loop rest
+    | TDot _ :: Tclass _ :: rest -> true
+    | _ -> false)
+  in
+  loop rest 
+
+let is_part_of_typecast rest =
+  let rec loop ts = 
+    (match ts with 
+    
+    | (TypedefIdent _ | TIdent _) :: TDot _ :: rest -> loop rest
+    
+    | (TypedefIdent _ | TIdent _)  :: TCPar _ :: (TypedefIdent _ | TIdent _)  :: rest -> true
+  
+    (* something.Thing[] X *)
+    | (TypedefIdent _ | TIdent _)  :: TOCro _ :: TCCro _ ::  TCPar _ :: (TypedefIdent _ | TIdent _)  :: rest -> true
+    | _ -> false)
+    in
+    loop rest 
 
 let is_part_of_type_declaration rest =
   let rec loop ts = 
 	(match ts with 
 	
-	| TIdent _ :: TDot _ :: rest -> loop rest
-	| TypedefIdent _ :: TDot _ :: rest ->  loop rest
-	| (TypedefIdent _ | TIdent _)  :: (TypedefIdent _ | TIdent _)  :: rest -> true
+	| (TypedefIdent _ | TIdent _) :: TDot _ :: rest -> loop rest
+	
+  | (TypedefIdent _ | TIdent _)  :: (TypedefIdent _ | TIdent _)  :: rest -> true
+
+  (* something.Thing[] X *)
+  | (TypedefIdent _ | TIdent _)  :: TOCro _ :: TCCro _ :: (TypedefIdent _ | TIdent _)  :: rest -> true
 	| _ -> false)
   in
   loop rest 
@@ -2109,6 +2135,16 @@ let lookahead2 ~pass next before =
       LP.disable_typedef();
       msg_typedef s i1 1; LP.add_typedef_root s;
       TypedefIdent (s, i1)
+  
+      (* X[] Y *)
+  | (TIdent(s,i1) :: TOCro _ :: TCCro _ :: TIdent(s2,i2)  :: rest, _ )
+    -> LP.add_typedef_root s;
+    TypedefIdent (s, i1)
+
+    (* any X x must mean that x is not a typedefIdent *)
+  | (TypedefIdent(s,i1) :: rest, TypedefIdent _ :: _ )
+    ->
+    TIdent (s, i1)
 
 	(* christia *)
 
@@ -2224,8 +2260,8 @@ let lookahead2 ~pass next before =
       TypedefIdent (s, i1)
 
   (* xx < yy > *)
-  | (TIdent (s, i1):: TInf _ :: TIdent (s2, i2) :: TSup _ ::rest  , _) when not_struct_enum before
-  && ok_typedef s && not (is_macro_paren s2 rest)
+  | (TIdent (s, i1):: TInf _ :: (TIdent _ | TWhy _) :: (TSup _ | Textends _ | Tsuper _ | TInf _ ) ::rest  , _) when not_struct_enum before
+  && ok_typedef s 
     ->
   msg_typedef s i1 2; LP.add_typedef_root s;
   TypedefIdent (s, i1)
@@ -2374,6 +2410,7 @@ let lookahead2 ~pass next before =
      ->
 
       msg_typedef s i1 12; LP.add_typedef_root s;
+      
       TypedefIdent (s, i1)
 
   (*------------------------------------------------------------*)
@@ -2480,15 +2517,22 @@ let lookahead2 ~pass next before =
 	LP.add_typedef_root s;
 	TypedefIdent (s, i1)
 
-  | (TypedefIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_method_call rest
+  | (TypedefIdent (s, i1) :: TDot _ :: rest, prev :: _) when is_part_of_method_call rest &&
+  not (is_new prev)
 	-> 
 	
 	TIdent(s, i1) 
 
-   | (TypedefIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_assignment rest
+   | (TypedefIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_assignment rest && not (is_part_of_type_declaration rest)
 	-> 
 	
-	TIdent(s, i1)
+  TIdent(s, i1)
+  
+  | (TIdent (s, i1) :: TDot _ :: rest, TOPar _ :: _) when is_part_of_typecast rest 
+	-> 
+    
+    TypedefIdent(s, i1)
+    
 | (TypedefIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_init rest
 	-> 
 	
@@ -2505,9 +2549,12 @@ let lookahead2 ~pass next before =
                                                                                  (* not (LP.is_top_or_struct (LP.curent_context ())) *)
                                                                                  not (is_end_of_something prev) &&
 										 not (is_new prev) &&
-										 not (is_definite_type_indicator prev)
+                     not (is_definite_type_indicator prev) &&
+                     not (is_part_of_type_declaration (TIdent (s2,  i2)  :: rest))
      ->
      (* Trick it into thinking its a record access*)
+     
+     
      
      TIdent(s, i1)
 
@@ -2518,13 +2565,17 @@ let lookahead2 ~pass next before =
 	not (is_new prev) &&
 	not (is_definite_type_indicator prev)
 	->
-	(* Trick it into thinking its a record access*)
+  (* Trick it into thinking its a record access*)
+  
+  
 	
 	TIdent(s, i1)
   (* return X.Y *)
   | (TypedefIdent (s, i1) :: TDot _ :: rest, Treturn _  :: _ )
     ->
     (* Trick it into thinking its a record access*)
+    
+    
     
     TIdent (s, i1) 
   | (TypedefIdent (s, i1) :: TDot _ :: Tclass (i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
@@ -2534,7 +2585,19 @@ let lookahead2 ~pass next before =
       ->
       (* Trick it into thinking its a record access*)
       
+      
+      
       TIdent(s, i1)
+| (TypedefIdent (s, i1) :: TOCro _ :: TCCro _ :: TDot _ :: Tclass (i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
+    (* not (LP.is_top_or_struct (LP.curent_context ())) *)
+      not (is_end_of_something prev) 
+
+  ->
+  (* Trick it into thinking its a record access*)
+  
+  
+  
+  TIdent(s, i1)
   | (TypedefIdent (s, i1) :: TDot _ :: TypedefIdent (s2,  i2) :: rest, prev :: prev2 :: _ ) when not (is_type_qualifier prev) &&
      (* not (LP.is_top_or_struct (LP.curent_context ())) *)
      not (is_end_of_something prev)  && 
@@ -2545,11 +2608,18 @@ let lookahead2 ~pass next before =
     ->
     (* Trick it into thinking its a record access*)
     
+    
+    
     TIdent(s, i1)
+ 
+   
+   
 (* X.Something() *)
   | (TypedefIdent (s, i1) :: TDot _ :: TIdent (s2,  i2) :: TOPar _ :: rest, prev :: _ )   
    ->
    (* Trick it into thinking its a record access*)
+   
+   
    
    TIdent(s, i1)
  
@@ -2567,6 +2637,7 @@ let lookahead2 ~pass next before =
     -> 
     (* something like "final X[] " -> X must be a type*)
     LP.add_typedef_root s;
+    
     TypedefIdent (s, i1)
 
   (* array type declaration*)
@@ -2574,41 +2645,94 @@ let lookahead2 ~pass next before =
     (* it is legal Java to do  something like int p[] however, so check this is the start *)
     when is_end_of_something prev 
     -> 
+    
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
 
   (* type casting to array, probably not very common. Should be ok to handle here *)
   | (TIdent (s, i1) :: TOCro _ :: TCCro _ :: TCPar _ :: rest, TOPar _ :: _)
     -> 
+    
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
    (* any 'ident < ?' must mean that the  ident is a type*)
   | (TIdent (s, i1) :: TInf _  :: TWhy _ ::  next :: rest, _) 
     -> 
+    
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
     (* T[] somename() *)
   | (TIdent (s, i1) :: TOCro _  :: TCCro _ :: TIdent _ :: TOPar _ :: next :: rest, _) 
     -> 
+    
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
     
   (* extends/implements/instanceof X -> X is a type*)
   | (TIdent (s, i1) :: rest, (Textends _ | Timplements _ | Tinstanceof _) :: _ )
     ->
+    
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
   (* for (X.Y . X needs to be a typedef *)
   | (TIdent (s, i1) :: TDot _ :: identlike :: rest, (TOPar _) :: Tfor _ ::  _ )
 	when is_ident identlike
-	->
+  ->
+  
 	LP.add_typedef_root s;
 	TypedefIdent (s, i1) 
 
- 
+ (* short.class *)
+  | Tshort ii :: TDot _ :: Tclass _ :: rest, _ 
+   -> TIdent ("short", ii)
+   (* short[].class *)
+  | (Tshort ii :: rest, _)
+    when is_primitive_type_array_class_access rest 
+  -> TIdent ("short", ii)
+   (* int.class *)
+  | Tint ii :: TDot _ :: Tclass _ :: rest, _ 
+  -> TIdent ("int", ii)
+  (* int[].class *)
+  | (Tint ii :: rest, _ )
+    when is_primitive_type_array_class_access rest
+  -> TIdent ("int", ii)
+  (* long.class *)
+  | Tlong ii :: TDot _ :: Tclass _ :: rest, _ 
+  -> TIdent ("int", ii)
+  (* long[].class *)
+  | (Tlong ii :: rest, _ )
+    when is_primitive_type_array_class_access rest
+  -> TIdent ("long", ii)
+  (* float.class *)
+  | Tfloat ii :: TDot _ :: Tclass _ :: rest, _ 
+  -> TIdent ("float", ii)
+(* float[].class *)
+  | (Tfloat ii :: rest, _) 
+    when is_primitive_type_array_class_access rest
+  -> TIdent ("float", ii)
+    (* double.class *)
+  | Tdouble ii :: TDot _ :: Tclass _ :: rest, _ 
+    -> TIdent ("double", ii)
+    (* double[].class *)
+  | (Tdouble ii :: rest, _) 
+    when is_primitive_type_array_class_access rest
+    -> TIdent ("double", ii)
+    (* char.class *)
+  | Tchar ii :: TDot _ :: Tclass _ :: rest, _ 
+    -> TIdent ("char", ii)
+     (* char[].class *)
+  | (Tchar ii :: rest, _) 
+    when is_primitive_type_array_class_access rest
 
-  | (TIdent ("byte", i1) :: rest, _ )
+  -> TIdent ("char", ii)
+    | Tvoid ii :: TDot _ :: Tclass _ :: rest, _ 
+    -> TIdent ("void", ii)
+
+
+  | (TIdent ("byte", i1) ::  rest, _ )
+    when not (is_primitive_type_array_class_access rest)
     ->
+    
     LP.add_typedef_root "byte";
     TypedefIdent ("byte", i1) 
 
@@ -2618,7 +2742,7 @@ let lookahead2 ~pass next before =
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
 
-  | TIdent (s, i1) :: rest, Tclass (i2) :: _   
+  | TIdent (s, i1) :: rest, (Tclass _ | Tinterface _ ) :: _   
     ->
     LP.add_typedef_root s;
     TypedefIdent (s, i1)

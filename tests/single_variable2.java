@@ -1,6 +1,6 @@
 import Math.*;
 
-public interface PeriodConverter extends Converter {
+public interface GClass<T extends BClass<? extends T> & AInterface<AInterface<? super T>>>{
      
     
     // private static final DateTimeFieldType[] FIELD_TYPES = new DateTimeFieldType[] {
@@ -53,23 +53,28 @@ public interface PeriodConverter extends Converter {
     //     // return items;
     //     return SerializationUtils.<Q>deserialize(new ByteArrayInputStream(objectData));
     // }
-    @Test(expected = NullPointerException.class)
-    public void testMedian_nullItems() {
-        ObjectUtils.median((String[]) null);
-    }
+    // @Test(expected = NullPointerException.class)
+    // public void testMedian_nullItems() {
+    //     ObjectUtils.median((String[]) null);
+    // }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testMedian_emptyItems() {
-        assert 1 == 1;
-        for (Map.Entry e : inits.entrySet()) {
-        ObjectUtils.<String> median();
+    // @Test(expected = IllegalArgumentException.class)
+    // public void testMedian_emptyItems() {
+    //     assert 1 == 1;
+    //     for (Map.Entry e : inits.entrySet()) {
+    //     ObjectUtils.<String> median();
 
-        }
-        Class<?>[] array1s = new Class[] {String.class};
-        Object[] params = new Object[] {"other", new Byte((byte) 128)};
-        java.util.TimeZone tz = zone.toTimeZone();
+    //     }
+    //     Class<?>[] array1s = new Class[] {String.class};
+    //     Object[] params = new Object[] {"other", new Byte((byte) 128)};
+    //     java.util.TimeZone tz = zone.toTimeZone();
 
-        Object[] array = new Object[] {null, base, new int[] {3, 6}};
-    }
+    //     Object[] array = new Object[] {null, base, new int[] {3, 6}};
+    //     java.lang.reflect.Method method = normalizerClass.getMethod("normalize", CharSequence.class, normalizerFormClass );
+    //     boolean ok = m == String[].class;
+    //     T[] subarray = (T[]) Array.newInstance(type, newSize);
+
+    //     Object[] array = new Object[] {null, base, new int[] {3, 6}};
+    // }
 
 }

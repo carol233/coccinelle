@@ -743,6 +743,7 @@ translation_unit:
 ident:
  | TIdent       { $1 }
  
+ 
  | TypedefIdent { $1 }
  | TypedefIdent generic_opt { $1 }
 
@@ -750,6 +751,7 @@ ident:
 typedef_ident_generic: 
  | TypedefIdent { $1 }
  | TypedefIdent generic_opt { $1 }
+ 
 
 
 identifier:
@@ -808,6 +810,9 @@ assign_expr:
  | cond_expr                     { $1 }
  | cast_expr TAssign assign_expr { mk_e(Assignment ($1, $2, $3)) []}
  | cast_expr TEq     assign_expr { mk_e (Assignment ($1, (SimpleAssign, [$2]),$3)) []}
+
+/*(* for tricking array initiation in annotations *)*/
+ | cast_expr TEq     TOBrace assign_expr TCBrace { mk_e (Assignment ($1, (SimpleAssign, [$2]),$4)) []}
 
 
 /*(* gccext: allow optional then part hence gcc_opt_expr
@@ -938,14 +943,22 @@ array_types:
  | array_types brace_wrapped_comma_separated_ident_or_values  /*(* initializing *)*/
    {$1}
 
-/*(* TODO this is wrong, but i am too tired now to figure this out *)*/
+/*(*  *)*/
 brace_wrapped_comma_separated_ident_or_values:
-
- | TOBrace comma_separated_ident_or_values TCBrace {}
- | TOBrace brace_wrapped_comma_separated_ident_or_values TComma brace_wrapped_comma_separated_ident_or_values TCBrace {}
- | TOBrace brace_wrapped_comma_separated_ident_or_values TComma brace_wrapped_comma_separated_ident_or_values TComma TCBrace {}
+ | TOBrace comma_separated_ident_array_init_or_values TCBrace {}
+ | TOBrace TCBrace {}
 
 
+
+/*(* identifier, array initialisation, value *)*/
+comma_separated_ident_array_init_or_values:
+ | comma_separated_ident_array_init_or_values TComma ident_array_init_or_values {}
+ | comma_separated_ident_array_init_or_values TComma {}
+ | ident_array_init_or_values {}
+
+ident_array_init_or_values:
+ | ident_or_value {}
+ | TOBrace comma_separated_ident_array_init_or_values TCBrace {}
 
 primitive_types_and_typedef:
 | Tchar { "char", [$1] }
@@ -977,6 +990,8 @@ postfix_expr:
  | primary_expr               { $1 }
  | postfix_expr TOCro expr TCCro
      { mk_e(ArrayAccess ($1, $3)) [$2;$4] }
+| postfix_expr TOCro  TCCro /*(* This means that this was some kind of type *)*/
+     { $1 }
  | postfix_expr TOPar argument_list_ne TCPar
      { mk_e(FunCall ($1, $3)) [$2;$4] }
  | postfix_expr TOPar  TCPar  { mk_e(FunCall ($1, [])) [$2;$3] }
@@ -1019,7 +1034,10 @@ nested_field_access:
  | ident {  RegularName (mk_string_wrap $1) }
  /*(* maybe some reflection thing, or operation on X.class? *)*/
  | Tclass { RegularName ("class", [$1]) }
+ | Tsuper { RegularName ("super", [$1]) }
  | nested_field_access TDot ident { RegularName (mk_string_wrap $3)}
+ | nested_field_access TDot Tsuper {  RegularName ("super", [$3]) }
+ | nested_field_access TDot Tclass {  RegularName ("class", [$3]) }
  
 
 primary_expr:
@@ -1235,8 +1253,8 @@ multiple_catches:
 
 union_type:
 /*(* Java supports union types for exceptions *)*/
- | ident {}
- | ident TOr union_type {}
+ | type_spec {}
+ | type_spec TOr union_type {}
  | type_qualif union_type {}
 
 iteration:
@@ -1783,10 +1801,13 @@ ident_or_value:
  | ident_or_fun_call  {}
  | TInt {}
  | TString {}
+ | TDecimal {}
  | TFloat {}
+ | TChar {}
  | unary_op ident_or_value {} 
- | ident_or_value binary_op ident_or_value {}
+ | ident_or_value binary_op  ident_or_value {}
  | Tnew new_argument {}
+ | TOPar type_name TCPar ident_or_value {}
  /* | Tnew ident_or_fun_call {} */
 
 binary_op:
@@ -1997,11 +2018,12 @@ generic_opt:
  *)*/
 
 generic_list:
- | ident_or_wildcard {}
+ | ident_or_wildcard { print_string "ident wildcard;\n";}
  | ident_or_wildcard TSup {}
  | ident_or_wildcard TShr {}
  | ident_or_wildcard TZeroFillShr {}
  | ident_or_wildcard TComma generic_list   {}
+ | ident_or_wildcard TAnd generic_list {}
  /* | ident_or_wildcard TComma generic_list2  {} */
 
 
@@ -2011,10 +2033,10 @@ ident_or_wildcard:
   | ident {  }
   | ident TDot ident_or_wildcard {}
   | ident TOCro TCCro {}
-  | ident Textends ident_or_wildcard {   }
-  | ident Tsuper ident_or_wildcard {     }
-  | TWhy Textends ident_or_wildcard {    }
-  | TWhy Tsuper ident_or_wildcard {      }
+  | ident Textends generic_list {   }
+  | ident Tsuper generic_list {     }
+  | TWhy Textends generic_list {    }
+  | TWhy Tsuper generic_list {      }
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
@@ -2692,6 +2714,10 @@ class_decl:
     {  
         
         fst $4, Namespace (fst $7, $3 :: (snd $7 @ [snd $4; $6; $8])) } 
+  | annotation_list  class_or_interface ident extends TOBrace class_body TCBrace 
+    {  
+        
+        fst $3, Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
  
  | decl_spec class_or_interface ident  extends TOBrace class_body TCBrace 
     {  
@@ -2732,7 +2758,7 @@ import:
 
 annotation:
  | Tannotate { }
- | Tannotate TOPar comma_separated_expr TCPar  {}
+ | Tannotate TOPar comma_separated_expr TCPar { }
  | Tannotate TOPar TOBrace comma_separated_expr TCBrace TCPar {}
 
 annotation_list:
