@@ -495,7 +495,7 @@ let args_to_params l pb =
 %token <Ast_c.info> TPtVirg
 %token <Ast_c.info>
        TOrLog TAndLog TOr TXor TAnd  TEqEq TNotEq TInf TSup TInfEq TSupEq
-       TShl TShr TZeroFillShr
+       TShl TShr TZeroFillShr TZeroFillShrEq
        TPlus TMinus TMul TDiv TMod  TMax TMin
 
 %token <Ast_c.info>
@@ -503,7 +503,7 @@ let args_to_params l pb =
        Tsize_t Tssize_t Tptrdiff_t
        Tauto Tregister Textern Tstatic
        Tpublic Tprivate Tprotected
-       Tabstract Tfinal Tsynchronized Ttransient
+       Tabstract Tfinal Tsynchronized Ttransient Tstrictfp
        Tsynchronizedblock
        Ttypedef
        Tconst Tvolatile
@@ -672,7 +672,7 @@ let args_to_params l pb =
 %left TAnd
 %left TEqEq TNotEq
 %left TInf TSup TInfEq TSupEq
-%left TShl TShr TZeroFillShr
+%left TShl TShr TZeroFillShr TZeroFillShrEq
 %left TPlus TMinus
 %left TMul TDiv TMod TMin TMax
 
@@ -796,6 +796,7 @@ identifier_cpp_list:
 /*(* expr *)*/
 /*(*************************************************************************)*/
 
+
 expr:
  | assign_expr             { $1 }
  | expr TComma assign_expr { mk_e (Sequence ($1,$3)) [$2] }
@@ -813,6 +814,7 @@ assign_expr:
 
 /*(* for tricking array initiation in annotations *)*/
  | cast_expr TEq     TOBrace assign_expr TCBrace { mk_e (Assignment ($1, (SimpleAssign, [$2]),$4)) []}
+
 
 
 /*(* gccext: allow optional then part hence gcc_opt_expr
@@ -838,6 +840,7 @@ arith_expr:
  | arith_expr TShl    arith_expr { mk_e(Binary ($1, (Arith DecLeft, [$2]), $3)) [] }
  | arith_expr TShr    arith_expr { mk_e(Binary ($1, (Arith DecRight, [$2]), $3)) [] }
  | arith_expr TZeroFillShr    arith_expr { mk_e(Binary ($1, (Arith DecRight, [$2]), $3)) [] }
+ | arith_expr TZeroFillShrEq    arith_expr { mk_e(Binary ($1, (Arith DecRight, [$2]), $3)) [] } /*(* TODO operator *)*/
  | arith_expr TInf    arith_expr { mk_e(Binary ($1, (Logical Inf, [$2]), $3)) [] }
  | arith_expr TSup    arith_expr { mk_e(Binary ($1, (Logical Sup, [$2]), $3)) [] }
  | arith_expr TInfEq  arith_expr { mk_e(Binary ($1, (Logical InfEq, [$2]), $3)) [] }
@@ -894,12 +897,30 @@ new_argument:
     Left (mk_e(AnonymousClassDecl (Namespace (fst $5,  []) )) [])
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
+  | typedef_ident_generic TDot nested_field_access TOPar TCPar TOBrace class_body TCBrace 
+    
+ {
+    Left (mk_e(AnonymousClassDecl (Namespace (fst $7,  []) )) [])
+    (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
+ }
+ | typedef_ident_generic TDot  TOPar TCPar TOBrace class_body TCBrace 
+    
+ {
+    Left (mk_e(AnonymousClassDecl (Namespace (fst $6,  []) )) [])
+    (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
+ }
   | typedef_ident_generic TOPar argument_list_ne TCPar TOBrace class_body TCBrace 
     
  {
     Left (mk_e(AnonymousClassDecl (Namespace (fst $6,  []) )) [])
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
+
+| typedef_ident_generic TDot nested_field_access
+  {
+      let recordnm = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+    Left( mk_e(RecordAccess (recordnm,$3)) [$2] )
+     }
 
  | typedef_ident_generic TDot nested_field_access TOPar  TCPar 
   {
@@ -927,11 +948,22 @@ new_argument:
 	   Right(ArgType pty)
        | _ -> raise (Impossible 88)
      } */
- | primitive_types_and_typedef array_types /*(* declaring new array: e.g. new String[] *)*/
- {
+ | primitive_types_and_typedef  array_types {
 	 (* TODO maybe new syntax in AST is needed here *)
 	  let fn = mk_e(Ident (RegularName ( $1))) [] in
        Left (mk_e(FunCall (fn, [])) $2) 
+ }
+
+ | new_argument array_types /*(* declaring new array: e.g. new String[] *)*/
+ {
+	 (* TODO maybe new syntax in AST is needed here *)
+	  (match $1 with 
+      | Left e ->
+       Left (mk_e(FunCall (e, [])) $2) 
+
+      | Right rest -> 
+        raise (Impossible 500)
+      )
  }
 
 
@@ -943,10 +975,12 @@ array_types:
  | array_types brace_wrapped_comma_separated_ident_or_values  /*(* initializing *)*/
    {$1}
 
+
 /*(*  *)*/
 brace_wrapped_comma_separated_ident_or_values:
  | TOBrace comma_separated_ident_array_init_or_values TCBrace {}
  | TOBrace TCBrace {}
+
 
 
 
@@ -957,16 +991,20 @@ comma_separated_ident_array_init_or_values:
  | ident_array_init_or_values {}
 
 ident_array_init_or_values:
- | ident_or_value {}
+ | arith_expr {}
  | TOBrace comma_separated_ident_array_init_or_values TCBrace {}
+ | TOBrace  TCBrace {}
 
-primitive_types_and_typedef:
+primitive_types:
 | Tchar { "char", [$1] }
 | Tint { "int", [$1] }
 | Tfloat { "float", [$1]}
 | Tdouble { "double", [$1]}
 | Tshort { "short", [$1]}
 | Tlong { "long", [$1]}
+
+primitive_types_and_typedef:
+| primitive_types {$1} 
 | TypedefIdent { mk_string_wrap $1 }
 /* | primitive_types_and_typedef TOCro TCCro { $1 }
 | primitive_types_and_typedef TOCro expr TCCro { $1 }
@@ -1514,6 +1552,7 @@ type_qualif:
  | Ttransient { {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=true},  $1 }
  | Tabstract { {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=true},  $1 }
  | Tfinal { {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=true},  $1 }
+ | Tstrictfp { {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=true},  $1 }
  /*(* C99 *)*/
  | Trestrict { (* TODO *) {const=false ; volatile=false ; static=false ; access=ADefault ; synchronized=false ; transient=false},  $1 }
 
@@ -1784,9 +1823,23 @@ enum_body:
   | enum_body init_block { $1 } 
 
 enum_constants:
- | TIdent TPtVirg {}
- | TIdent {}
- | TIdent TComma enum_constants {}
+ | enum_constant TPtVirg {}
+ | enum_constant TComma {}
+
+/*(* sometimes they end with `,;`. What a bummer. Need to write these rules.*)*/
+ | enum_constant TComma TPtVirg {}
+ 
+ | enum_constant {}
+ /* | TIdent TComma {} */
+ |  enum_constant enum_constants {}
+ /* |  enum_constant enum_constants {} */
+
+ 
+enum_constant:
+ | TIdent  {}
+ | TIdent TOPar argument_list_ne TCPar  {}
+ | TIdent TOBrace class_body TCBrace  {}
+ 
 
 init_block:
  | Tstatic compound {}
@@ -1821,6 +1874,7 @@ binary_op:
  | TShl {}
  | TShr {}
  | TZeroFillShr {}
+ | TZeroFillShrEq {}
  | TInf {}
  | TSup {}
  | TInfEq {}
@@ -1843,6 +1897,7 @@ ident_or_fun_call:
  | ident {}
  | ident_or_fun_call TOPar TCPar  {}  
  | ident_or_fun_call TOPar argument_list_ne TCPar  {}  
+ | ident_or_fun_call TOCro ident_or_value TCCro  {}  
  | ident_or_fun_call TDot ident_or_fun_call {}
  | ident_or_fun_call TDot Tclass {}
 
@@ -1991,7 +2046,7 @@ decl_spec2:
  | type_qualif        { ([], {nullDecl with qualifD  = (fst $1, [snd $1]) }) }
  | Tinline            { ([], {nullDecl with inlineD = (true, [$1]) }) }
  | attribute          { ([$1], nullDecl) }
-  
+ | generic_opt        { ([], nullDecl) }
  | decl_spec2 type_spec           {(fst $1, addTypeD    ($2, snd $1)) }
  | decl_spec2 type_qualif         { (fst $1, addQualifD  ($2, snd $1)) }
  | decl_spec2 Tinline             { (fst $1, addInlineD ((true, $2), snd $1)) }
@@ -2018,25 +2073,31 @@ generic_opt:
  *)*/
 
 generic_list:
- | ident_or_wildcard { print_string "ident wildcard;\n";}
- | ident_or_wildcard TSup {}
- | ident_or_wildcard TShr {}
- | ident_or_wildcard TZeroFillShr {}
- | ident_or_wildcard TComma generic_list   {}
- | ident_or_wildcard TAnd generic_list {}
- /* | ident_or_wildcard TComma generic_list2  {} */
+ | ident_or_primitive_array_or_wildcard { }
+ | ident_or_primitive_array_or_wildcard TSup {}
+ | ident_or_primitive_array_or_wildcard TShr {}
+ | ident_or_primitive_array_or_wildcard TZeroFillShr {}
+ | ident_or_primitive_array_or_wildcard TComma generic_list   {}
+ | ident_or_primitive_array_or_wildcard TAnd generic_list {}
+ /* | ident_or_primitive_array_or_wildcard TComma generic_list2  {} */
 
 
 
 
-ident_or_wildcard:
+ident_or_primitive_array_or_wildcard:
   | ident {  }
-  | ident TDot ident_or_wildcard {}
+  | primitive_type_array {} 
+  | ident TDot ident_or_primitive_array_or_wildcard {}
   | ident TOCro TCCro {}
   | ident Textends generic_list {   }
   | ident Tsuper generic_list {     }
   | TWhy Textends generic_list {    }
   | TWhy Tsuper generic_list {      }
+
+
+primitive_type_array:
+ | primitive_types TOCro TCCro {}
+ | primitive_type_array  TOCro TCCro {}
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
@@ -2302,7 +2363,9 @@ idente: ident_cpp { LP.add_ident (str_of_name $1); $1 }
 /*(*************************************************************************)*/
 /*(* function *)*/
 /*(*************************************************************************)*/
-function_definition: function_def    { fixFunc $1 }
+function_definition: 
+ | function_def    { fixFunc $1 }
+ | function_def TPtVirg   { fixFunc $1 }
 
 decl_list:
  | decl           { [$1 Ast_c.LocalDecl]   }
@@ -2384,52 +2447,6 @@ start_fun2:
 
     
 
-/*(* needed for ctor without type qualifiers*)*/
-   /* | declaratorfd throws_opt
-   { 
-       
-       let returnType = TypeName (RegularName ("ctor", []), Ast_c.noTypedefDef()) in 
-       let storage = NoSto in
-       let (id, attrs) = $1 in
-       (RegularName ("ctor", []), (nullQualif, (returnType, [])), ((storage, false),[] ), Ast_c.noattr )
-     } */
-   /* | java_ctor
-     { 
-         $1
-     }
-    | decl_spec java_ctor
-     { 
-         $2
-     } */
-   /* | ctor_dtor { $1 } */
-
-
-java_ctor:
- | TypedefIdent TOPar argument_list_ne TCPar throws_opt
-   {
-       
-       (*/* let (returnType,storage) = fixDeclSpecForFuncDef (snd $1) in */*)
-       let returnType = TypeName (RegularName (mk_string_wrap $1), Ast_c.noTypedefDef()) in 
-       let storage = NoSto in
-   
-       (RegularName ("ctor", []), (nullQualif, (returnType, [])), ((storage, false),[] ), Ast_c.noattr )
-   }
-
-ctor_dtor:
- | Tconstructorname topar tcpar {
-     let id = RegularName (mk_string_wrap $1) in
-     let ret = mk_ty NoType [] in
-     let ty = mk_ty (FunctionType (ret, (([], (false, []))))) [$2;$3] in
-     let storage = ((NoSto,false),[]) in
-     let attrs = [] in
-     (id, ty, storage, attrs) }
- | Tconstructorname topar parameter_type_list tcpar {
-     let id = RegularName (mk_string_wrap $1) in
-     let ret = mk_ty NoType [] in
-     let ty = mk_ty (FunctionType (ret, $3)) [$2;$4] in
-     let storage = ((NoSto,false),[]) in
-     let attrs = [] in
-     (id, ty, storage, attrs) }
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
@@ -2610,71 +2627,6 @@ cpp_ifdef_directive:
  | TIfdefVersion
      { let (_b, tag,ii) = $1 in
        IfdefDirective ((Ifdef Gnone, IfdefTag (Common.some !tag)), [ii]) }
-
-
-/*(* cppext: *)*/
-cpp_other:
- /*(* no conflict ? no need for a TMacroTop ? apparently not as at toplevel
-    * the rule are slightly different, they cant be statement and so expr
-    * at the top, only decl or function definition.
-    *)*/
- | identifier TOPar argument_list TCPar TPtVirg
-     {
-       if args_are_params $3
-       then
-	 (* if all args are params, assume it is a prototype of a function
-	    with no return type *)
-	 let parameters = args_to_params $3 None in
-	 let paramlist = (parameters, (false, [])) in (* no varargs *)
-	 let id = RegularName (mk_string_wrap $1) in
-	 let ret =
-	   warning "type defaults to 'int'"
-	     (mk_ty defaultInt [fakeInfo fake_pi]) in
-	 let ty =
-	   fixOldCDecl (mk_ty (FunctionType (ret, paramlist)) [$2;$4]) in
-	 let attrs = Ast_c.noattr in
-	 let sto = (NoSto, false), [] in
-	 let iistart = Ast_c.fakeInfo () in
-	 Declaration(
-	 DeclList ([{v_namei = Some (id,NoInit); v_type = ty;
-                      v_storage = unwrap sto; v_local = NotLocalDecl;
-                      v_attr = attrs; v_endattr = Ast_c.noattr;
-		      v_type_bis = ref None;
-                    },[]],
-                   ($5::iistart::snd sto)))
-       else
-	 Declaration
-	   (MacroDecl((NoSto, fst $1, $3, true), [snd $1;$2;$4;$5;fakeInfo()]))
-           (* old: MacroTop (fst $1, $3,    [snd $1;$2;$4;$5])  *)
-     }
-
- /* cheap solution for functions with no return type.  Not really a
-       cpp_other, but avoids conflicts */
- | identifier TOPar argument_list TCPar compound {
-   let parameters = args_to_params $3 (Some (snd $1)) in
-   let paramlist = (parameters, (false, [])) in (* no varargs *)
-   let fninfo =
-     let id = RegularName (mk_string_wrap $1) in
-     let ret =
-       warning "type defaults to 'int'"
-	 (mk_ty defaultInt [fakeInfo fake_pi]) in
-     let ty = mk_ty (FunctionType (ret, paramlist)) [$2;$4] in
-     let attrs = Ast_c.noattr in
-     let sto = (NoSto, false), [] in
-     (id, fixOldCDecl ty, sto, attrs) in
-   let fundef = fixFunc (fninfo, $5, None) in
-   Definition fundef
- }
-
- /*(* TCParEOL to fix the end-of-stream bug of ocamlyacc *)*/
- | identifier TOPar argument_list TCParEOL
-     { Declaration
-	 (MacroDecl ((NoSto, fst $1, $3, false), [snd $1;$2;$4;fakeInfo()])) }
-
-  /*(* ex: EXPORT_NO_SYMBOLS; *)*/
- | identifier TPtVirg { EmptyDef [snd $1;$2] }
-
-
 
 /*(*************************************************************************)*/
 /*(* celem *)*/

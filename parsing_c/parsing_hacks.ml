@@ -94,6 +94,19 @@ let msg_typedef s ii n =
     )
     s
 
+let msg_not_typedef s ii n =
+   incr Stat.nTypedefInfer;
+  msg_gen (!Flag_parsing_c.debug_typedef)
+	is_known_typdef
+	(fun s ->
+	pr2_cpp
+	(Printf.sprintf "TYPEDEF: demoting:(%d) %s on line %d" n s
+		(Ast_c.line_of_info ii))
+	(*(Printf.sprintf "TYPEDEF: promoting: %s on line %d" s
+		(Ast_c.line_of_info ii))*)
+	)
+	s
+
 let msg_maybe_dangereous_typedef s =
   if not (is_known_typdef s)
   then
@@ -316,6 +329,18 @@ let is_ident t  =
   match t with 
   | TIdent _ -> true
   | TypedefIdent _ -> true
+  | _ -> false
+
+let is_argument t = 
+  match t with 
+  | TFloat _ 
+  | TInt _
+  | TChar _
+  | TString _ 
+  | TDecimal _  
+  | TypedefIdent ("true", _) | TIdent ("true", _) 
+  | TypedefIdent ("false", _) | TIdent ("false", _) 
+      -> true 
   | _ -> false
 
 (*****************************************************************************)
@@ -1868,7 +1893,7 @@ let fix_tokens_cpp2 ~macro_defs err_pos tokens =
     let line_paren_grouped = TV.mk_line_parenthised paren_grouped in
     find_define_init_brace_paren paren_grouped;
     find_string_macro_paren paren_grouped;
-    find_macro_lineparen    true line_paren_grouped;
+    (* find_macro_lineparen    true line_paren_grouped; *)
     find_macro_paren        paren_grouped;
 
 
@@ -1976,6 +2001,19 @@ let is_part_of_assignment rest =
   in
   loop rest 
 
+let is_followed_by_closing_generic_within_n tokens n = 
+  let rec loop toks n =
+    if n = 0 then false 
+    else
+    (match toks with 
+    | TSup _ :: _ -> true
+    | TShr _  :: _ -> true
+    | TZeroFillShr _  :: _ -> true
+    | (b :: _) when TH.is_binary_operator b  -> false
+    | _ :: rest ->  loop rest (n-1))
+  in
+  loop tokens n 
+
 let is_primitive_type_array_class_access rest = 
   let rec loop ts = 
     (match ts with 
@@ -1992,24 +2030,28 @@ let is_part_of_typecast rest =
     | (TypedefIdent _ | TIdent _) :: TDot _ :: rest -> loop rest
     
     | (TypedefIdent _ | TIdent _)  :: TCPar _ :: (TypedefIdent _ | TIdent _)  :: rest -> true
+
+    | (TypedefIdent _ | TIdent _)  :: TCPar _ :: Tnew _ :: (TypedefIdent _ | TIdent _)  :: rest -> true
   
     (* something.Thing[] X *)
     | (TypedefIdent _ | TIdent _)  :: TOCro _ :: TCCro _ ::  TCPar _ :: (TypedefIdent _ | TIdent _)  :: rest -> true
+
     | _ -> false)
     in
     loop rest 
 
 let is_part_of_type_declaration rest =
   let rec loop ts = 
-	(match ts with 
+    (match ts with 
 	
-	| (TypedefIdent _ | TIdent _) :: TDot _ :: rest -> loop rest
+    | (TypedefIdent _ | TIdent _) :: TDot _ :: rest -> loop rest
 	
-  | (TypedefIdent _ | TIdent _)  :: (TypedefIdent _ | TIdent _)  :: rest -> true
+    | (TypedefIdent _ | TIdent _)  :: (TypedefIdent _ | TIdent _)  :: rest -> true
 
-  (* something.Thing[] X *)
-  | (TypedefIdent _ | TIdent _)  :: TOCro _ :: TCCro _ :: (TypedefIdent _ | TIdent _)  :: rest -> true
-	| _ -> false)
+    (* something.Thing[] X *)
+    | (TypedefIdent _ | TIdent _)  :: TOCro _ :: TCCro _ :: (TypedefIdent _ | TIdent _)  :: rest -> true
+    | (TypedefIdent _ | TIdent _)  :: TOCro _ :: TCCro _ ::TOCro _ :: TCCro _  :: (TypedefIdent _ | TIdent _)  :: rest -> true
+    |  _ -> false)
   in
   loop rest 
 
@@ -2138,13 +2180,20 @@ let lookahead2 ~pass next before =
   
       (* X[] Y *)
   | (TIdent(s,i1) :: TOCro _ :: TCCro _ :: TIdent(s2,i2)  :: rest, _ )
-    -> LP.add_typedef_root s;
+    -> msg_typedef s i1 101; LP.add_typedef_root s;
     TypedefIdent (s, i1)
 
     (* any X x must mean that x is not a typedefIdent *)
-  | (TypedefIdent(s,i1) :: rest, TypedefIdent _ :: _ )
+  | (TypedefIdent(s,i1) :: rest, (TypedefIdent _ | Tlong _| Tchar _ | Tint _ | Tfloat _ | Tdouble _ | Tshort _ | Tlong _ ) :: _ )
     ->
+    (*print_string "part of X x check ;\n";*)
+    msg_not_typedef s i1 1;
     TIdent (s, i1)
+
+  (* package something.enum *)
+    | (Tenum(i1) :: rest, TDot _ :: _ )
+    ->
+    TIdent ("enum", i1)
 
 	(* christia *)
 
@@ -2263,36 +2312,49 @@ let lookahead2 ~pass next before =
   | (TIdent (s, i1):: TInf _ :: (TIdent _ | TWhy _) :: (TSup _ | Textends _ | Tsuper _ | TInf _ ) ::rest  , _) when not_struct_enum before
   && ok_typedef s 
     ->
-  msg_typedef s i1 2; LP.add_typedef_root s;
+  msg_typedef s i1 102; LP.add_typedef_root s;
   TypedefIdent (s, i1)
 
 
-   | (TIdent (s, i1):: TInf _ :: TypedefIdent (s2, i2) ::rest  , _) when not_struct_enum before
-   && ok_typedef s && not (is_macro_paren s2 rest)
+   | (TIdent (s, i1):: TInf _ :: (TypedefIdent _ | TIdent _ | Tchar _ | Tint _ | Tfloat _ | Tdouble _ | Tshort _ | Tlong _)  :: rest  , _) when not_struct_enum before
+   && ok_typedef s &&
+   (
+	   is_followed_by_closing_generic_within_n rest 3
+   )
      ->
-   msg_typedef s i1 2; LP.add_typedef_root s;
+   msg_typedef s i1 103; LP.add_typedef_root s;
+   
    TypedefIdent (s, i1)
  
+   | (TIdent (s, i1):: TDot _ :: (TIdent (s1, i2) | TypedefIdent (s1, i2)) :: TInf _ :: (TypedefIdent _ | TIdent _ | Tchar _ | Tint _ | Tfloat _ | Tdouble _ | Tshort _ | Tlong _)  :: rest  , _) when not_struct_enum before
+   && ok_typedef s &&
+   (
+	   is_followed_by_closing_generic_within_n rest 3
+   )
+     ->
+   msg_typedef s i1 103; LP.add_typedef_root s;
+   
+   TypedefIdent (s, i1)
 
    (* xx < yy , *)
    | (TIdent (s, i1):: TInf _ :: TIdent (s2, i2) :: TComma _ ::rest  , _) when not_struct_enum before
    && ok_typedef s && not (is_macro_paren s2 rest)
      ->
-   msg_typedef s i1 2; LP.add_typedef_root s; msg_typedef s2 i2 2; LP.add_typedef_root s2; 
+   msg_typedef s i1 104; LP.add_typedef_root s; msg_typedef s2 i2 2; LP.add_typedef_root s2; 
    TypedefIdent (s, i1)
 
    (* xx.yy zz , *)
    | (TIdent (s, i1):: TDot _ :: TIdent (s2, i2) :: TIdent  _ ::rest  , _) when not_struct_enum before
    && ok_typedef s && not (is_macro_paren s2 rest)
      ->
-   msg_typedef s i1 2; LP.add_typedef_root s; 
+   msg_typedef s i1 105; LP.add_typedef_root s; 
    TypedefIdent (s, i1)
 
   (* xx.yy.zz zz , *)
    | (TIdent (s, i1):: TDot _ :: TIdent (s2, i2) ::TDot _ :: ident3 :: TIdent  _ ::rest  , _) when not_struct_enum before
       && ok_typedef s && not (is_macro_paren s2 rest) && is_ident ident3
 	->
-      msg_typedef s i1 2; LP.add_typedef_root s; 
+      msg_typedef s i1 106; LP.add_typedef_root s; 
       TypedefIdent (s, i1)
 
 
@@ -2306,7 +2368,7 @@ let lookahead2 ~pass next before =
 
 
   (* [,(] xx [,)] AND param decl *)
-  | (TIdent (s, i1)::(((TComma _|TCPar _)::_) as rest) ,
+  (* | (TIdent (s, i1)::(((TComma _|TCPar _)::_) as rest) ,
      ((TComma _ |TOPar _)::_ as bef))
     when not_struct_enum before && (LP.current_context() = LP.InParameter)
       && not (!Flag_parsing_c.prevent_kr) && LP.is_kr_possible()
@@ -2315,10 +2377,11 @@ let lookahead2 ~pass next before =
       && not_has_type_before is_oparen bef
       ->
 
-	TKRParam(s,i1)
+	TKRParam(s,i1) *)
 
   | (TIdent (s, i1)::((TComma _|TCPar _)::_) , (TComma _ |TOPar _)::_ )
-    when not_struct_enum before && (LP.current_context() = LP.InParameter)
+    when not_struct_enum before 
+    && (LP.current_context() = LP.InParameter)
       && ok_typedef s
       ->
 
@@ -2506,6 +2569,7 @@ let lookahead2 ~pass next before =
         (Tstatic _| Tprivate _| Tpublic _| Tprotected _ |
          Tfinal _| Tabstract _| Tsynchronized _) :: _) 
       -> 
+      msg_typedef s i1 107;
       LP.add_typedef_root s;
       TypedefIdent (s, i1)
   | (TIdent (s, i1) :: TDot (i2) :: rest, prev :: _) 
@@ -2514,33 +2578,50 @@ let lookahead2 ~pass next before =
       is_new prev
 
 	-> 
+	msg_typedef s i1 108;
 	LP.add_typedef_root s;
 	TypedefIdent (s, i1)
 
-  | (TypedefIdent (s, i1) :: TDot _ :: rest, prev :: _) when is_part_of_method_call rest &&
-  not (is_new prev)
+  | (TypedefIdent (s, i1) :: TDot _ :: rest, prev :: _) when is_part_of_method_call rest && not (is_part_of_type_declaration rest) 
+  && not (is_new prev)
 	-> 
-	
+	(*print_string "part of is_part_of_method_call? ;\n";*)
+	msg_not_typedef s i1 2;
 	TIdent(s, i1) 
 
    | (TypedefIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_assignment rest && not (is_part_of_type_declaration rest)
 	-> 
-	
+(*print_string "part of assignment? ;\n";*)
+msg_not_typedef s i1 3;
   TIdent(s, i1)
   
   | (TIdent (s, i1) :: TDot _ :: rest, TOPar _ :: _) when is_part_of_typecast rest 
 	-> 
-    
+	msg_typedef s i1 109;
     TypedefIdent(s, i1)
+
+    | (TIdent (s, i1) :: rest, TOPar _ :: prev :: prev_rest) when is_part_of_typecast (TIdent (s, i1) :: rest) 
+    && (match prev with 
+	| Tif _ -> false 
+	| _ -> true)
+    -> 
+	msg_typedef s i1 150;
+	TypedefIdent(s, i1)
     
 | (TypedefIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_init rest
 	-> 
-	
+	(*print_string "part of is_part_of_init? ;\n";*)
+	msg_not_typedef s i1 4;
 	TIdent(s, i1) 
 	
   | (TIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_type_declaration rest
 	-> 
-	
+	msg_typedef s i1 111;
+	LP.add_typedef_root s;
+	TypedefIdent(s, i1)
+| (TIdent (s, i1) :: rest, any :: _)  when is_part_of_type_declaration (TIdent (s, i1) :: rest)
+	-> 
+	msg_typedef s i1 112;
 	LP.add_typedef_root s;
 	TypedefIdent(s, i1)
 	
@@ -2553,9 +2634,10 @@ let lookahead2 ~pass next before =
                      not (is_part_of_type_declaration (TIdent (s2,  i2)  :: rest))
      ->
      (* Trick it into thinking its a record access*)
+(*print_string "record_access thing 1;\n";*)
      
      
-     
+msg_not_typedef s i1 5;
      TIdent(s, i1)
 
      (* e.g. X.<String>method *)
@@ -2566,17 +2648,19 @@ let lookahead2 ~pass next before =
 	not (is_definite_type_indicator prev)
 	->
   (* Trick it into thinking its a record access*)
+(*print_string "record_access thing 2;\n";*)
   
   
-	
+	msg_not_typedef s i1 6;
 	TIdent(s, i1)
   (* return X.Y *)
   | (TypedefIdent (s, i1) :: TDot _ :: rest, Treturn _  :: _ )
     ->
     (* Trick it into thinking its a record access*)
+(*print_string "record_access thing 3;\n";*)
     
     
-    
+	msg_not_typedef s i1 7;
     TIdent (s, i1) 
   | (TypedefIdent (s, i1) :: TDot _ :: Tclass (i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
           (* not (LP.is_top_or_struct (LP.curent_context ())) *)
@@ -2584,9 +2668,10 @@ let lookahead2 ~pass next before =
 	  
       ->
       (* Trick it into thinking its a record access*)
+(*print_string "record_access thing 4;\n";*)
       
       
-      
+	msg_not_typedef s i1 8;
       TIdent(s, i1)
 | (TypedefIdent (s, i1) :: TOCro _ :: TCCro _ :: TDot _ :: Tclass (i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
     (* not (LP.is_top_or_struct (LP.curent_context ())) *)
@@ -2594,32 +2679,38 @@ let lookahead2 ~pass next before =
 
   ->
   (* Trick it into thinking its a record access*)
+(*print_string "record_access thing 5;\n";*)
   
   
-  
+  msg_not_typedef s i1 9;
   TIdent(s, i1)
-  | (TypedefIdent (s, i1) :: TDot _ :: TypedefIdent (s2,  i2) :: rest, prev :: prev2 :: _ ) when not (is_type_qualifier prev) &&
+  | (TypedefIdent (s, i1) :: TDot _ :: (TypedefIdent _ | TIdent _ ):: rest, prev :: prev2 :: _ ) when not (is_type_qualifier prev) &&
      (* not (LP.is_top_or_struct (LP.curent_context ())) *)
-     not (is_end_of_something prev)  && 
+     (* not (is_end_of_something prev)  &&  *)
      not (is_definite_type_indicator prev) && 
+     not (is_new prev) && 
+     not (is_part_of_assignment rest) &&
      (match prev2 with  (* needed to prevent `for (T.X`'s T to turn into an ident`*)
       | Tfor _ -> false 
       | _ -> true)
     ->
     (* Trick it into thinking its a record access*)
+(*print_string "record_access thing  6;\n";*)
     
     
-    
+    msg_not_typedef s i1 10;
     TIdent(s, i1)
  
    
    
 (* X.Something() *)
-  | (TypedefIdent (s, i1) :: TDot _ :: TIdent (s2,  i2) :: TOPar _ :: rest, prev :: _ )   
+  | (TypedefIdent (s, i1) :: TDot _ :: TIdent (s2,  i2) :: TOPar _ :: rest, prev :: _ ) 
+    when not (is_new prev)  
    ->
    (* Trick it into thinking its a record access*)
+(*print_string "record_access thing 7;\n";*)
    
-   
+msg_not_typedef s i1 11;
    
    TIdent(s, i1)
  
@@ -2627,58 +2718,67 @@ let lookahead2 ~pass next before =
     -> 
     (* something like "final X<" is part of a type declaration*)
     LP.add_typedef_root s;
+    msg_typedef s i1 113;
     TypedefIdent (s, i1)
   | (TIdent (s, i1) :: TIdent i2 :: rest, prev :: _) when is_type_qualifier prev 
     -> 
     (* something like "final X Y" -> X must be a type*)
     LP.add_typedef_root s;
+    msg_typedef s i1 114;
     TypedefIdent (s, i1)
   | (TIdent (s, i1)  :: TOCro _ :: TCCro _ :: rest, prev :: _) when is_type_qualifier prev 
     -> 
     (* something like "final X[] " -> X must be a type*)
     LP.add_typedef_root s;
-    
+    msg_typedef s i1 115;
     TypedefIdent (s, i1)
 
   (* array type declaration*)
   | (TIdent (s, i1) :: TOCro _ :: TCCro _ :: rest, prev :: _)
-    (* it is legal Java to do  something like int p[] however, so check this is the start *)
+    (* it is legal Java to do  something like `int p[]`, so check this is the start *)
     when is_end_of_something prev 
     -> 
-    
+    msg_typedef s i1 116;
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
 
   (* type casting to array, probably not very common. Should be ok to handle here *)
   | (TIdent (s, i1) :: TOCro _ :: TCCro _ :: TCPar _ :: rest, TOPar _ :: _)
     -> 
-    
+    msg_typedef s i1 117;
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
+   (* type casting to array, probably not very common. Should be ok to handle here *)
+  | (TIdent (s, i1) :: TOCro _ :: TCCro _ :: TOCro _ :: TCCro _ :: TCPar _ :: rest, TOPar _ :: _)
+    -> 
+    msg_typedef s i1 118;
+    LP.add_typedef_root s;
+    TypedefIdent (s, i1) 
+
    (* any 'ident < ?' must mean that the  ident is a type*)
   | (TIdent (s, i1) :: TInf _  :: TWhy _ ::  next :: rest, _) 
     -> 
-    
+    msg_typedef s i1 119;
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
     (* T[] somename() *)
   | (TIdent (s, i1) :: TOCro _  :: TCCro _ :: TIdent _ :: TOPar _ :: next :: rest, _) 
     -> 
-    
+    msg_typedef s i1 120;
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
     
   (* extends/implements/instanceof X -> X is a type*)
   | (TIdent (s, i1) :: rest, (Textends _ | Timplements _ | Tinstanceof _) :: _ )
     ->
-    
+    msg_typedef s i1 121;
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
   (* for (X.Y . X needs to be a typedef *)
   | (TIdent (s, i1) :: TDot _ :: identlike :: rest, (TOPar _) :: Tfor _ ::  _ )
 	when is_ident identlike
   ->
-  
+  msg_typedef s i1 122;
 	LP.add_typedef_root s;
 	TypedefIdent (s, i1) 
 
@@ -2734,28 +2834,35 @@ let lookahead2 ~pass next before =
     ->
     
     LP.add_typedef_root "byte";
+    msg_typedef "byte" i1 123;
     TypedefIdent ("byte", i1) 
 
   | (TIdent (s, i1) :: next :: rest, Tnew _ :: _ )
     when not (is_new next)
     ->
+    msg_typedef s i1 124;
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
 
   | TIdent (s, i1) :: rest, (Tclass _ | Tinterface _ ) :: _   
     ->
+    msg_typedef s i1 125;
     LP.add_typedef_root s;
     TypedefIdent (s, i1)
 
   (* type cast to some ident separated by dot. e.g. Map.Entry<String, Integer> *)
   | (TIdent (s, i1) :: TDot i2 :: TypedefIdent (s2, i3) :: TCPar (i4) :: next :: rest, TOPar i5 :: _)
     when is_ident next
-    ->  LP.add_typedef_root s; TypedefIdent (s, i1)
+    ->  LP.add_typedef_root s; msg_typedef s i1 126; TypedefIdent (s, i1)
 (* < X >  means X is almost definitely a type*)
   | (TIdent (s, i1) :: TSup _ :: rest, TInf i3 :: _)
     
-    ->  LP.add_typedef_root s; TypedefIdent (s, i1)
+    ->  LP.add_typedef_root s;msg_typedef s i1 127; TypedefIdent (s, i1)
 
+ (* X, Y meams Y is a type*)
+    | (TIdent (s, i1) :: rest, TComma i3 :: TypedefIdent  _ :: _)
+    
+    ->  LP.add_typedef_root s; msg_typedef s i1 128;TypedefIdent (s, i1)
 
 
     (*  why need TOPar condition as stated in preceding rule ? really needed ? *)
@@ -2776,26 +2883,32 @@ let lookahead2 ~pass next before =
   | TypedefIdent (s, i1) :: TOPar (i2) :: rest, (Tstatic _| Tprivate _| Tpublic _| Tprotected _ |
                              Tfinal _| Tabstract _| Tsynchronized _) :: _ 
     -> 
-    
+    msg_not_typedef s i1 12;
     TIdent (s, i1)
     (* constructor *)
     (* in this case, emit a special token otherwise too much ambiguity *)
-  | (TIdent (s, i1) :: TOPar (i2) :: rest, prev :: _) when not (is_type_qualifier prev) &&
+  | (TIdent (s, i1) :: TOPar (i2) :: param1 :: rest, prev :: _) when not (is_type_qualifier prev) &&
                                                            not (is_new prev) &&
                                                            is_end_of_something (prev) &&
+                                                           not (is_argument param1) && 
                                                            (LP.is_top_or_struct (LP.current_context ()) )
     -> 
+    
     Tconstructorname (s, i1)
-  | (TypedefIdent (s, i1) :: TOPar (i2) :: rest, prev :: _) when  not (is_type_qualifier prev) &&
+  | (TypedefIdent (s, i1) :: TOPar (i2) :: param1 ::rest, prev :: _) when  not (is_type_qualifier prev) &&
                                                                   not (is_new prev) &&
                                                                   is_end_of_something (prev) &&
+                                                                  not (is_argument param1) && 
                                                                   (LP.is_top_or_struct (LP.current_context ()) )
     -> 
+   
     Tconstructorname (s, i1)
     (* <V> Name( *)
-  | (TypedefIdent (s, i1) :: TOPar (i2) :: rest, TSup _ :: _) when 
-	(LP.is_top_or_struct (LP.current_context ()) )
-	-> 
+  | (TypedefIdent (s, i1) :: TOPar (i2) :: param1 ::rest, TSup _ :: _) when 
+  (LP.is_top_or_struct (LP.current_context ()) ) && 
+  not (is_argument param1 )
+  -> 
+
 	Tconstructorname (s, i1)
 
   
@@ -2961,15 +3074,21 @@ let lookahead2 ~pass next before =
       (*TOPar info*)
       TypedefIdent (s,i1)
 
+  (* failed to parse whatever's synchronized on. *)
+  (* Treat as a function call? TODO will have to handle this . *)
+  (* this probably can't ever work since it causes a parse error *)
+  | Tsynchronized i1 :: TOPar _ :: _, _ 
+
+  -> TIdent("synchronized", i1)
 
   (* (xx){ ... }  constructor *)
-  | (TIdent (s, i1)::TCPar _::TOBrace _::_ , TOPar _::x::_)
+  (* | (TIdent (s, i1)::TCPar _::TOBrace _::_ , TOPar _::x::_)
       when (*s ==~ regexp_typedef && *) not (TH.is_stuff_taking_parenthized x)
       && ok_typedef s
         ->
 
       msg_typedef s i1 33; LP.add_typedef_root s;
-      TypedefIdent (s, i1)
+      TypedefIdent (s, i1) *)
 
 
         (* can have sizeof on expression

@@ -189,7 +189,7 @@ let is_start_of_something = function
 let is_binary_operator = function
   | TOrLog _ | TAndLog _ |  TOr _ |  TXor _ |  TAnd _
   | TEqEq _ |  TNotEq _  | TInf _ |  TSup _ |  TInfEq _ |  TSupEq _
-  | TShl _ | TShr _ | TZeroFillShr _ 
+  | TShl _ | TShr _ | TZeroFillShr _ | TZeroFillShrEq _ 
   | TPlus _ |  TMinus _ |  TMul _ |  TDiv _ |  TMod _ | TMax _ | TMin _
         -> true
   | _ -> false
@@ -397,6 +397,7 @@ let info_of_tok = function
   | TShl                 (i) -> i
   | TShr                 (i) -> i
   | TZeroFillShr         (i) -> i
+  | TZeroFillShrEq       (i) -> i
   | TPlus                (i) -> i
   | TMinus               (i) -> i
   | TMul                 (i) -> i
@@ -434,6 +435,7 @@ let info_of_tok = function
   | Tvolatile            (i) -> i
   | Tsynchronized        (i) -> i
   | Ttransient           (i) -> i
+  | Tstrictfp            (i) -> i
 
   | Tsuper               (i) -> i
   | Tthrows              (i) -> i
@@ -597,7 +599,8 @@ let visitor_info_of_tok f = function
   | TSupEq               (i) -> TSupEq               (f i)
   | TShl                 (i) -> TShl                 (f i)
   | TShr                 (i) -> TShr                 (f i)
-  | TZeroFillShr         (i) -> TZeroFillShr                 (f i)
+  | TZeroFillShr         (i) -> TZeroFillShr         (f i)
+  | TZeroFillShrEq       (i) -> TZeroFillShrEq       (f i)
   | TPlus                (i) -> TPlus                (f i)
   | TMinus               (i) -> TMinus               (f i)
   | TMul                 (i) -> TMul                 (f i)
@@ -628,6 +631,7 @@ let visitor_info_of_tok f = function
   | Tabstract            (i) -> Tabstract            (f i)
   | Tsynchronized        (i) -> Tsynchronized        (f i)
   | Ttransient            (i) -> Ttransient          (f i)
+  | Tstrictfp            (i) -> Tstrictfp            (f i)  
 
   | Tconst               (i) -> Tconst               (f i)
   | Tvolatile            (i) -> Tvolatile            (f i)
@@ -748,6 +752,7 @@ let string_of_token = function
   | TShl _ -> "TShl"
   | TShr _ -> "TShr"
   | TZeroFillShr _ -> "TZeroFillShr"
+  | TZeroFillShrEq _ -> "TZeroFillShrEq"
   | TPlus _ -> "TPlus"
   | TMinus _ -> "TMinus"
   | TMul _ -> "TMul"
@@ -783,6 +788,7 @@ let string_of_token = function
   | Tfinal _ -> "Tfinal"
   | Tsynchronized _ -> "Tsynchronized"
   | Ttransient _ -> "Ttransient"
+  | Tstrictfp _ -> "Tstrictfp"
   | Tsynchronizedblock _ -> "Tsynchronizedblock"
   | Ttypedef _ -> "Ttypedef"
   | Tconst _ -> "Tconst"

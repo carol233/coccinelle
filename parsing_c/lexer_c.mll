@@ -144,9 +144,9 @@ let keyword_table = Common.hash_of_list [
   "unsigned", (fun ii -> Tunsigned ii);
   (* "signed",   (fun ii -> Tsigned ii); *)
 
-  "auto",     (fun ii -> Tauto ii);
+  (* "auto",     (fun ii -> Tauto ii); *)
   (* "register", (fun ii -> Tregister ii); *)
-  "extern",   (fun ii -> Textern ii);
+  (* "extern",   (fun ii -> Textern ii); *)
   "static",   (fun ii -> Tstatic ii);
 
   (* for java *)
@@ -157,6 +157,7 @@ let keyword_table = Common.hash_of_list [
   "final",   (fun ii -> Tfinal ii);
   "synchronized", (fun ii -> Tsynchronized ii);
   "transient", (fun ii -> Ttransient ii);
+  "strictfp", (fun ii -> Tstrictfp ii);
 
   "try",     (fun ii -> Ttry ii);
   "catch",   (fun ii -> Tcatch ii);
@@ -180,10 +181,10 @@ let keyword_table = Common.hash_of_list [
   "import",  (fun ii -> Timport ii);
   "package",  (fun ii -> Tpackage ii);
 
-  "struct",  (fun ii -> Tstruct ii);
-  "union",   (fun ii -> Tunion ii);
+  (* "struct",  (fun ii -> Tstruct ii); *)
+  (* "union",   (fun ii -> Tunion ii); *)
   "enum",    (fun ii -> Tenum ii);
-  "typedef", (fun ii -> Ttypedef ii);
+  (* "typedef", (fun ii -> Ttypedef ii); *)
 
   "if",      (fun ii -> Tif ii);
   "else",     (fun ii -> Telse ii);
@@ -205,7 +206,7 @@ let keyword_table = Common.hash_of_list [
   "__asm__", (fun ii -> Tasm ii);
   "__asm",   (fun ii -> Tasm ii);
 
-  "inline",     (fun ii -> Tinline ii);
+  (* "inline",     (fun ii -> Tinline ii); *)
   "__inline__", (fun ii -> Tinline ii);
   "__inline",   (fun ii -> Tinline ii);
 
@@ -248,10 +249,14 @@ let keyword_table = Common.hash_of_list [
  ]
 
 let cpp_keyword_table = Common.hash_of_list [
-  "namespace", (fun ii -> Tnamespace ii);
+  (* "namespace", (fun ii -> Tnamespace ii); *)
   "new",       (fun ii -> Tnew ii);
+
+  (* Some code in google closure does something crazy: *)
+  "this.new",       (fun ii -> Tnew ii);
   (* "delete",    (fun ii -> Tdelete ii); *)
-  "using",     (fun ii -> TComment ii) ]
+  (* "using",     (fun ii -> TComment ii) ] *)
+]
 
 let ibm_keyword_table = Common.hash_of_list [
   "decimal",   (fun ii -> Tdecimal ii);
@@ -347,7 +352,7 @@ let spopt = [' ' '\t']*
 
 let dec = ['0'-'9']
 let oct = ['0'-'7']
-let hex = ['0'-'9' 'a'-'f' 'A'-'F']
+let hex = ['0'-'9' 'a'-'f' 'A'-'F' '.' 'p' '-']
 
 let decimal = ('0' | (['1'-'9'] (dec | '_' )*))
 let octal   = ['0']        oct+
@@ -359,7 +364,7 @@ let pfract = dec+
 let sign = ['-' '+']
 let exp  = ['e''E'] sign? dec+
 let real = pent exp | ((pent? '.' pfract | pent '.' pfract? ) exp?)
-let ddecimal = ((pent? '.' pfract | pent '.' pfract? ))
+let ddecimal = ((pent? '.' pfract | pent '.' pfract? ) 'd' ?)
 
 let id = letter (letter | digit) *
 
@@ -737,11 +742,11 @@ rule token = parse
         TIdent (tok lexbuf, info)
       }
   (* the ... next to id, e.g. arg..., works with ##, e.g. ##arg *)
-  | ((id as s)  "...")
+  | ((id as s) " " ? "...")
       { TDefParamVariadic (s, tokinfo lexbuf) }
   | ((cplusplus_ident
       ('<'' ' * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'*
-      ("," " " * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * ' ' * '>') as s)  "...")
+      ("," " " * "const "? cplusplus_ident_ext ("::" cplusplus_ident_ext) * '*'* ) * ' ' * '>') as s) " " ?  "...")
       { TDefParamVariadic (s, tokinfo lexbuf) }
 
   (* Java annotation *)
@@ -749,7 +754,7 @@ rule token = parse
 	   let info = tokinfo lexbuf in 
 	  Tannotate(info) }
 
-  | ("synchronized" " " * ("(" (letter | ".") *   ")")*  " " * "{" ) {
+  | ("synchronized" " " * ("(" " " *  (letter | "." | "(" | ")") *  " " *  ")")*  " " * "{" ) {
     let info = tokinfo lexbuf in 
     Tsynchronizedblock(info)
   }
@@ -803,6 +808,7 @@ rule token = parse
 
   | "&&" { TAndLog(tokinfo lexbuf) } | "||" { TOrLog(tokinfo lexbuf) }
   | ">>" { TShr(tokinfo lexbuf) }    | "<<" { TShl(tokinfo lexbuf) } | ">>>" { TZeroFillShr(tokinfo lexbuf) }
+  | ">>>=" { TZeroFillShrEq(tokinfo lexbuf) }
   | "&"  { TAnd(tokinfo lexbuf) }    | "|" { TOr(tokinfo lexbuf) }
   | "^"  { TXor(tokinfo lexbuf) }
   | "..." { TEllipsis(tokinfo lexbuf) }
@@ -1036,8 +1042,8 @@ rule token = parse
 	(pr2 ("LEXER: ZARB integer_string, certainly a macro:" ^ tok lexbuf);
          TIdent (tok lexbuf, tokinfo lexbuf)) }
 
-  | (real ['f' 'F']) as x { TFloat ((x, CFloat),      tokinfo lexbuf) }
-  | (real ['l' 'L']) as x { TFloat ((x, CLongDouble), tokinfo lexbuf) }
+  | (real ['f' 'F' ]) as x { TFloat ((x, CFloat),      tokinfo lexbuf) }
+  | (real ['l' 'L' 'd' 'D']) as x { TFloat ((x, CLongDouble), tokinfo lexbuf) }
   | (real as x)           { TFloat ((x, CDouble),     tokinfo lexbuf) }
   (* How to make the following only available if !Flag.ibm *)
   | (ddecimal ['d' 'D']) as x
