@@ -668,6 +668,7 @@ module Parser_c :
       | TShl of Ast_c.info
       | TShr of Ast_c.info
       | TZeroFillShr of Ast_c.info
+      | TZeroFillShrEq of Ast_c.info
       | TPlus of Ast_c.info
       | TMinus of Ast_c.info
       | TMul of Ast_c.info
@@ -698,6 +699,7 @@ module Parser_c :
       | Tfinal of Ast_c.info
       | Tsynchronized of Ast_c.info
       | Ttransient of Ast_c.info
+      | Tstrictfp of Ast_c.info
       | Tsynchronizedblock of Ast_c.info
       | Ttypedef of Ast_c.info
       | Tconst of Ast_c.info

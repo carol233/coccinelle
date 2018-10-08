@@ -322,6 +322,7 @@ let is_end_of_something t =
   | TCBrace _ -> true
   | TPtVirg _ -> true
   | TOBrace _ -> true
+  | TCPar _ -> true
   (* | TOPar _ -> true *)
   | _ -> false
 
@@ -2010,9 +2011,21 @@ let is_followed_by_closing_generic_within_n tokens n =
     | TShr _  :: _ -> true
     | TZeroFillShr _  :: _ -> true
     | (b :: _) when TH.is_binary_operator b  -> false
+    | [] -> false
     | _ :: rest ->  loop rest (n-1))
   in
   loop tokens n 
+
+let is_followed_by_comma_within_n tokens n = 
+	let rec loop toks n =
+	  if n = 0 then false 
+	  else
+	  (match toks with 
+	  | TComma _ :: _ -> true
+	  | [] -> false
+	  | _ :: rest ->  loop rest (n-1))
+	in
+	loop tokens n 
 
 let is_primitive_type_array_class_access rest = 
   let rec loop ts = 
@@ -2047,6 +2060,9 @@ let is_part_of_type_declaration rest =
     | (TypedefIdent _ | TIdent _) :: TDot _ :: rest -> loop rest
 	
     | (TypedefIdent _ | TIdent _)  :: (TypedefIdent _ | TIdent _)  :: rest -> true
+
+    | (TypedefIdent _ | TIdent _)  :: TInf _ :: rest -> loop rest
+    | (TypedefIdent _ | TIdent _)  :: (TShr _ |  TSup _) :: (TypedefIdent _ | TIdent _ ) :: rest -> loop rest
 
     (* something.Thing[] X *)
     | (TypedefIdent _ | TIdent _)  :: TOCro _ :: TCCro _ :: (TypedefIdent _ | TIdent _)  :: rest -> true
@@ -2186,7 +2202,6 @@ let lookahead2 ~pass next before =
     (* any X x must mean that x is not a typedefIdent *)
   | (TypedefIdent(s,i1) :: rest, (TypedefIdent _ | Tlong _| Tchar _ | Tint _ | Tfloat _ | Tdouble _ | Tshort _ | Tlong _ ) :: _ )
     ->
-    (*print_string "part of X x check ;\n";*)
     msg_not_typedef s i1 1;
     TIdent (s, i1)
 
@@ -2316,11 +2331,12 @@ let lookahead2 ~pass next before =
   TypedefIdent (s, i1)
 
 
-   | (TIdent (s, i1):: TInf _ :: (TypedefIdent _ | TIdent _ | Tchar _ | Tint _ | Tfloat _ | Tdouble _ | Tshort _ | Tlong _)  :: rest  , _) when not_struct_enum before
+   | (TIdent (s, i1):: TInf _ :: ((TypedefIdent _ | TIdent _ | Tchar _ | Tint _ | Tfloat _ | Tdouble _ | Tshort _ | Tlong _) as i)  :: rest  , _) when not_struct_enum before
    && ok_typedef s &&
    (
 	   is_followed_by_closing_generic_within_n rest 3
-   )
+   ) 
+   (* && (is_part_of_type_declaration (i :: rest)) *)
      ->
    msg_typedef s i1 103; LP.add_typedef_root s;
    
@@ -2475,6 +2491,8 @@ let lookahead2 ~pass next before =
       msg_typedef s i1 12; LP.add_typedef_root s;
       
       TypedefIdent (s, i1)
+  | (TypedefIdent ("null", i1) :: _, _ )
+    -> TIdent ("null", i1)
 
   (*------------------------------------------------------------*)
   (* if 'x*y' maybe an expr, maybe just a classic multiplication *)
@@ -2585,13 +2603,13 @@ let lookahead2 ~pass next before =
   | (TypedefIdent (s, i1) :: TDot _ :: rest, prev :: _) when is_part_of_method_call rest && not (is_part_of_type_declaration rest) 
   && not (is_new prev)
 	-> 
-	(*print_string "part of is_part_of_method_call? ;\n";*)
+	
 	msg_not_typedef s i1 2;
 	TIdent(s, i1) 
 
    | (TypedefIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_assignment rest && not (is_part_of_type_declaration rest)
 	-> 
-(*print_string "part of assignment? ;\n";*)
+
 msg_not_typedef s i1 3;
   TIdent(s, i1)
   
@@ -2610,7 +2628,6 @@ msg_not_typedef s i1 3;
     
 | (TypedefIdent (s, i1) :: TDot _ :: rest, any :: _) when is_part_of_init rest
 	-> 
-	(*print_string "part of is_part_of_init? ;\n";*)
 	msg_not_typedef s i1 4;
 	TIdent(s, i1) 
 	
@@ -2634,9 +2651,7 @@ msg_not_typedef s i1 3;
                      not (is_part_of_type_declaration (TIdent (s2,  i2)  :: rest))
      ->
      (* Trick it into thinking its a record access*)
-(*print_string "record_access thing 1;\n";*)
-     
-     
+
 msg_not_typedef s i1 5;
      TIdent(s, i1)
 
@@ -2648,8 +2663,6 @@ msg_not_typedef s i1 5;
 	not (is_definite_type_indicator prev)
 	->
   (* Trick it into thinking its a record access*)
-(*print_string "record_access thing 2;\n";*)
-  
   
 	msg_not_typedef s i1 6;
 	TIdent(s, i1)
@@ -2657,19 +2670,16 @@ msg_not_typedef s i1 5;
   | (TypedefIdent (s, i1) :: TDot _ :: rest, Treturn _  :: _ )
     ->
     (* Trick it into thinking its a record access*)
-(*print_string "record_access thing 3;\n";*)
-    
     
 	msg_not_typedef s i1 7;
     TIdent (s, i1) 
-  | (TypedefIdent (s, i1) :: TDot _ :: Tclass (i2) :: rest, prev :: _ ) when not (is_type_qualifier prev) &&
+  | (TypedefIdent (s, i1) :: TDot _ :: Tclass (i2) :: rest, prev :: _ ) when not (is_type_qualifier prev)
+   
           (* not (LP.is_top_or_struct (LP.curent_context ())) *)
-          not (is_end_of_something prev) 
+          (* && not (is_end_of_something prev)  *)
 	  
       ->
-      (* Trick it into thinking its a record access*)
-(*print_string "record_access thing 4;\n";*)
-      
+      (* Trick it into thinking its a record access*)      
       
 	msg_not_typedef s i1 8;
       TIdent(s, i1)
@@ -2679,24 +2689,21 @@ msg_not_typedef s i1 5;
 
   ->
   (* Trick it into thinking its a record access*)
-(*print_string "record_access thing 5;\n";*)
-  
-  
+
   msg_not_typedef s i1 9;
   TIdent(s, i1)
-  | (TypedefIdent (s, i1) :: TDot _ :: (TypedefIdent _ | TIdent _ ):: rest, prev :: prev2 :: _ ) when not (is_type_qualifier prev) &&
+  | (TypedefIdent (s, i1) :: TDot _ :: ((TypedefIdent _ | TIdent _ ) as i) :: rest, prev :: prev2 :: _ ) when not (is_type_qualifier prev) &&
      (* not (LP.is_top_or_struct (LP.curent_context ())) *)
      (* not (is_end_of_something prev)  &&  *)
      not (is_definite_type_indicator prev) && 
      not (is_new prev) && 
      not (is_part_of_assignment rest) &&
+     not (is_part_of_type_declaration (i :: rest)) &&
      (match prev2 with  (* needed to prevent `for (T.X`'s T to turn into an ident`*)
       | Tfor _ -> false 
       | _ -> true)
     ->
     (* Trick it into thinking its a record access*)
-(*print_string "record_access thing  6;\n";*)
-    
     
     msg_not_typedef s i1 10;
     TIdent(s, i1)
@@ -2708,8 +2715,6 @@ msg_not_typedef s i1 5;
     when not (is_new prev)  
    ->
    (* Trick it into thinking its a record access*)
-(*print_string "record_access thing 7;\n";*)
-   
 msg_not_typedef s i1 11;
    
    TIdent(s, i1)
@@ -2887,22 +2892,22 @@ msg_not_typedef s i1 11;
     TIdent (s, i1)
     (* constructor *)
     (* in this case, emit a special token otherwise too much ambiguity *)
-  | (TIdent (s, i1) :: TOPar (i2) :: param1 :: rest, prev :: _) when not (is_type_qualifier prev) &&
+  | ( (TIdent (s, i1) | TypedefIdent (s, i1)) :: TOPar (i2) :: param1 :: rest, prev :: _) when not (is_type_qualifier prev) &&
                                                            not (is_new prev) &&
                                                            is_end_of_something (prev) &&
                                                            not (is_argument param1) && 
-                                                           (LP.is_top_or_struct (LP.current_context ()) )
+							   (LP.is_top_or_struct (LP.current_context ()) 
+
+							   	   (* check if this is enum constant  *)
+								   || (LP.current_context () = LP.InEnum  
+								       && not (is_followed_by_comma_within_n rest 5)
+								          )
+							   
+							   )
     -> 
     
     Tconstructorname (s, i1)
-  | (TypedefIdent (s, i1) :: TOPar (i2) :: param1 ::rest, prev :: _) when  not (is_type_qualifier prev) &&
-                                                                  not (is_new prev) &&
-                                                                  is_end_of_something (prev) &&
-                                                                  not (is_argument param1) && 
-                                                                  (LP.is_top_or_struct (LP.current_context ()) )
-    -> 
-   
-    Tconstructorname (s, i1)
+
     (* <V> Name( *)
   | (TypedefIdent (s, i1) :: TOPar (i2) :: param1 ::rest, TSup _ :: _) when 
   (LP.is_top_or_struct (LP.current_context ()) ) && 

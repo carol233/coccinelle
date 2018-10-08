@@ -803,7 +803,6 @@ expr:
 
 
 
-
 /*(* bugfix: in C grammar they put unary_expr, but in fact it must be
    * cast_expr, otherwise (int * ) xxx = &yy; is not allowed
    *)*/
@@ -813,7 +812,9 @@ assign_expr:
  | cast_expr TEq     assign_expr { mk_e (Assignment ($1, (SimpleAssign, [$2]),$3)) []}
 
 /*(* for tricking array initiation in annotations *)*/
- | cast_expr TEq     TOBrace assign_expr TCBrace { mk_e (Assignment ($1, (SimpleAssign, [$2]),$4)) []}
+ | cast_expr TEq     TOBrace expr TCBrace { mk_e (Assignment ($1, (SimpleAssign, [$2]),$4)) []}
+ | cast_expr TEq     annotation { $1 }
+ | cast_expr TEq    TOBrace  annotation TCBrace { $1 }
 
 
 
@@ -1031,8 +1032,10 @@ postfix_expr:
 | postfix_expr TOCro  TCCro /*(* This means that this was some kind of type *)*/
      { $1 }
  | postfix_expr TOPar argument_list_ne TCPar
-     { mk_e(FunCall ($1, $3)) [$2;$4] }
- | postfix_expr TOPar  TCPar  { mk_e(FunCall ($1, [])) [$2;$3] }
+     {
+          mk_e(FunCall ($1, $3)) [$2;$4] }
+ | postfix_expr TOPar  TCPar  { 
+     mk_e(FunCall ($1, [])) [$2;$3] }
  /* | postfix_expr TDot   ident_cpp { mk_e(RecordAccess   ($1,$3)) [$2] } */
  /*(* OtherClass.<Integer>method() *)*/
  /* | postfix_expr TDot   new_argument { mk_e(New (None, $3))     [$2] } */
@@ -1840,6 +1843,7 @@ enum_constant:
  | TIdent TOPar argument_list_ne TCPar  {}
  | TIdent TOBrace class_body TCBrace  {}
  
+ 
 
 init_block:
  | Tstatic compound {}
@@ -2070,7 +2074,7 @@ generic_opt:
  /* | TInf TIdent TSup {} */
  /*(*
  | TInf TSup {}  /*(* diamond operator 
- *)*/
+*)*/
 
 generic_list:
  | ident_or_primitive_array_or_wildcard { }
@@ -2086,9 +2090,9 @@ generic_list:
 
 ident_or_primitive_array_or_wildcard:
   | ident {  }
-  | primitive_type_array {} 
+  | primitive_types {} 
   | ident TDot ident_or_primitive_array_or_wildcard {}
-  | ident TOCro TCCro {}
+  | ident_or_primitive_array_or_wildcard TOCro TCCro {}
   | ident Textends generic_list {   }
   | ident Tsuper generic_list {     }
   | TWhy Textends generic_list {    }
@@ -2414,7 +2418,20 @@ start_fun2:
        let (id, attrs) = $3 in
        (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $2)@attrs)
      }  
-
+    | annotation_list Tconstructorname topar            tcpar throws_opt 
+   {
+       let returnType = mk_ty (TypeName (RegularName (fst $2, [snd $2]), Ast_c.noTypedefDef())) [] in 
+       (*let ret = mk_ty NoType [] in*)
+       let ty = mk_ty (FunctionType (returnType, (([], (false, []))))) [$3;$4] in
+       (RegularName ("", Ast_c.noii), ty, ((NoSto, false),[] ), Ast_c.noattr )
+   }
+    | annotation_list Tconstructorname topar  parameter_type_list  tcpar throws_opt 
+   {
+       let returnType = mk_ty (TypeName (RegularName (fst $2, [snd $2]), Ast_c.noTypedefDef())) [] in 
+       (*let ret = mk_ty NoType [] in*)
+       let ty = mk_ty (FunctionType (returnType, $4)) [$3;$5] in
+       (RegularName ("", Ast_c.noii), ty, ((NoSto, false),[] ), Ast_c.noattr )
+   }
    | Tconstructorname topar            tcpar throws_opt 
    {
        let returnType = mk_ty (TypeName (RegularName (fst $1, [snd $1]), Ast_c.noTypedefDef())) [] in 
@@ -2685,11 +2702,11 @@ class_decl:
 
         fst $2, Namespace (fst $6, $1 :: ([snd $2] @ [$3; $4;] @ snd $6 @ [$5; $7])) 
     } */
-  | decl_spec Tenum ident extends TOBrace enum_body TCBrace  {
+  | decl_spec Tenum ident extends tobrace_enum enum_body tcbrace_enum  {
 	  fst $3, Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
-  | annotation_list decl_spec Tenum ident extends TOBrace enum_body TCBrace  {
+  | annotation_list decl_spec Tenum ident extends tobrace_enum enum_body tcbrace_enum  {
 	  fst $4, Namespace (fst $7, $3 :: (snd $7 @ [snd $4; $6; $8])) } 
-  | Tenum ident extends TOBrace enum_body TCBrace  {
+  | Tenum ident extends tobrace_enum enum_body tcbrace_enum  {
 	  fst $2, Namespace (fst $5, $1 :: (snd $5 @ [snd $2; $4; $6])) } 
   	
 
@@ -2700,7 +2717,7 @@ class_or_interface:
 
 /*(* Things to ignore *)*/
 import:
-  | Timport Tstatic ident TDot nested_field_access TPtVirg { [$1; $6] }
+ | Timport Tstatic ident TDot nested_field_access TPtVirg { [$1; $6] }
  | Timport Tstatic ident TDot nested_field_access TDot TMul TPtVirg { [$1; $6] }
  | Timport Tstatic ident TDot TMul TPtVirg { [$1; $6] }
  /* | Timport TIdent TPtVirg { [$1; $3] } */
@@ -2710,17 +2727,21 @@ import:
 
 annotation:
  | Tannotate { }
- | Tannotate TOPar comma_separated_expr TCPar { }
- | Tannotate TOPar TOBrace comma_separated_expr TCBrace TCPar {}
+ | Tannotate TOPar expr TCPar { }
+ | Tannotate TOPar TOBrace expr TCBrace TCPar { }
 
 annotation_list:
  | annotation {}
  | annotation_list annotation  {}
 
-comma_separated_expr:
+/* comma_separated_expr:
  | expr {}
- | comma_separated_expr  TComma expr {}
+ | comma_separated_expr  TComma expr {} */
 
+
+/* annotation_comma_separated_expr:
+ | annotation_expr {}
+ | annotation_comma_separated_expr TComma annotation_expr {} */
 
 
 /*(*************************************************************************)*/
