@@ -1,0 +1,44 @@
+
+
+@outside_check@
+identifier func_neg.i, func_neg.f;
+expression E;
+statement S, S1;
+binary operator bop;
+@@
+
+i =
+(
+ f()
+|
+ f(...)
+)
+...
+if (i >= 0 bop E) 
+S else S1
+...
+i
+
+
+@add_branch@
+identifier func_neg.i;
+identifier func_neg.f;
+statement S,S1;
+type t;
+expression forgot_check.E;
+@@
+
+(
++ if (!E) {
++  add(x, y);
++  return;
++ }
+t i = f(...);
+|
++ if (!E) {
++  add(x, y);
++  return;
++ }
+i = f(...);
+)
+...

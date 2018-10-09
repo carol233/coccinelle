@@ -1,0 +1,14 @@
+@@
+identifier  i,j;
+identifier f =~ "multiply$";
+@@
+f (...) {
+   switch (j) {
+      case -1:
++         if (i == Long.MIN_VALUE) {
++              throw new ArithmeticException("Multiplication overflows a long")
++         }
+
+   }
+
+}
