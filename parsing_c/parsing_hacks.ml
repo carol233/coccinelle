@@ -1970,12 +1970,12 @@ let pointer ?(followed_by=fun _ -> true)
   let rec loop ts =
     match ts with
     | TMul _ :: rest -> loop rest
-    | TAnd _ :: rest when !Flag.c_plus_plus -> loop rest
+    | TAnd _ :: rest when !Flag.c_plus_plus || !Flag.java -> loop rest
     | t :: ts' -> followed_by t && followed_by_more ts'
     | [] -> failwith "unexpected end of token stream" in
   match ts with
   | TMul _ :: rest -> loop rest
-  | TAnd _ :: rest when !Flag.c_plus_plus -> loop rest
+  | TAnd _ :: rest when !Flag.c_plus_plus || !Flag.java -> loop rest
   | _ -> false
 
 let is_part_of_method_call rest =
@@ -2905,7 +2905,6 @@ msg_not_typedef s i1 11;
 							   
 							   )
     -> 
-    
     Tconstructorname (s, i1)
 
     (* <V> Name( *)
@@ -2913,7 +2912,6 @@ msg_not_typedef s i1 11;
   (LP.is_top_or_struct (LP.current_context ()) ) && 
   not (is_argument param1 )
   -> 
-
 	Tconstructorname (s, i1)
 
   

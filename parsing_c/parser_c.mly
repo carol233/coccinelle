@@ -888,7 +888,7 @@ new_argument:
 
 | typedef_ident_generic  TOPar  argument_list_ne TCPar
     { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
-       Left (mk_e(FunCall (fn, [])) [$2;$4]) }
+       Left (mk_e(FunCall (fn, $3)) [$2;$4]) }
  | typedef_ident_generic  TOPar  TCPar
     { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
        Left (mk_e(FunCall (fn, [])) [$2;$3]) }
@@ -919,6 +919,7 @@ new_argument:
 
 | typedef_ident_generic TDot nested_field_access
   {
+     
       let recordnm = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
     Left( mk_e(RecordAccess (recordnm,$3)) [$2] )
      }
@@ -951,6 +952,7 @@ new_argument:
      } */
  | primitive_types_and_typedef  array_types {
 	 (* TODO maybe new syntax in AST is needed here *)
+     
 	  let fn = mk_e(Ident (RegularName ( $1))) [] in
        Left (mk_e(FunCall (fn, [])) $2) 
  }
@@ -1072,7 +1074,7 @@ postfix_expr:
      { mk_e(Constructor ($2, (InitList (List.rev $5),[$4;$7] @ $6))) [$1;$3] } */
 
 nested_field_access:
- | ident {  RegularName (mk_string_wrap $1) }
+ | ident {   RegularName (mk_string_wrap $1) }
  /*(* maybe some reflection thing, or operation on X.class? *)*/
  | Tclass { RegularName ("class", [$1]) }
  | Tsuper { RegularName ("super", [$1]) }
@@ -1105,7 +1107,7 @@ primary_expr:
  /*(* gccext: allow statement as expressions via ({ statement }) *)*/
  /* | TOPar compound TCPar  { mk_e(StatementExpr ($2)) [$1;$3] } */
 
- | Tsuper {  mk_e(Ident  (RegularName (("super", [$1])))) []  }
+ | Tsuper { mk_e(Ident  (RegularName (("super", [$1])))) []  }
  
 
 string_fragments:
@@ -2420,46 +2422,56 @@ start_fun2:
      }  
     | annotation_list Tconstructorname topar            tcpar throws_opt 
    {
-       let returnType = mk_ty (TypeName (RegularName (fst $2, [snd $2]), Ast_c.noTypedefDef())) [] in 
+       (*let returnType = mk_ty (TypeName (RegularName (fst $2, []), Ast_c.noTypedefDef())) [] in *)
+
+       let ret = mk_ty NoType [] in
+       let ty = mk_ty (FunctionType (ret, (([], (false, []))))) [$3;$4] in
+
        (*let ret = mk_ty NoType [] in*)
-       let ty = mk_ty (FunctionType (returnType, (([], (false, []))))) [$3;$4] in
-       (RegularName ("", Ast_c.noii), ty, ((NoSto, false),[] ), Ast_c.noattr )
+       (*let ty = mk_ty (FunctionType (returnType, (([], (false, []))))) [$3;$4] in *)
+       (RegularName (fst $2, [snd $2]), ty, ((NoSto, false),[] ), Ast_c.noattr )
    }
     | annotation_list Tconstructorname topar  parameter_type_list  tcpar throws_opt 
    {
-       let returnType = mk_ty (TypeName (RegularName (fst $2, [snd $2]), Ast_c.noTypedefDef())) [] in 
+       (*let returnType = mk_ty (TypeName (RegularName (fst $2, []), Ast_c.noTypedefDef())) [] in *)
+       let ret = mk_ty NoType [] in
+       let ty = mk_ty (FunctionType (ret, $4)) [$3;$5] in
+
        (*let ret = mk_ty NoType [] in*)
-       let ty = mk_ty (FunctionType (returnType, $4)) [$3;$5] in
-       (RegularName ("", Ast_c.noii), ty, ((NoSto, false),[] ), Ast_c.noattr )
+       (*let ty = mk_ty (FunctionType (returnType, $4)) [$3;$5] in*)
+       (RegularName (fst $2, [snd $2]), ty, ((NoSto, false),[] ), Ast_c.noattr )
    }
    | Tconstructorname topar            tcpar throws_opt 
    {
-       let returnType = mk_ty (TypeName (RegularName (fst $1, [snd $1]), Ast_c.noTypedefDef())) [] in 
+       (*let returnType = mk_ty (TypeName (RegularName (fst $1, []), Ast_c.noTypedefDef())) [] in *)
        (*let ret = mk_ty NoType [] in*)
-       let ty = mk_ty (FunctionType (returnType, (([], (false, []))))) [$2;$3] in
-       (RegularName ("", Ast_c.noii), ty, ((NoSto, false),[] ), Ast_c.noattr )
+       (*let ty = mk_ty (FunctionType (returnType, (([], (false, []))))) [$2;$3] in*)
+       let ret = mk_ty NoType [] in
+       let ty = mk_ty (FunctionType (ret, (([], (false, []))))) [$2;$3]  in
+       (RegularName (fst $1, [snd $1]), ty, ((NoSto, false),[] ), Ast_c.noattr )
    }
    | decl_spec Tconstructorname topar            tcpar throws_opt 
    {
-       let returnType = mk_ty (TypeName (RegularName (fst $2, [snd $2]), Ast_c.noTypedefDef())) [] in 
+       (*let returnType = mk_ty (TypeName (RegularName (fst $2, []), Ast_c.noTypedefDef())) [] in *)
        (*let ret = mk_ty NoType [] in*)
-       let ty = mk_ty (FunctionType (returnType, (([], (false, []))))) [$3;$4] in
-       (RegularName ("", Ast_c.noii), ty, ((NoSto, false),[] ), Ast_c.noattr )
+       (*let ty = mk_ty (FunctionType (returnType, (([], (false, []))))) [$3;$4] in*)
+       let ret = mk_ty NoType [] in
+       let ty = mk_ty (FunctionType (ret, (([], (false, []))))) [$3;$4]  in
+       (RegularName (fst $2, [snd $2]), ty, ((NoSto, false),[] ), Ast_c.noattr )
    }
 
    | Tconstructorname topar parameter_type_list tcpar throws_opt 
    {
-       let returnType = mk_ty (TypeName (RegularName (fst $1, [snd $1]), Ast_c.noTypedefDef())) [] in 
-       (*let ret = mk_ty NoType [] in*)
-       let ty = mk_ty (FunctionType (returnType, $3)) [$2;$4] in
-       (RegularName ("", Ast_c.noii ), ty, ((NoSto, false),[] ), Ast_c.noattr )
+       let ret = mk_ty NoType [] in
+       let ty = mk_ty (FunctionType (ret, $3)) [$2;$4] in
+       (RegularName (fst $1, [snd $1]), ty, ((NoSto, false),[] ), Ast_c.noattr )
    }
    | decl_spec Tconstructorname topar parameter_type_list tcpar throws_opt 
    {
-       let returnType = mk_ty (TypeName (RegularName (fst $2, [snd $2]), Ast_c.noTypedefDef())) [] in 
+       let returnType = mk_ty (TypeName (RegularName (fst $2, []), Ast_c.noTypedefDef())) [] in 
        (*let ret = mk_ty NoType [] in*)
        let ty = mk_ty (FunctionType (returnType, $4)) [$3;$5] in
-       (RegularName ("", Ast_c.noii ), ty, ((NoSto, false),[] ), Ast_c.noattr )
+       (RegularName (fst $2, [snd $2]), ty, ((NoSto, false),[] ), Ast_c.noattr )
    }
 
     

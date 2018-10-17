@@ -28,7 +28,11 @@ let test_tokens_c file =
 
 (* Was in main, but using it in test_parsing_c *)
 let get_files path =
-  if !Flag.c_plus_plus
+  if !Flag.java 
+  then 
+    cmd_to_list ("find " ^ path ^ " -name \"*.java\"")
+  else 
+  if !Flag.c_plus_plus 
   then
     (* only C++ files, but contains .h files as that extension is ambiguous *)
     cmd_to_list

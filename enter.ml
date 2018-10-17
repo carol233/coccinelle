@@ -645,6 +645,8 @@ let other_options = [
     "  indicate that a virtual rule should be considered to be matched";
     "--c++", Arg.Set Flag.c_plus_plus,
     "  make a small attempt to parse C++ files";
+    "--java", Arg.Set Flag.java,
+    "  make a small attempt to parse Java files";
     "--ibm", Arg.Set Flag.ibm,
     "  make a small attempt to parse IBM C files";
     "--force-kr", Arg.Set Flag_parsing_c.force_kr,

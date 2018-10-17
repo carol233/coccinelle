@@ -23,6 +23,7 @@ val defined_virtual_rules : string list ref
 val defined_virtual_env : (string * string) list ref
 val set_defined_virtual_rules : string -> unit
 val c_plus_plus : bool ref
+val java : bool ref
 val ibm : bool ref
 val include_headers : bool ref
 val no_include_cache : bool ref

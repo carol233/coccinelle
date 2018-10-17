@@ -1,5 +1,5 @@
 def build_link(p, msg, color) :
-        return "[[view:%s::face=%s::linb=%s::colb=%s::cole=%s][%s]]" % (p.file,color,p.line,p.column,p.column_end,msg)
+        return "[[file:%s::face=%s::linb=%s::colb=%s::cole=%s][%s]]" % (p.file,color,p.line,p.column,p.column_end,msg)
 
 def print_todo(p, msg="", color="ovl-face1") :
         if msg == "" : msg = "%s::%s" % (p.file,p.line)

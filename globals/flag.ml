@@ -51,6 +51,7 @@ let set_defined_virtual_rules s =
   | _ -> failwith "nothing defined"
 
 let c_plus_plus = ref false
+let java = ref false
 let ibm = ref false
 
 (* was in main *)
