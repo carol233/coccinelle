@@ -1332,7 +1332,29 @@ let rec (expression: (A.expression, Ast_c.expression) matcher) =
           ((A.FunCall (ea, ia1, eas, ia2)) +> wa,
           ((B.FunCall (eb, ebs),typ), [ib1;ib2])
         ))))))
-
+  | A.FunCall (ea, ia1, eas, ia2),  ((B.New (_, 
+                                      Left((B.FunCall (eb, ebs), typ), ii)), _), _) ->
+        (* todo: Now we just treat anything after "new" as a function call *)
+        (* todo: do special case to allow IdMetaFunc, cos doing the
+         * recursive call will be too late, match_ident will not have the
+         * info whether it was a function. todo: but how detect when do
+         * x.field = f; how know that f is a Func ? By having computed
+         * some information before the matching!
+         *
+         * Allow match with FunCall containing types. Now ast_cocci allow
+         * type in parameter, and morover ast_cocci allow f(...) and those
+         * ... could match type.
+         *)
+        let (ib1, ib2) = tuple_of_list2 ii in
+        expression ea eb >>= (fun ea eb ->
+        tokenf ia1 ib1 >>= (fun ia1 ib1 ->
+        tokenf ia2 ib2 >>= (fun ia2 ib2 ->
+        arguments (seqstyle eas) (A.unwrap eas) ebs >>= (fun easunwrap ebs ->
+          let eas = A.rewrap eas easunwrap in
+          return (
+            ((A.FunCall (ea, ia1, eas, ia2)) +> wa,
+            ((B.FunCall (eb, ebs),typ), [ib1;ib2])
+          ))))))
   | A.Assignment (ea1, opa, ea2, simple),
       ((B.Assignment (eb1, opb, eb2), typ),ii) ->
       if ii<>[] then failwith "In cocci_vs_c, ii for Assign should be empty."
