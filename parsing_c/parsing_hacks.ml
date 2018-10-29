@@ -2360,8 +2360,13 @@ let lookahead2 ~pass next before =
    TypedefIdent (s, i1)
 
    (* xx.yy zz , *)
-   | (TIdent (s, i1):: TDot _ :: TIdent (s2, i2) :: TIdent  _ ::rest  , _) when not_struct_enum before
-   && ok_typedef s && not (is_macro_paren s2 rest)
+   | (TIdent (s, i1):: TDot _ :: TIdent (s2, i2) :: TIdent  _ ::rest  , prev:: _) when not_struct_enum before
+   && ok_typedef s && not (is_macro_paren s2 rest)  && (
+      (* sometimes in annotations, will get false positives? not sure why *)
+      match prev with  
+      | Tannotate _ -> false
+      | _ -> true
+    )
      ->
    msg_typedef s i1 105; LP.add_typedef_root s; 
    TypedefIdent (s, i1)
@@ -2600,6 +2605,12 @@ let lookahead2 ~pass next before =
 	LP.add_typedef_root s;
 	TypedefIdent (s, i1)
 
+  | (TypedefIdent (s, i1) :: TDot _ :: rest, TOPar _ :: Tannotate _  :: _)
+	-> 
+	
+	msg_not_typedef s i1 50;
+  TIdent(s, i1) 
+  
   | (TypedefIdent (s, i1) :: TDot _ :: rest, prev :: _) when is_part_of_method_call rest && not (is_part_of_type_declaration rest) 
   && not (is_new prev)
 	-> 
@@ -2613,15 +2624,25 @@ let lookahead2 ~pass next before =
 msg_not_typedef s i1 3;
   TIdent(s, i1)
   
-  | (TIdent (s, i1) :: TDot _ :: rest, TOPar _ :: _) when is_part_of_typecast rest 
+  | (TIdent (s, i1) :: TDot _ :: rest, TOPar _ :: prev :: _) when is_part_of_typecast rest && (
+    (* sometimes in annotations, will get false positives? not sure why *)
+    match prev with  
+    | Tannotate _ -> false
+    | _ -> true
+  )
 	-> 
 	msg_typedef s i1 109;
     TypedefIdent(s, i1)
 
-    | (TIdent (s, i1) :: rest, TOPar _ :: prev :: prev_rest) when is_part_of_typecast (TIdent (s, i1) :: rest) 
+  | (TIdent (s, i1) :: rest, TOPar _ :: prev :: prev_rest) when is_part_of_typecast (TIdent (s, i1) :: rest) 
     && (match prev with 
 	| Tif _ -> false 
-	| _ -> true)
+	| _ -> true)  && (
+    (* sometimes in annotations, will get false positives? not sure why *)
+    match prev with  
+    | Tannotate _ -> false
+    | _ -> true
+  )
     -> 
 	msg_typedef s i1 150;
 	TypedefIdent(s, i1)

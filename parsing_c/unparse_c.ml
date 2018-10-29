@@ -243,8 +243,6 @@ let get_fakeInfo_and_tokens celem toks =
       let _ = print_string "\ntok_ins in = ;\n" in
       let _ =  (!toks_in |> List.fold_left (fun acc x -> acc ^ (TH.str_of_tok x)) "" )|> print_string  in
       let _ = print_string ";\n" in *)
-
-      
     let (before, x, after) =      
         !toks_in +> split_when (fun tok ->
           info = TH.info_of_tok tok)
@@ -2502,16 +2500,20 @@ let pp_program2 xs outfile  =
 
       match ppmethod with
       | PPnormal ->
+  
         (* now work on tokens *)
         (* phase1: just get all the tokens, all the information *)
         assert(toks_e +> List.for_all (fun t ->
           TH.is_origin t || TH.is_expanded t
         ));
+    
         let toks = get_fakeInfo_and_tokens e toks_e in
+    
         let toks = displace_fake_nodes toks in
+    
         (* assert Origin;ExpandedTok;Faketok *)
         let toks = expand_mcode toks in
-
+    
         (* assert Origin;ExpandedTok; + Cocci + C (was AbstractLineTok)
          * and no tag endparen, just NOTHING. *)
 
@@ -2523,6 +2525,7 @@ let pp_program2 xs outfile  =
           else
             begin
               (* phase2: can now start to filter and adjust *)
+          
 	      let toks = check_danger toks in
               let toks = paren_then_brace toks in
 	      (* have to annotate droppable spaces early, so that can create
@@ -2544,7 +2547,7 @@ let pp_program2 xs outfile  =
               let toks = add_newlines toks tu in
               toks
             end in
-
+        
         (* in theory here could reparse and rework the ast! or
          * apply some SP. Not before cos julia may have generated
          * not parsable file. Need do unparsing_tricks call before

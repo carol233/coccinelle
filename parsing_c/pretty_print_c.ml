@@ -342,27 +342,40 @@ and pp_string_format (e,ii) =
         pr_elem i1; pr_space(); 
         indent_if_needed st1 (function _-> pp_statement st1); pr_elem i2; 
 	
-	(match st2 with 
-        | None -> failwith "selection list 5a"
-	| Some s ->  indent_if_needed s (function _-> pp_statement s)); 
-	pr_elem i3; 
-        (match st3 with 
-        | None -> ()
-        | Some s ->  failwith "selection list 5b" );
+        (match st2 with 
+            | None -> failwith "selection list 5a"
+        | Some s ->  indent_if_needed s (function _-> pp_statement s)); 
+        pr_elem i3; 
+            (match st3 with 
+            | None -> ()
+            | Some s ->  failwith "selection list 5b" );
 
-	pr_elem i5
+        pr_elem i5
     | Selection  (Try (st1, st2, st3)), [i1;i2;] ->
         pr_elem i1; pr_space(); 
         indent_if_needed st1 (function _-> pp_statement st1); pr_elem i2; 
 	
-	(match st2 with 
-        | None -> ()
-        | Some s -> failwith "selection list 6a");
-        (match st3 with 
-        | None -> failwith "selection list 6b" 
-        | Some s -> indent_if_needed s (function _-> pp_statement s) );
+        (match st2 with 
+            | None -> ()
+            | Some s -> failwith "selection list 6a");
+            (match st3 with 
+            | None -> failwith "selection list 6b" 
+            | Some s -> indent_if_needed s (function _-> pp_statement s) );
 
-        pr_elem i2;
+            pr_elem i2;
+    | Selection  (Try (st1, st2, st3)), [i1;i2;i3;] ->
+        (* try without catch, with finally *)
+            pr_elem i1; pr_space(); 
+            indent_if_needed st1 (function _-> pp_statement st1); pr_elem i2; 
+        
+            (match st2 with 
+                | None -> ()
+                | Some s -> failwith "selection list 6c");
+            (match st3 with 
+            | None -> failwith "selection list 6dee" 
+            | Some s -> indent_if_needed s (function _-> pp_statement s) );
+    
+                pr_elem i3;
     | Iteration  (While (e, st)), [i1;i2;i3;iifakend] ->
         pr_elem i1; pr_space(); pr_elem i2; pp_expression e; pr_elem i3;
 	indent_if_needed st (function _-> pp_statement st); pr_elem iifakend

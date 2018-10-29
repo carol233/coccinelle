@@ -455,6 +455,7 @@ let info_of_tok = function
   | Tdecimal             (i) -> i
   | Texec                (i) -> i
   | Tsynchronizedblock   (i) -> i
+  | TLeftArrow           (i) -> i
   | Ttypedef             (i) -> i
   | Tunion               (i) -> i
   | Tbreak               (i) -> i
@@ -659,6 +660,7 @@ let visitor_info_of_tok f = function
   | Tdecimal             (i) -> Tdecimal             (f i)
   | Texec                (i) -> Texec                (f i)
   | Tsynchronizedblock   (i) -> Tsynchronizedblock   (f i)
+  | TLeftArrow           (i) -> TLeftArrow           (f i)
   | Ttypedef             (i) -> Ttypedef             (f i)
   | Tunion               (i) -> Tunion               (f i)
   | Tbreak               (i) -> Tbreak               (f i)
@@ -790,6 +792,7 @@ let string_of_token = function
   | Ttransient _ -> "Ttransient"
   | Tstrictfp _ -> "Tstrictfp"
   | Tsynchronizedblock _ -> "Tsynchronizedblock"
+  | TLeftArrow _ ->  "TLeftArrow"
   | Ttypedef _ -> "Ttypedef"
   | Tconst _ -> "Tconst"
   | Tvolatile _ -> "Tvolatile"

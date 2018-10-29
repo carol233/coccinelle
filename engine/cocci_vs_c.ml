@@ -1239,7 +1239,12 @@ let rec (expression: (A.expression, Ast_c.expression) matcher) =
         ((B.Ident (nameidb), typ),Ast_c.noii)
           ))
 
-
+  | A.Ident ida,   ((B.RecordAccess (eb, idb), typ),ii)  ->
+	ident_cpp DontKnow ida idb >>= (fun ida nameidb ->
+	    return (
+	    ((A.Ident ida)) +> wa,
+	    ((B.Ident (idb), typ),Ast_c.noii)
+	      ))
 
 
   | A.MetaErr _,     _ -> failwith "not handling MetaErr"
@@ -1334,7 +1339,7 @@ let rec (expression: (A.expression, Ast_c.expression) matcher) =
         ))))))
   | A.FunCall (ea, ia1, eas, ia2),  ((B.New (_, 
                                       Left((B.FunCall (eb, ebs), typ), ii)), _), _) ->
-        (* todo: Now we just treat anything after "new" as a function call *)
+        (* todo: Now we just treat constructor as a function call *)
         (* todo: do special case to allow IdMetaFunc, cos doing the
          * recursive call will be too late, match_ident will not have the
          * info whether it was a function. todo: but how detect when do

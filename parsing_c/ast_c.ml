@@ -1414,3 +1414,35 @@ let string_of_inc_file = function
 	| NonLocal lst -> "nonlocal://" ^ (String.concat "/" lst)
 	| Weird s -> "weird://" ^ s
 
+let string_of_metabinding_kind = function 
+| MetaIdVal        s -> "MetaIdVal"
+| MetaFuncVal      s ->  "MetaFuncVal"
+| MetaLocalFuncVal s ->  "MetaLocalFuncVal"
+
+| MetaExprVal      _ -> "MetaExprVal"
+| MetaExprListVal  _ -> "MetaExprListVal"
+| MetaParamVal     _ -> "MetaParamVal"
+| MetaParamListVal _ -> "MetaParamListVal"
+
+| MetaTypeVal      _ -> "MetaTypeVal"
+| MetaInitVal      _ -> "MetaInitVal"
+| MetaInitListVal  _ -> "MetaInitListVal"
+| MetaDeclVal      _ -> "MetaDeclVal"
+| MetaFieldVal     _ -> "MetaFieldVal"
+| MetaFieldListVal _ -> "MetaFieldListVal"
+| MetaStmtVal      _ -> "MetaStmtVal"
+| MetaStmtListVal  _ -> "MetaStmtListVal"
+| MetaDParamListVal _ -> "MetaDParamListVal"
+| MetaFmtVal       _ -> "MetaFmtVal"
+| MetaFragListVal  _ -> "MetaFragListVal"
+| MetaAssignOpVal  _ -> "MetaAssignOpVal"
+| MetaBinaryOpVal  _ -> "MetaBinaryOpVal"
+(* Could also be in Lib_engine.metavars_binding2 with the ParenVal,
+ * because don't need to have the value for a position in the env of
+ * a '+'. But ParenVal or LabelVal are used only by CTL, they are not
+ * variables accessible via SmPL whereas the position can be one day
+ * so I think it's better to put MetaPosVal here *)
+| MetaPosVal       _ -> "MetaPosVal"
+| MetaPosValList   _ -> "MetaPosValList"
+| MetaListlenVal   _ -> "MetaListlenVal"
+| MetaNoVal -> "MetaNoVal"

@@ -450,3 +450,4 @@ val get_comments_before : info -> Token_c.comment_like_token list
 val get_comments_after : info -> Token_c.comment_like_token list
 val string_of_toplevel : toplevel -> string
 val string_of_inc_file : inc_file -> string
+val string_of_metabinding_kind : metavar_binding_kind -> string

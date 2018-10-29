@@ -759,6 +759,10 @@ rule token = parse
     Tsynchronizedblock(info)
   }
 
+  | ("->") {
+    let info = tokinfo lexbuf in 
+    TLeftArrow(info)
+  }
 
 
   (* ----------------------------------------------------------------------- *)

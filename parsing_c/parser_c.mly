@@ -504,7 +504,7 @@ let args_to_params l pb =
        Tauto Tregister Textern Tstatic
        Tpublic Tprivate Tprotected
        Tabstract Tfinal Tsynchronized Ttransient Tstrictfp
-       Tsynchronizedblock
+       Tsynchronizedblock TLeftArrow
        Ttypedef
        Tconst Tvolatile
        Tstruct Tunion Tenum Tdecimal Texec
@@ -898,6 +898,12 @@ new_argument:
     Left (mk_e(AnonymousClassDecl (Namespace (fst $5,  []) )) [])
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
+ | typedef_ident_generic TOPar  TOPar TCPar TLeftArrow functional_interface_class_body  TCPar
+    
+ {
+    Left (mk_e(AnonymousClassDecl (Namespace (fst $6,  []) )) [$5])
+    (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
+ }
   | typedef_ident_generic TDot nested_field_access TOPar TCPar TOBrace class_body TCBrace 
     
  {
@@ -1036,7 +1042,7 @@ postfix_expr:
  | postfix_expr TOPar argument_list_ne TCPar
      {
           mk_e(FunCall ($1, $3)) [$2;$4] }
- | postfix_expr TOPar  TCPar  { 
+ | postfix_expr TOPar  TCPar  {
      mk_e(FunCall ($1, [])) [$2;$3] }
  /* | postfix_expr TDot   ident_cpp { mk_e(RecordAccess   ($1,$3)) [$2] } */
  /*(* OtherClass.<Integer>method() *)*/
@@ -1285,12 +1291,17 @@ selection:
  | TUifdef Tif TOPar expr TCPar statement Telse TUelseif statement TUendif statement
      { Ifdef_Ite2 ($4,$6,$9,$11), [$1;$2;$3;$5;$7;$8;$10] }
  /* | Ttry statement Tcatch TOPar union_type ident TCPar statement Tfinally statement { Try ($2, Some $8, Some $10), [$1;$3;$4;$7;$9;]  } */
- | Ttry statement multiple_catches Tfinally statement { Try ($2, Some (fst $3), Some $5), [$1;] @ (snd $3)  @ [ $4; ]  }
+ | try_maybe_expr statement multiple_catches Tfinally statement { Try ($2, Some (fst $3), Some $5), [(snd $1);] @ (snd $3)  @ [ $4; ] }
  /* | Ttry statement Tcatch TOPar union_type ident TCPar statement %prec SHIFTHERE { Try ($2, Some $8, None), [$1;$3;$4;$7] }  */
- | Ttry statement multiple_catches %prec SHIFTHERE { Try ($2, Some (fst $3), None), [$1;] @ (snd $3) } 
- | Ttry statement Tfinally statement { Try ($2, None, None), [$1;$3;] } 
+ | try_maybe_expr statement multiple_catches %prec SHIFTHERE { Try ($2, Some (fst $3), None), [(snd $1);] @ (snd $3) } 
+ | try_maybe_expr statement Tfinally statement { Try ($2, None, Some $4), [(snd $1);$3;] } 
  
+try_maybe_expr:
+ | Ttry { None, $1 }
+ | Ttry TOPar decl_without_semicolon TCPar { Some $3, $1 }
+
 multiple_catches:
+ /*(* todo handle the multiple branches in CFG *)*/
  | Tcatch TOPar union_type TIdent TCPar statement { $6, [$1; $2; $5] }
  | multiple_catches Tcatch TOPar union_type TIdent TCPar statement {$7, [$2; $3; $6]}
 
@@ -1819,6 +1830,11 @@ class_body:
   | class_body class_decl { (snd $2 :: (fst $1)), snd $1 }
   | class_body init_block { $1 } 
 
+functional_interface_class_body:
+  /*(* TODO functional interfaces are classes with just 1 method *)*/ 
+  | compound { [ ], (snd $1) }
+  | expr { [ ], snd $1 } 
+
 enum_body:
   | { ([], []) }
   | enum_body function_definition { (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
@@ -1968,6 +1984,72 @@ abstract_declaratort:
 /*(*************************************************************************)*/
 /*(* declaration and initializers *)*/
 /*(*************************************************************************)*/
+
+decl_without_semicolon:
+ | decl_spec 
+     { function local ->
+       let (returnType,storage) = fixDeclSpecForDecl (snd $1) in
+       let iistart = Ast_c.fakeInfo () in
+       DeclList ([{v_namei = None; v_type = returnType;
+                   v_storage = unwrap storage; v_local = local;
+                   v_attr = fst $1; v_endattr = Ast_c.noattr;
+                   v_type_bis = ref None;
+                },[]],
+                (iistart::snd storage))
+     }
+| annotation_list decl_spec 
+     { function local ->
+       let (returnType,storage) = fixDeclSpecForDecl (snd $2) in
+       let iistart = Ast_c.fakeInfo () in
+       DeclList ([{v_namei = None; v_type = returnType;
+                   v_storage = unwrap storage; v_local = local;
+                v_attr = fst $2; v_endattr = Ast_c.noattr;
+                   v_type_bis = ref None;
+                },[]],
+                (iistart::snd storage))
+     }
+ | decl_spec init_declarator_list 
+     { function local ->
+       let (returnType,storage) = fixDeclSpecForDecl (snd $1) in
+       let iistart = Ast_c.fakeInfo () in
+       DeclList (
+         ($2 +> List.map (fun ((((name,f),attrs,endattrs), ini), iivirg) ->
+           let s = str_of_name name in
+	   if fst (unwrap storage) = StoTypedef
+	   then LP.add_typedef s;
+           {v_namei = Some (name, ini);
+            v_type = f returnType;
+            v_storage = unwrap storage;
+            v_local = local;
+            v_attr = (fst $1)@attrs;
+            v_endattr = endattrs;
+            v_type_bis = ref None;
+           },
+           iivirg
+         )
+         ),  (iistart::snd storage))
+     }
+| annotation_list decl_spec init_declarator_list 
+     { function local ->
+       let (returnType,storage) = fixDeclSpecForDecl (snd $2) in
+       let iistart = Ast_c.fakeInfo () in
+       DeclList (
+         ($3 +> List.map (fun ((((name,f),attrs,endattrs), ini), iivirg) ->
+           let s = str_of_name name in
+	   if fst (unwrap storage) = StoTypedef
+	   then LP.add_typedef s;
+           {v_namei = Some (name, ini);
+            v_type = f returnType;
+            v_storage = unwrap storage;
+            v_local = local;
+            v_attr = (fst $2)@attrs;
+            v_endattr = endattrs;
+            v_type_bis = ref None;
+           },
+           iivirg
+         )
+         ),  (iistart::snd storage))
+     }
 
 decl2:
  | decl_spec TPtVirg

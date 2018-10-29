@@ -210,11 +210,12 @@ let compute_labels_and_create_them st =
 
 
 let rec add_arc_all_stmt_in_try_to_except firstcatch firsttry lasttry  = 
-	(* recurse back until we hit firsttry*)
-	if firsttry = lasttry 
-	then ()
-  else begin
-    (match Control_flow_c.extract_fullstatement (Control_flow_c.KeyMap.find lasttry !g#nodes  ) with 
+  (* recurse back until we hit firsttry *)
+  if firsttry = lasttry (* base case *)
+  then ()
+  else 
+  begin
+    (match Control_flow_c.extract_fullstatement (Control_flow_c.KeyMap.find lasttry !g#nodes) with 
     | Some stmt -> 
       (let s = Ast_c.unwrap_st stmt in 
       (match s with
@@ -229,7 +230,7 @@ let rec add_arc_all_stmt_in_try_to_except firstcatch firsttry lasttry  =
 
 (* ctl_braces: *)
 let insert_all_braces xs starti nodety str =
-  xs  +> List.fold_left (fun acc nodeinfo ->
+  xs +> List.fold_left (fun acc nodeinfo ->
     (* Have to build a new node (clone), cos cannot share it.
      * update: This is now done by the caller. The clones are in xs.
      *)
@@ -1138,7 +1139,7 @@ and mk_If (starti :nodei option) (labels :int list) (xi_lbl :xinfo)
   | x -> error_cant_have x
 
 (* Mk_if for try/catch/finally *)
-(* Just return the endFinally node*)
+(* Returns the endFinally node *)
 and mk_Try (starti :nodei option) (labels :int list) 
            (xi_lbl :xinfo) (stmt :statement) : nodei option =
 
@@ -1146,55 +1147,74 @@ and mk_Try (starti :nodei option) (labels :int list)
 	match Ast_c.unwrap_st stmt with
   | Selection (Ast_c.Try (st1, st2, st3)) ->
     
-    let (i1,i2,i3,i4,i5) = if List.length ii = 5 then 
-      tuple_of_list5 ii else 
-      let (ii1, ii2, ii3, ii4, ii5, ii6) = tuple_of_list6 ii in 
-      (ii1, ii2, ii3, ii4, ii5)
-      
-      in
+    let (i1,i2,i3) = 
+	if List.length ii = 5 then 
+      		let (ii1, ii2, ii3, ii4, ii5) = tuple_of_list5 ii  in 
+      		(ii1, ii2, ii3)     
+        else 
+        if List.length ii = 6 then 
+      		let (ii1, ii2, ii3, ii4, ii5, ii6) = tuple_of_list6 ii in 
+      		(ii1, ii2, ii3)
+      	else 
+		let (ii1, ii2, ii3) = tuple_of_list3 ii in 
+      		(ii1, ii2, ii3)
+      	in
   
-		let trynode =  add_node (Try (st1, ((), [i1]))) labels "try" !g in
+    let trynode = add_node (Try (st1, ((), [i1]))) labels "try" !g in
     (* let catchnode = add_node (Catch (st2, ((), [i1]))) labels "catch" !g in *)
     let catchnode = match st2 with 
-			| Some catch_stmt ->  add_node (Catch (catch_stmt, ((), [i1]))) labels "catch" !g
-			| None -> (!g +> add_node (EndStatement (None)) labels "catch")
-		in
-		let finallynode = match st3 with 
-			| Some finally_stmt ->  (!g +> add_node (Finally (finally_stmt, ((), [i1]))) labels "finally")
-			| None -> (!g +> add_node (EndStatement (None)) labels "finally")
-		in
-		!g +> add_arc_opt (starti, trynode);
-
-		let finaltry = aux_statement (Some trynode, xi_lbl) st1 in 
-    (* let finalcatch = aux_statement (Some catchnode, xi_lbl) st2 in *)
+		    | Some catch_stmt ->  add_node (Catch (catch_stmt, ((), [i2]))) labels "catch" !g
+		    | None -> (!g +> add_node (EndStatement (None)) labels "catch1")
+    in
+    let finallynode = 
+	match st3 with 
+		     | Some finally_stmt -> (!g +> add_node (Finally (finally_stmt, ((), [i3]))) labels "finally")
+		     | None -> 
+		     (!g +> add_node (EndStatement (None)) labels "finally")
+    in
+  
+    !g +> add_arc_opt (starti, trynode);
+    let finaltry = aux_statement (Some trynode, xi_lbl) st1 in 
     let finalcatch = 
       (match st2 with 
       | Some stmt -> aux_statement (Some catchnode, xi_lbl) stmt
-      | None -> Some finallynode) in
+      | None -> Some catchnode) 
+    in
 
-    add_arc_opt (finaltry, finallynode) !g ;
+    add_arc_opt (finaltry, finallynode) !g;
     add_arc_opt (finalcatch, finallynode) !g;
-    
-		let finalfinally = 
-				(match st3 with 
-				| Some stmt -> aux_statement (Some finallynode, xi_lbl) stmt
-				| None -> Some finallynode) 
-		
-		in	
-		(* link in nodes in st1 to `catch` *)
-		(* we don't do interprocedural analysis, 
-		 * potentially any statement in the try-block might throw *)
-		(match finaltry with 
-			| Some node -> add_arc_all_stmt_in_try_to_except catchnode trynode node
-			| None -> ());
-		
-		let endnode =
-			add_node (EndStatement(Some i3)) labels "[end-finally]" !g in
-    add_arc_opt (finalfinally, endnode) !g;
-    (* !g#add_arc ((finalfinally, endnode), Direct) *)
-		Some endnode
+    let finalfinally = 
+	(
+	match st3 with 
+	| Some stmt -> aux_statement (Some finallynode, xi_lbl) stmt
+	| None -> 
+	Some finallynode) 	
+    in	
+	
+    (match st2 with 
+    | Some stmt -> 
+	(* link in nodes in st1 to `catch` *)
+	(* we don't do interprocedural analysis, 
+	* potentially any statement in the try-block might throw *)
+	(match finaltry with 
+	| Some node -> add_arc_all_stmt_in_try_to_except catchnode trynode node;
+	| None -> ());
+    | None -> 
+	(* link in nodes in st1 to `finally` *)
+	(* we don't do interprocedural analysis, 
+	* potentially any statement in the try-block might throw *)
+	(match finaltry with 
+	| Some node -> add_arc_all_stmt_in_try_to_except finallynode trynode node;
+	| None -> ());
+    );
+   
+	
+    let endnode = add_node (EndStatement(Some i3)) labels "[end-finally]" !g in
+      add_arc_opt (finalfinally, endnode) !g;
+       (* !g#add_arc ((finalfinally, endnode), Direct) *)
+    Some endnode
 
-	| x -> error_cant_have x
+  | x -> error_cant_have x
     
 
 (* Builds the CFG for an Ifdef_Ite selection statement, i.e.

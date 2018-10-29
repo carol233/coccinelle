@@ -639,8 +639,8 @@ let rec lexer_function ~pass tr = fun lexbuf ->
           match v with
           | Parser_c.TCommentCpp _ -> lexer_function ~pass tr lexbuf
           | v ->
-        tr.passed_clean <- extend_passed_clean v tr.passed_clean;
-        
+	tr.passed_clean <- extend_passed_clean v tr.passed_clean;
+		
               v
       )
     end
