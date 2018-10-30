@@ -116,6 +116,7 @@ type node = node1 * string
    * analyse #define body, so we need those nodes.
    *)
    | TopNode
+   | ClassNode of name
    | EndNode
 
    (* ------------------------ *)
@@ -337,7 +338,10 @@ let mk_any_node is_fake node labels bclabels nodestr =
 let mk_node = mk_any_node false
 let mk_fake_node = mk_any_node true (* for duplicated braces *)
 
-let is_first_node = function TopNode -> true | _ -> false
+let is_first_node = function 
+  TopNode -> true 
+  | ClassNode _ -> true
+  | _ -> false
 
 let find_node f g =
   let f' (_,node) = f (unwrap node) in
@@ -423,7 +427,7 @@ let extract_fullstatement node =
   | Exec (st,_)
       -> Some st
 
-  | TopNode|EndNode
+  | TopNode| ClassNode _ | EndNode
   | FunHeader _
   | SeqEnd  _
   | Else _

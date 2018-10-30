@@ -157,7 +157,7 @@ and statementbis =
   | Iteration of iteration
   | Jump of jump
   | Decl of declaration
-  | ClassDecl of toplevel
+  | ClassDecl of name * toplevel
   | Asm of asmbody
   | NestedFunc of definition
   | MacroStmt
@@ -220,7 +220,7 @@ and v_init =
   | ConstrInit of argument wrap2 list wrap
 and storage = storagebis * bool
 and storagebis = NoSto | StoTypedef | Sto of storageClass list
-and storageClass = Auto | Static | Register | Extern | Public | Private | Protected | Abstract | Final
+and storageClass = Auto | Static | Register | Extern | Public | Private | Protected | Abstract | Final | WithParentClass of string
 and local_decl = LocalDecl | NotLocalDecl
 and initialiser = initialiserbis wrap
 and initialiserbis =
@@ -306,7 +306,7 @@ and toplevel =
   | EmptyDef of il
   | NotParsedCorrectly of il
   | FinalDef of info
-  | Namespace of toplevel list * il
+  | Namespace of name option * toplevel list * il
 and program = toplevel list
 and metavars_binding =
     (Ast_cocci.meta_name, metavar_binding_kind) Common.assoc

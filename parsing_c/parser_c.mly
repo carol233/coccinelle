@@ -364,6 +364,28 @@ let full_type t ii =
   | (Right3 t,ii') ->
       (nullQualif, (t, ii'))
 
+let addParentInfo def_list s = 
+  let add_with_parent ss = (WithParentClass s) :: ss in
+  List.map (
+    fun toplevel -> 
+    (match toplevel with 
+    | Definition def -> 
+        Definition (match def with 
+        | (def_bis, il) -> {
+            def_bis with f_storage = (
+                let (sto_bis, b) = def_bis.f_storage in
+                let storage_bis = (match sto_bis with 
+                    | Sto storage_list -> 
+                        Sto (add_with_parent storage_list)
+                    | NoSto -> Sto (add_with_parent []) 
+                    | StoTypedef -> Sto (add_with_parent []) 
+                ) in
+                (storage_bis, b)
+            )
+        }, il)
+    | x -> x)
+  ) def_list
+
 (*-------------------------------------------------------------------------- *)
 (* parse_typedef_fix2 *)
 (*-------------------------------------------------------------------------- *)
@@ -727,9 +749,7 @@ translation_unit:
      { [] }
  | translation_unit external_declaration
      { !LP._lexer_hint.context_stack <- [LP.InTopLevel]; $1 @ [$2] }
- | translation_unit Tnamespace TIdent TOBrace translation_unit TCBrace
-     { !LP._lexer_hint.context_stack <- [LP.InTopLevel];
-       $1 @ [Namespace ($5, [$2; snd $3; $4; $6])] }
+
 
 
 /*(*************************************************************************)*/
@@ -895,31 +915,31 @@ new_argument:
  | typedef_ident_generic TOPar TCPar TOBrace class_body TCBrace 
     
  {
-    Left (mk_e(AnonymousClassDecl (Namespace (fst $5,  []) )) [])
+    Left (mk_e(AnonymousClassDecl (Namespace (None, fst $5,  []) )) [])
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
  | typedef_ident_generic TOPar  TOPar TCPar TLeftArrow functional_interface_class_body  TCPar
     
  {
-    Left (mk_e(AnonymousClassDecl (Namespace (fst $6,  []) )) [$5])
+    Left (mk_e(AnonymousClassDecl (Namespace (None, fst $6,  []) )) [$5])
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
   | typedef_ident_generic TDot nested_field_access TOPar TCPar TOBrace class_body TCBrace 
     
  {
-    Left (mk_e(AnonymousClassDecl (Namespace (fst $7,  []) )) [])
+    Left (mk_e(AnonymousClassDecl (Namespace (None, fst $7,  []) )) [])
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
  | typedef_ident_generic TDot  TOPar TCPar TOBrace class_body TCBrace 
     
  {
-    Left (mk_e(AnonymousClassDecl (Namespace (fst $6,  []) )) [])
+    Left (mk_e(AnonymousClassDecl (Namespace (None, fst $6,  []) )) [])
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
   | typedef_ident_generic TOPar argument_list_ne TCPar TOBrace class_body TCBrace 
     
  {
-    Left (mk_e(AnonymousClassDecl (Namespace (fst $6,  []) )) [])
+    Left (mk_e(AnonymousClassDecl (Namespace (None, fst $6,  []) )) [])
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
 
@@ -1187,7 +1207,7 @@ statement2:
  | selection       { Selection    (fst $1), snd $1 @ [fakeInfo()] }
  | iteration       { Iteration    (fst $1), snd $1 @ [fakeInfo()] }
  | jump TPtVirg    { Jump         (fst $1), snd $1 @ [$2] }
- | class_decl      { ClassDecl    (snd $1), []}
+ | class_decl      { ClassDecl    (fst $1, snd $1), []}
 
  /*(* gccext: *)*/
  | Tasm TOPar asmbody TCPar TPtVirg             { Asm $3, [$1;$2;$4;$5] }
@@ -2775,33 +2795,36 @@ class_decl:
 
  | annotation_list decl_spec class_or_interface ident extends TOBrace class_body TCBrace 
     {  
-        
-        fst $4, Namespace (fst $7, $3 :: (snd $7 @ [snd $4; $6; $8])) } 
+        let nm = mk_string_wrap $4 in 
+        RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $7) (fst nm), $3 :: (snd $7 @ [snd $4; $6; $8])) } 
   | annotation_list  class_or_interface ident extends TOBrace class_body TCBrace 
     {  
-        
-        fst $3, Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
+        let nm = mk_string_wrap $3 in
+        RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $6) (fst nm), $2 :: (snd $6 @ [snd $3; $5; $7])) } 
  
  | decl_spec class_or_interface ident  extends TOBrace class_body TCBrace 
     {  
-        
-        fst $3, Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
+        let nm = mk_string_wrap $3 in
+        RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $6) (fst nm), $2 :: (snd $6 @ [snd $3; $5; $7])) } 
 
 |  class_or_interface ident extends TOBrace class_body TCBrace 
     {  
-        
-        fst $2, Namespace (fst $5, $1 :: (snd $5 @ [snd $2; $4; $6])) } 
+        let nm = mk_string_wrap $2 in
+        RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $5) (fst nm), $1 :: (snd $5 @ [snd $2; $4; $6])) } 
  /* | Tnew ident TOPar TCPar TOBrace class_body TCBrace 
     {
 
-        fst $2, Namespace (fst $6, $1 :: ([snd $2] @ [$3; $4;] @ snd $6 @ [$5; $7])) 
+        fst $2, Namespace (fst $2, fst $6, $1 :: ([snd $2] @ [$3; $4;] @ snd $6 @ [$5; $7])) 
     } */
   | decl_spec Tenum ident extends tobrace_enum enum_body tcbrace_enum  {
-	  fst $3, Namespace (fst $6, $2 :: (snd $6 @ [snd $3; $5; $7])) } 
+      let nm =  mk_string_wrap $3 in
+	  RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $6) (fst nm), $2 :: (snd $6 @ [snd $3; $5; $7])) } 
   | annotation_list decl_spec Tenum ident extends tobrace_enum enum_body tcbrace_enum  {
-	  fst $4, Namespace (fst $7, $3 :: (snd $7 @ [snd $4; $6; $8])) } 
+      let nm = mk_string_wrap $4 in 
+	  RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $7) (fst nm), $3 :: (snd $7 @ [snd $4; $6; $8])) } 
   | Tenum ident extends tobrace_enum enum_body tcbrace_enum  {
-	  fst $2, Namespace (fst $5, $1 :: (snd $5 @ [snd $2; $4; $6])) } 
+      let nm = mk_string_wrap $2 in 
+	  RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $5) (fst nm), $1 :: (snd $5 @ [snd $2; $4; $6])) } 
   	
 
 class_or_interface:

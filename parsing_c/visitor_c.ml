@@ -437,7 +437,7 @@ and vk_statement = fun bigf (st: Ast_c.statement) ->
     | Jump (GotoComputed e) -> vk_expr bigf e;
 
     | Decl decl -> vk_decl bigf decl
-    | ClassDecl classdef -> vk_toplevel bigf classdef; ();
+    | ClassDecl (name, classdef) -> vk_toplevel bigf classdef; ();
     | Asm asmbody -> vk_asmbody bigf asmbody
     | NestedFunc def -> vk_def bigf def
     | MacroStmt -> ()
@@ -738,7 +738,7 @@ and vk_toplevel = fun bigf p ->
     | NotParsedCorrectly ii -> iif ii
     | FinalDef info -> vk_info bigf info
 
-    | Namespace (tls, ii) -> List.iter (vk_toplevel bigf) tls
+    | Namespace (name, tls, ii) -> List.iter (vk_toplevel bigf) tls
   in f (k, bigf) p
 
 and vk_program = fun bigf xs ->
@@ -981,7 +981,7 @@ and vk_node = fun bigf node ->
 	List.iter (vk_exec_code bigf) code
 
     | (
-        F.TopNode|F.EndNode|
+        F.TopNode|F.ClassNode _ |F.EndNode|
         F.ErrorExit|F.Exit|F.Enter|F.LoopFallThroughNode|F.FallThroughNode|
         F.AfterNode _|F.FalseNode|F.TrueNode _|F.InLoopNode|
         F.Fake
@@ -1340,7 +1340,7 @@ and vk_statement_s = fun bigf st ->
       | Jump (GotoComputed e) -> Jump (GotoComputed (vk_expr_s bigf e));
 
       | Decl decl -> Decl (vk_decl_s bigf decl)
-      | ClassDecl classdef -> ClassDecl (vk_toplevel_s bigf classdef); 
+      | ClassDecl (name, classdef) -> ClassDecl (name, vk_toplevel_s bigf classdef); 
       | Asm asmbody -> Asm (vk_asmbody_s bigf asmbody)
       | NestedFunc def -> NestedFunc (vk_def_s bigf def)
       | MacroStmt -> MacroStmt
@@ -1663,7 +1663,7 @@ and vk_toplevel_s = fun bigf p ->
 
     | NotParsedCorrectly ii -> NotParsedCorrectly (iif ii)
     | FinalDef info -> FinalDef (vk_info_s bigf info)
-    | Namespace (tls, ii) -> Namespace (List.map (vk_toplevel_s bigf) tls, ii)
+    | Namespace (name, tls, ii) -> Namespace (name, List.map (vk_toplevel_s bigf) tls, ii)
   in f (k, bigf) p
 
 and vk_program_s : visitor_c_s -> toplevel list -> toplevel list =
@@ -1936,7 +1936,7 @@ and vk_node_s = fun bigf node ->
 
     | (
         (
-          F.TopNode|F.EndNode|
+          F.TopNode|F.ClassNode _ |F.EndNode|
           F.ErrorExit|F.Exit|F.Enter|F.LoopFallThroughNode|F.FallThroughNode|
           F.AfterNode _|F.FalseNode|F.TrueNode _|F.InLoopNode|
           F.Fake

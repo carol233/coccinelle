@@ -209,7 +209,12 @@ let interpret_cocci_git_grep strict x virt =
     | Not x -> failwith "not unexpected in atoms"
     | And l | Or l -> List.fold_left atoms acc l
     | True | False -> acc in
-  let wordify x = "\\b" ^ x ^"\\b" in
+  let wordify x = 
+    (* HJ: handle clazz#ident for java, just search on ident *)
+    if !Flag.java then 
+	("\\b" ^ ((String.split_on_char '#' x) |> Common.last) ^ "\\b")
+    else "\\b" ^ x ^ "\\b"  
+  in
   match x with
     True -> None
   | False when strict ->

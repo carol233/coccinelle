@@ -10,6 +10,7 @@ type node = node1 * string (* For debugging. Used by print_graph *)
     }
   and node2 =
   | TopNode
+  | ClassNode     of name
   | EndNode
 
   | FunHeader     of definition (* but empty body *)

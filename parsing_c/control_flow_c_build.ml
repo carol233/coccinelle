@@ -974,14 +974,14 @@ let rec aux_statement : (nodei option * xinfo) -> statement -> nodei option =
      !g +> add_arc_opt (starti, newi);
      Some newi
 
-  | Ast_c.ClassDecl  classdef -> 
+  | Ast_c.ClassDecl (name, classdef) -> 
     (* class delcarations aren't exactly part of the control flow *)
     (* Maybe just make a dummy node, *)
-    let root = !g +> add_node TopNode lbl "[class]" in 
+    let root = !g +> add_node (ClassNode name) lbl "[class]" in 
      (* !g +> add_arc_opt (starti, root); *)
 
      (match classdef with
-     	| Ast_c.Namespace (defs, _) -> ast_to_control_flow_namespace defs root; ()
+     	| Ast_c.Namespace (name, defs, _) -> ast_to_control_flow_namespace name defs root; ()
 	    | _ -> failwith "ClassDecl should contain  only a namespace"
 	
     );
@@ -1475,34 +1475,35 @@ and specialdeclmacro_to_stmt (s, args, ii) =
 and ast_to_control_flow e = 
   (* globals (re)initialialisation *)
   g := (new Control_flow_c.G.ograph_mutable);
-  let root = !g +> add_node TopNode lbl_0 "[class]" in 
+  let root = !g +> add_node TopNode lbl_0 "[top class]" in 
   match e with
-  | Ast_c.Namespace (defs, _) ->
-	
-    ast_to_control_flow_namespace defs root
+  | Ast_c.Namespace (name_opt, defs, _) ->
+    ast_to_control_flow_namespace name_opt defs root
   | _ ->
-
     let result = ast_to_control_flow_not_namespace e root in 
     result;
 
-and ast_to_control_flow_namespace defs root =
+and ast_to_control_flow_namespace name_opt defs root =
+  let name = (match name_opt with 
+    | Some nm -> nm 
+    | None -> raise (Impossible 808)
+  ) in
+  let new_root = !g +> add_node (ClassNode name) lbl_0 "[class]" in 
+  let _ = !g#add_arc ((root, new_root),Direct) in 
   let rec loop defs =
   match defs with
   | [] -> Some !g
   | def :: defs ->
     match def with
-    | Ast_c.Namespace (nested_defs, _) -> 
-      (match ast_to_control_flow_namespace nested_defs root with 
+    | Ast_c.Namespace (name, nested_defs, _) -> 
+      (match ast_to_control_flow_namespace name nested_defs new_root with 
         | None -> loop defs 
-          
-        | x -> loop defs )
+        | x -> loop defs)
     | _ ->
-      match ast_to_control_flow_not_namespace def root with
+      match ast_to_control_flow_not_namespace def new_root with
       | None -> loop defs 
-        
       | x -> loop defs 
   in 
-
   let result = loop defs in 
   result;
 
@@ -1681,6 +1682,7 @@ let deadcode_detection (g : Control_flow_c.cflow) =
     if KeyEdgeSet.is_empty (g#predecessors k) then
       (match unwrap node with
       | TopNode -> ()
+      | ClassNode _ -> ()
       | FunHeader _ -> ()
       | ErrorExit -> ()
       | Exit -> ()     (* if have 'loop: if(x) return; i++; goto loop' *)

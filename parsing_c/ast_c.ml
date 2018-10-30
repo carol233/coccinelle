@@ -450,7 +450,7 @@ and statement = statementbis wrap3
 	| Decl  of declaration
 
   (* TODO simplify, move or stop using Namespace as toplevel? *)
-	| ClassDecl of toplevel
+	| ClassDecl of name * toplevel
 
 	(* gccext: *)
 	| Asm of asmbody
@@ -592,6 +592,7 @@ and declaration =
 		 and storage       = storagebis * bool (* gccext: inline or not *)
 		 and storagebis    = NoSto | StoTypedef | Sto of storageClass list (* need to rename this for Java *)
 		 and storageClass  = Auto  | Static | Register | Extern | Public | Private | Protected | Abstract | Final
+		                    (* HJ: WithParentClass hack to track parent class*) | WithParentClass of string
 
 		 and local_decl = LocalDecl | NotLocalDecl
 
@@ -796,7 +797,7 @@ and toplevel =
 	| FinalDef of info (* EOF *)
 
 	(* c++ *)
-	| Namespace of toplevel list * il
+	| Namespace of name option * toplevel list * il
 
 (* ------------------------------------------------------------------------- *)
 and program = toplevel list

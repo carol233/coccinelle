@@ -437,6 +437,14 @@ let show_or_not_celem2 prelude celem start_end =
   | Ast_c.MacroTop(nm,_,_) ->
       Flag.current_element := nm;
       (" macro ",None);
+  | Ast_c.Namespace (nm_opt, _, _)->
+      (match nm_opt with 
+      | None ->
+	Flag.current_element := "unknown class";
+	(" class/namespace ",None);
+      | Some nm ->
+	Flag.current_element := Ast_c.str_of_name nm;
+	(" class/namespace ",None))
   |  _ ->
       Flag.current_element := "something_else";
       (" ",None);
@@ -508,6 +516,14 @@ let worth_trying2 cfiles (tokens,_,query,_) =
   (* drop the following line for a list of list by rules.  since we don't
      allow multiple minirules, all the tokens within a rule should be in
      a single CFG entity *)
+ (* HJ: handle clazz#ident for java, just search on ident *)
+ let tokens = 
+    if !Flag.java then 
+	match tokens with 
+	| Some toks -> Some (toks |> List.map (fun s -> (String.split_on_char '#' s) |> Common.last))
+	| None -> tokens
+    else tokens 
+  in 
   let res =
   match (!Flag_cocci.windows,!Flag.scanner,tokens,query,cfiles) with
     (true,_,_,_,_) | (_,_,None,_,_) | (_,_,_,None,_) | (_,Flag.CocciGrep,_,_,_)

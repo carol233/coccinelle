@@ -1873,11 +1873,13 @@ and (ident: info_ident -> (A.ident, string * Ast_c.info) matcher) =
   match A.unwrap ida with
   | A.Id sa ->
       if (term sa) = idb then
+      begin
       tokenf sa iib >>= (fun sa iib ->
         return (
           ((A.Id sa)) +> A.rewrap ida,
           (idb, iib)
         ))
+      end
       else fail
 
   | A.MetaId(mida,constraints,keep,inherited) ->
@@ -4939,6 +4941,48 @@ let rec (rule_elem_node: (A.rule_elem, F.node) matcher) =
 
       let (stoa,tya,inla,attras) = get_fninfo fninfoa in
 
+      let coccier_name = (match A.unwrap ida with
+	      | A.Id sa -> Some (term sa)
+	      | _ -> None
+      ) in
+
+      let requires_further_checks = (
+	    match coccier_name with 
+	    | None -> true 
+	    | Some nm -> 
+		if String.contains nm '#' then 
+		begin
+	        let req_name = (String.split_on_char '#' nm) |> List.hd in 
+			let (sto_bis, boo) = stob in 
+			(match sto_bis with 
+			| NoSto -> true
+			| StoTypedef -> true 
+			| Sto sto_class_list -> (
+				List.fold_left (fun acc sto_cls -> 
+					acc && ( 
+					match sto_cls with 
+					 | B.WithParentClass name -> 
+					  name = req_name
+					| _ -> true)
+				) true sto_class_list
+			))
+		end
+	      	else true
+      ) in 
+      let ida = (
+	  match A.unwrap ida with
+	  | A.Id sa -> 
+	      	A.rewrap 
+		      ida 
+		      (A.Id (
+			      A.rewrap_mcode sa (String.split_on_char '#' (term sa) |> Common.last)
+			    )
+		      )
+	  | x -> ida
+      ) in
+      
+      if not requires_further_checks then fail 
+      else 
       (match ii with
       | ioparenb::icparenb::iifakestart::iistob ->
 
@@ -4971,7 +5015,6 @@ let rec (rule_elem_node: (A.rule_elem, F.node) matcher) =
               ) >>= (fun () iidotsb ->
 
            fullType_optional_allminus allminus tya retb >>= (fun tya retb ->
-
              let fninfoa = put_fninfo stoa tya inla attras in
 
              return (
@@ -5400,7 +5443,7 @@ let rec (rule_elem_node: (A.rule_elem, F.node) matcher) =
     -> fail2 ()
 
   | _,
-    (F.MacroStmt (_, _)| F.DefineDoWhileZeroHeader _| F.EndNode|F.TopNode)
+    (F.MacroStmt (_, _)| F.DefineDoWhileZeroHeader _| F.EndNode|F.TopNode|F.ClassNode _)
       -> fail
   | _,
     (F.Label (_, _, _)|F.Break (_, _, _)|F.Continue (_, _)|F.Default (_, _)|

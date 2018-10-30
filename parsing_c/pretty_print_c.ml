@@ -180,7 +180,7 @@ let mk_pretty_printers
         pp_name name;
         pr_elem i3; (* ) *)
 
-    | AnonymousClassDecl (Namespace (ns, ii1)), ii ->
+    | AnonymousClassDecl (Namespace (name, ns, ii1)), ii ->
         ns |> List.iter pp_toplevel;
 
     | (Ident (_) | Constant _ | StringConstant _ | FunCall (_,_)
@@ -429,7 +429,7 @@ and pp_string_format (e,ii) =
         pr_elem i1; pr_elem i2; pp_expression e; pr_elem i3
 
     | Decl decl, [] -> pp_decl decl
-    | ClassDecl classdef, _ -> pp_toplevel classdef
+    | ClassDecl (name, classdef), _ -> pp_toplevel classdef
     | Asm asmbody, ii ->
         (match ii with
         | [iasm;iopar;icpar;iptvirg] ->
@@ -1383,7 +1383,7 @@ and pp_init (init, iinit) =
 
     | IfdefTop ifdefdir -> pp_ifdef ifdefdir
 
-    | Namespace (tls, il) ->
+    | Namespace (name, tls, il) ->
         (match il with 
             | [] -> failwith "Impossible: namespace's il cannot be empty" 
             | head::cons -> 
@@ -1576,6 +1576,7 @@ and pp_init (init, iinit) =
 
 
     | F.TopNode -> pr2 "TopNode"
+    | F.ClassNode _ -> pr2 "ClassNode"
     | F.EndNode -> pr2 "EndNode"
     | F.ErrorExit -> pr2 "ErrorExit"
     | F.Exit -> pr2 "Exit"

@@ -210,7 +210,7 @@ module Ast_c :
       | Iteration of iteration
       | Jump of jump
       | Decl of declaration
-      | ClassDecl of toplevel
+      | ClassDecl of name * toplevel
       | Asm of asmbody
       | NestedFunc of definition
       | MacroStmt
@@ -296,7 +296,7 @@ module Ast_c :
       | StoTypedef
       | Sto of storageClass list
     (* need to rename this for java*)
-    and storageClass = Ast_c.storageClass = Auto | Static | Register | Extern | Public | Private | Protected | Abstract | Final
+    and storageClass = Ast_c.storageClass = Auto | Static | Register | Extern | Public | Private | Protected | Abstract | Final | WithParentClass of string
     and local_decl = Ast_c.local_decl = LocalDecl | NotLocalDecl
     and initialiser = initialiserbis wrap
     and initialiserbis =
@@ -397,7 +397,7 @@ module Ast_c :
       | EmptyDef of il
       | NotParsedCorrectly of il
       | FinalDef of info
-      | Namespace of toplevel list * il
+      | Namespace of name option * toplevel list * il
     and program = toplevel list
     and metavars_binding =
         (Ast_cocci.meta_name, metavar_binding_kind) Common.assoc
@@ -701,6 +701,7 @@ module Parser_c :
       | Ttransient of Ast_c.info
       | Tstrictfp of Ast_c.info
       | Tsynchronizedblock of Ast_c.info
+      | TLeftArrow of Ast_c.info
       | Ttypedef of Ast_c.info
       | Tconst of Ast_c.info
       | Tvolatile of Ast_c.info
