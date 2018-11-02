@@ -361,7 +361,12 @@ and ident i =
 	Ast.DisjId(List.map ident id_list)
     | Ast0.MetaId(name,cstr,_,_) ->
 	let cstr' = constraints cstr in
+	
 	Ast.MetaId(mcode name,cstr',unitary,false)
+    | Ast0.MetaIdWithParent((name,cstr,_,_), (name1,cstr1,_,_) ) ->
+	let cstr' = constraints cstr in
+	let cstr1' = constraints cstr1 in
+	Ast.MetaIdWithParent((mcode name,cstr',unitary,false), (mcode name1,cstr1',unitary,false))
     | Ast0.MetaFunc(name,cstr,_) ->
 	let cstr' = constraints cstr in
 	Ast.MetaFunc(mcode name,cstr',unitary,false)
@@ -1002,7 +1007,7 @@ and statement s =
           let lbrace = mcode lbrace in
           let body = dots (statement seqible) body in
           let rbrace = mcode rbrace in
-          let allminus = check_allminus.VT0.combiner_rec_statement s in
+	  let allminus = check_allminus.VT0.combiner_rec_statement s in
           Ast.FunDecl(rewrap_rule_elem s
                         (Ast.FunHeader
                            (convert_allminus_mcodekind allminus bef,

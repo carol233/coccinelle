@@ -151,9 +151,11 @@ let rec unify_ident i1 i2 =
         B.unify_meta_ident (mn0, id0, k0, i0) (mn1, id1, k1, i1)
 
   | (Ast.MetaId(_,_,_,_),_)
+  | (Ast.MetaIdWithParent _,_)
   | (Ast.MetaFunc(_,_,_,_),_)
   | (Ast.MetaLocalFunc(_,_,_,_),_)
   | (_,Ast.MetaId(_,_,_,_))
+  | (_,Ast.MetaIdWithParent(_,_))
   | (_,Ast.MetaFunc(_,_,_,_))
   | (_,Ast.MetaLocalFunc(_,_,_,_)) -> B.meta_ident_unifier
 

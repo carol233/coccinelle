@@ -272,7 +272,12 @@ let rec ident i =
 	handle_metavar name (function
 			       | (Ast_c.MetaIdVal id) -> print_text id
 			       | _ -> error name i "identifier value expected"
-			    )
+                )
+    | Ast.MetaIdWithParent((name,_,_,_), _) ->
+        handle_metavar name (function
+                        | (Ast_c.MetaIdVal id) -> print_text id
+                        | _ -> error name i "identifier value expected"
+                    )
     | Ast.MetaFunc(name,_,_,_) ->
 	handle_metavar name (function
 			       | (Ast_c.MetaFuncVal id) -> print_text id

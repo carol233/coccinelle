@@ -210,7 +210,7 @@ let interpret_cocci_git_grep strict x virt =
     | And l | Or l -> List.fold_left atoms acc l
     | True | False -> acc in
   let wordify x = 
-    (* HJ: handle clazz#ident for java, just search on ident *)
+    (* HJ: handle clazz#ident for java, search on just `ident`, and ignore `clazz` *)
     if !Flag.java then 
 	("\\b" ^ ((String.split_on_char '#' x) |> Common.last) ^ "\\b")
     else "\\b" ^ x ^ "\\b"  

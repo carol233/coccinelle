@@ -78,7 +78,11 @@ let visitor mode bind option_default
 	    let (n,name) = string_mcode name in (n,Ast0.Id(name))
 	| Ast0.MetaId(name,constraints,seed,pure) ->
 	    let (n,name) = meta_mcode name in
-	    (n,Ast0.MetaId(name,constraints,seed,pure))
+		(n,Ast0.MetaId(name,constraints,seed,pure))
+	| Ast0.MetaIdWithParent((name,constraints,seed,pure), ((name1, c, s, p))) ->
+		let (n,name) = meta_mcode name in
+		let (n1,name1) = meta_mcode name1 in
+	    (n,Ast0.MetaIdWithParent((name,constraints,seed,pure), (name1, c, s, p)))
 	| Ast0.MetaFunc(name,constraints,pure) ->
 	    let (n,name) = meta_mcode name in
 	    (n,Ast0.MetaFunc(name,constraints,pure))
@@ -694,8 +698,10 @@ let visitor mode bind option_default
       rewrap s
 	(match Ast0.unwrap s with
 	  Ast0.FunDecl(bef,fi,name,lp,params,va,rp,lbrace,body,rbrace,aft) ->
+
 	    let (fi_n,fi) = map_split_bind fninfo fi in
 	    let (name_n,name) = ident name in
+
 	    let (lp_n,lp) = string_mcode lp in
 	    let (params_n,params) = parameter_dots params in
             let (va_n,va) = match va with

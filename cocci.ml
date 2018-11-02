@@ -1672,6 +1672,8 @@ let rec apply_cocci_rule r rules_that_have_ever_matched parse_strings es
 			  process_a_generated_a_env_a_toplevel r
 			    relevant_bindings !ccs;
 			  [] in
+
+			
 		    let new_bindings_ua =
 		      Common.nub
 			(new_bindings +>
@@ -1929,6 +1931,7 @@ let bigloop2 rs (ccs: file_info list) parse_strings =
   let ccs = ref ccs in
   let rules_that_have_ever_matched = ref [] in
 
+ 
   (try
   (* looping over the rules *)
   rs +> List.iter (fun r ->

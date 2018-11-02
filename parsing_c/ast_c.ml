@@ -1416,9 +1416,9 @@ let string_of_inc_file = function
 	| Weird s -> "weird://" ^ s
 
 let string_of_metabinding_kind = function 
-| MetaIdVal        s -> "MetaIdVal"
-| MetaFuncVal      s ->  "MetaFuncVal"
-| MetaLocalFuncVal s ->  "MetaLocalFuncVal"
+| MetaIdVal        s -> "MetaIdVal " ^ s
+| MetaFuncVal      s ->  "MetaFuncVal " ^ s
+| MetaLocalFuncVal s ->  "MetaLocalFuncVal " ^ s
 
 | MetaExprVal      _ -> "MetaExprVal"
 | MetaExprListVal  _ -> "MetaExprListVal"

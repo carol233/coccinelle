@@ -326,7 +326,28 @@ let id_tokens lexbuf =
 
   | "_" when !Data.in_meta -> TUnderscore
 
-  | s -> check_var s linetype
+  | s -> 
+     (* In Java, permit ident like clazz#names for matching function headers  *)
+     if String.contains s '#' then 
+     begin 
+	(* Use a special token *)
+	let clazz_name = (String.split_on_char '#' s) |> List.hd in
+	
+	let ident_name = (String.split_on_char '#' s) |> Common.last in
+	
+	let ident = check_var ident_name linetype in 
+	let clazz = check_var clazz_name linetype in 
+	(match clazz, ident with 
+	  | TMetaId mi, TMetaId mi1 -> 
+		    (* Printexc.get_callstack 5 |> Printexc.raw_backtrace_to_string |> print_string; *)
+		TIdentWithParentConstraint(mi1, mi)
+		(* TMetaId mi1  *)
+	  | _ -> check_var s linetype
+	) 
+	
+     end 
+     else 
+     check_var s linetype
 
 let mkassign op lexbuf =
   TOpAssign (op, (get_current_line_type lexbuf))

@@ -84,14 +84,15 @@ and 'a dots = 'a list wrap
 (* Identifier *)
 
 and base_ident =
-    Id            of string mcode
-  | MetaId        of Ast.meta_name mcode * constraints * Ast.seed * pure
-  | MetaFunc      of Ast.meta_name mcode * constraints * pure
-  | MetaLocalFunc of Ast.meta_name mcode * constraints * pure
-  | AsIdent       of ident * ident (* as ident, always metavar *)
-  | DisjId        of string mcode * ident list *
-                     string mcode list (* the |s *) * string mcode
-  | OptIdent      of ident
+    Id                of string mcode
+  | MetaId            of Ast.meta_name mcode * constraints * Ast.seed * pure
+  | MetaIdWithParent  of (Ast.meta_name mcode * constraints * Ast.seed * pure) * (Ast.meta_name mcode  * constraints * Ast.seed * pure)
+  | MetaFunc          of Ast.meta_name mcode * constraints * pure
+  | MetaLocalFunc     of Ast.meta_name mcode * constraints * pure
+  | AsIdent           of ident * ident (* as ident, always metavar *)
+  | DisjId            of string mcode * ident list *
+                         string mcode list (* the |s *) * string mcode
+  | OptIdent          of ident
 
 and ident = base_ident wrap
 
@@ -713,6 +714,7 @@ let rec meta_names_of_ident ident =
   match unwrap ident with
     Id _ -> []
   | MetaId (tyname, _, _, _)
+  | MetaIdWithParent ((tyname, _, _, _), _)
   | MetaFunc (tyname, _, _)
   | MetaLocalFunc (tyname, _, _) -> [unwrap_mcode tyname]
   | AsIdent (ident0, ident1) ->

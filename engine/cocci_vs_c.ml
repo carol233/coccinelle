@@ -1883,6 +1883,7 @@ and (ident: info_ident -> (A.ident, string * Ast_c.info) matcher) =
       else fail
 
   | A.MetaId(mida,constraints,keep,inherited) ->
+
       check_constraints constraints mida (B.MetaIdVal idb)
       (fun () ->
       let max_min _ = lin_col_by_pos [iib] in
@@ -1896,6 +1897,8 @@ and (ident: info_ident -> (A.ident, string * Ast_c.info) matcher) =
             (idb, iib)
             )))
       ))
+  | A.MetaIdWithParent( ( mida,constraints,keep,inherited), (mida1, _, _, _) ) ->
+      failwith "In Cocci_vs_c, should have converted MetaIdWithParent already"
 
   | A.MetaFunc(mida,constraints,keep,inherited) ->
       let is_function _ =
@@ -4141,6 +4144,69 @@ and storage_optional_allminus allminus stoa (stob, iistob) =
       else fail
   )
 
+and classname ida (stob, iib) = (* (class_name : (A.ident, (B.storage * Ast_c.info)) matcher) *)
+	let success new_ida = return (new_ida, stob) in  
+	match A.unwrap ida with 
+	| A.Id sa -> 
+	print_string ("id? " ^ (term sa) ^ "\n");
+	    if not (String.contains (term sa) '#') then success ida 
+	    else 
+		let clazz_name_as_str = term sa |> String.split_on_char '#' |> List.hd in 
+		let (sto_bis, boo) = stob in 
+		let new_ida = A.rewrap 
+			  ida 
+			  (A.Id (
+				  A.rewrap_mcode sa (String.split_on_char '#' (term sa) |> Common.last)
+				)
+			  ) 
+		in
+		(match sto_bis with 
+		    | B.NoSto -> fail
+		    | B.StoTypedef -> fail
+		    | B.Sto sto_class_list -> (
+			if (List.fold_left (fun acc sto_cls -> 
+			    acc && ( 
+			    match sto_cls with 
+			    | B.WithParentClass name -> 
+				name = clazz_name_as_str
+			    | _ -> true)
+			) true sto_class_list) then (success new_ida) else fail
+		    ))
+    
+	(* i want to return updated_ida where the `clazz# ` is removed *)
+	(* and this checks if a binding of MetaId to classname is possible *)
+	| A.MetaIdWithParent((mida,constraints,keep,inherited), (mida1, a, b, c)) ->
+	    let new_ida = A.rewrap 
+			  ida 
+		  (* replace with MetaId since the information about the containing clazz is not needed anymore*)
+			  (A.MetaId (mida,constraints,keep,inherited))
+			  (* (A.MetaIdWithParent((mida,constraints,keep,inherited), (mida1, a, b, c))) *)
+	    in 
+	        let (metaname, info, mc, meta_pos) = mida1 in
+		let clazz_name_as_str = (snd metaname)  in 
+
+		let updated_mida1 = (metaname, info, mc, meta_pos) in
+		let (sto_bis, boo) = stob in 
+		(match sto_bis with 
+		    | B.NoSto -> fail
+		    | B.StoTypedef -> fail 
+		    | B.Sto sto_class_list -> (
+			let with_parent = List.map (fun sto_class -> 
+			    match sto_class with 
+			    | B.WithParentClass clazz_name -> [clazz_name] 
+			    | _ -> []
+			) sto_class_list |> List.flatten |>  List.hd 
+			in 
+		
+			X.envf keep c (A.drop_pos updated_mida1, Ast_c.MetaIdVal with_parent, (fun () -> None))
+			(* unit -> tin -> 'x tout *)
+			(fun () -> success new_ida)
+    
+		    ))
+    
+	| x -> return (ida, stob)
+    
+	  
 and inline_optional_allminus allminus inla (stob, iistob) =
   (* "iso-by-absence" for storage, and return type. *)
   X.optional_storage_flag (fun optional_storage ->
@@ -4935,61 +5001,23 @@ let rec (rule_elem_node: (A.rule_elem, F.node) matcher) =
                   f_old_c_style = oldstyle;
                   }, ii) ->
       assert (body = []);
+      
 
       if oldstyle <> None
       then pr2 "OLD STYLE DECL NOT WELL SUPPORTED";
 
       let (stoa,tya,inla,attras) = get_fninfo fninfoa in
 
-      let coccier_name = (match A.unwrap ida with
-	      | A.Id sa -> Some (term sa)
-	      | _ -> None
-      ) in
-
-      let requires_further_checks = (
-	    match coccier_name with 
-	    | None -> true 
-	    | Some nm -> 
-		if String.contains nm '#' then 
-		begin
-	        let req_name = (String.split_on_char '#' nm) |> List.hd in 
-			let (sto_bis, boo) = stob in 
-			(match sto_bis with 
-			| NoSto -> true
-			| StoTypedef -> true 
-			| Sto sto_class_list -> (
-				List.fold_left (fun acc sto_cls -> 
-					acc && ( 
-					match sto_cls with 
-					 | B.WithParentClass name -> 
-					  name = req_name
-					| _ -> true)
-				) true sto_class_list
-			))
-		end
-	      	else true
-      ) in 
-      let ida = (
-	  match A.unwrap ida with
-	  | A.Id sa -> 
-	      	A.rewrap 
-		      ida 
-		      (A.Id (
-			      A.rewrap_mcode sa (String.split_on_char '#' (term sa) |> Common.last)
-			    )
-		      )
-	  | x -> ida
-      ) in
       
-      if not requires_further_checks then fail 
-      else 
       (match ii with
       | ioparenb::icparenb::iifakestart::iistob ->
 
           (* maybe important to put ident as the first tokens to transform.
            * It's related to transform_proto. So don't change order
            * between the >>=.
-           *)
+	   *)
+	   
+	  classname ida (stob, ii) >>= (fun ida stob -> 
           ident_cpp LocalFunction ida nameidb >>= (fun ida nameidb ->
           X.tokenf_mck mckstart iifakestart >>= (fun mckstart iifakestart ->
           tokenf oparen ioparenb >>= (fun oparen ioparenb ->
@@ -5029,7 +5057,7 @@ let rec (rule_elem_node: (A.rule_elem, F.node) matcher) =
                            },
                            ioparenb::icparenb::iifakestart::iistob)
                 )
-              ))))))))))
+              )))))))))))
       | _ -> raise (Impossible 49)
       )
 

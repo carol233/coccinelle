@@ -207,6 +207,8 @@ let rec left_ident i =
       call_right left_mcode name i (function name -> Ast0.Id(name))
   | Ast0.MetaId(name,a,b,c) ->
       call_right left_mcode name i (function name -> Ast0.MetaId(name,a,b,c))
+  | Ast0.MetaIdWithParent((name,a,b,c), (name1, a1, b1, c1)) ->
+      call_right left_mcode name i (function name -> Ast0.MetaIdWithParent((name,a,b,c), (name1, a1, b1, c1)))
   | Ast0.MetaFunc(name,a,b) ->
       call_right left_mcode name i (function name -> Ast0.MetaFunc(name,a,b))
   | Ast0.MetaLocalFunc(name,a,b) ->

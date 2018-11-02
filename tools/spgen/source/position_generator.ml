@@ -97,6 +97,9 @@ let rec ident_pos i snp
   | Ast0.MetaId(mc, i, s, p) ->
       let constructor ~mc = Ast0.MetaId(mc,i,s,p) in
       mcode ~mc ~constructor snp
+  | Ast0.MetaIdWithParent((mc, i, s, p), x) ->
+      let constructor ~mc = Ast0.MetaIdWithParent((mc,i,s,p), x) in
+      mcode ~mc ~constructor snp
   | Ast0.MetaFunc(mc, i, p) ->
       let constructor ~mc = Ast0.MetaFunc(mc,i,p) in
       mcode ~mc ~constructor snp

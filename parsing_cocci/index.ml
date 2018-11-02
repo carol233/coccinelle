@@ -35,6 +35,7 @@ let ident i =
   match Ast0.unwrap i with
       Ast0.Id(name) -> [10]
     | Ast0.MetaId(name,_,_,_) -> [11]
+    | Ast0.MetaIdWithParent((name,_,_,_), (name1,_,_,_)) -> [200]
     | Ast0.MetaFunc(name,_,_) -> [12]
     | Ast0.MetaLocalFunc(name,_,_) -> [13]
     | Ast0.DisjId(_,id_list,_,_) -> [152]

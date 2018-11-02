@@ -1492,7 +1492,10 @@ and ast_to_control_flow_namespace name_opt defs root =
   let _ = !g#add_arc ((root, new_root),Direct) in 
   let rec loop defs =
   match defs with
-  | [] -> Some !g
+  | [] ->  
+      (* Add edge to itself*)
+      !g#add_arc ((new_root, new_root),Direct); 
+      Some !g
   | def :: defs ->
     match def with
     | Ast_c.Namespace (name, nested_defs, _) -> 

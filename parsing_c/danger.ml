@@ -64,7 +64,6 @@ let add_danger xs =
       Ast_c.DeclList (((_::_::_) as xs), ii) ->
 	Visitor_c.vk_decl (update_danger danger) decl;
   xs +> List.iter undanger_onedecl;
-  print_string "max_min_ii_by_pos call site R\n";
 	let (max,min) =
 	  Lib_parsing_c.max_min_ii_by_pos(Lib_parsing_c.ii_of_decl decl) in
 	danger_start min;
@@ -78,7 +77,6 @@ let add_danger xs =
 	Visitor_c.vk_struct_field (update_danger danger) field;
 	xs +> List.iter undanger_fieldkind;
   let (max,min) =
-    print_string "max_min_ii_by_pos call site Q\n";
 	  Lib_parsing_c.max_min_ii_by_pos(Lib_parsing_c.ii_of_field field) in
 	danger_start min;
 	danger_end max

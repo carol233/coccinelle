@@ -2540,6 +2540,7 @@ module Ast_cocci :
       Ast_cocci.base_ident =
         Id of string mcode
       | MetaId of meta_name mcode * constraints * keep_binding * inherited
+      | MetaIdWithParent of (meta_name mcode * constraints * keep_binding * inherited) * (meta_name mcode * constraints * keep_binding * inherited)
       | MetaFunc of meta_name mcode * constraints * keep_binding * inherited
       | MetaLocalFunc of meta_name mcode * constraints * keep_binding *
           inherited
@@ -3258,6 +3259,8 @@ module Ast0_cocci :
         Id of string mcode
       | MetaId of Ast_cocci.meta_name mcode * constraints * Ast_cocci.seed *
           pure
+      | MetaIdWithParent of (Ast_cocci.meta_name mcode * constraints * Ast_cocci.seed *
+          pure) * (Ast_cocci.meta_name mcode * constraints * Ast_cocci.seed * pure)
       | MetaFunc of Ast_cocci.meta_name mcode * constraints * pure
       | MetaLocalFunc of Ast_cocci.meta_name mcode * constraints * pure
       | AsIdent of ident * ident

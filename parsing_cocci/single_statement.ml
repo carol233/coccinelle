@@ -97,6 +97,7 @@ let rec left_ident i =
   match Ast0.unwrap i with
     Ast0.Id(name) -> modif_before_mcode name
   | Ast0.MetaId(name,_,_,_) -> modif_before_mcode name
+  | Ast0.MetaIdWithParent((name,_,_,_), (name1,_,_,_) )->  print_string "singlestmt.ml: still got my parent" ; modif_before_mcode name && modif_before_mcode name1
   | Ast0.MetaFunc(name,_,_) -> modif_before_mcode name
   | Ast0.MetaLocalFunc(name,_,_) -> modif_before_mcode name
   | Ast0.DisjId(_,id_list,_,_) -> List.exists left_ident id_list
@@ -108,6 +109,7 @@ let rec right_ident i =
   match Ast0.unwrap i with
     Ast0.Id(name) -> modif_after_mcode name
   | Ast0.MetaId(name,_,_,_) -> modif_after_mcode name
+  | Ast0.MetaIdWithParent((name,_,_,_), (name1,_,_,_)) -> print_string "singlestmt.ml: still got my parent" ; modif_after_mcode name && modif_after_mcode name1
   | Ast0.MetaFunc(name,_,_) -> modif_after_mcode name
   | Ast0.MetaLocalFunc(name,_,_) -> modif_after_mcode name
   | Ast0.DisjId(_,id_list,_,_) -> List.exists right_ident id_list

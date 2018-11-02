@@ -539,6 +539,12 @@ return ...; => return;
 // ---------------------------------------------------------------------------
 // They are handled in engine.
 // 'X = Y'  should also match  'type X = Y';
+//Expression
+// @ init_with_assign @
+// identifier X, Y;
+// type T;
+// @@
+// T X = y => X = y
 
 // ---------------------------------------------------------------------------
 // Pointer/Array isomorphisms

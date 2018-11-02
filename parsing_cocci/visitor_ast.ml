@@ -105,7 +105,8 @@ let combiner bind option_default
     let k i =
       match Ast.unwrap i with
 	Ast.Id(name) -> string_mcode name
-      | Ast.MetaId(name,_,_,_) -> meta_mcode name
+			| Ast.MetaId(name,_,_,_) -> meta_mcode name
+			| Ast.MetaIdWithParent((name,_,_,_), _) -> meta_mcode name
       | Ast.MetaFunc(name,_,_,_) -> meta_mcode name
       | Ast.MetaLocalFunc(name,_,_,_) -> meta_mcode name
       | Ast.AsIdent(id,asid) ->
@@ -1028,7 +1029,9 @@ let rebuilder
 	(match Ast.unwrap i with
 	  Ast.Id(name) -> Ast.Id(string_mcode name)
 	| Ast.MetaId(name,constraints,keep,inherited) ->
-	    Ast.MetaId(meta_mcode name,constraints,keep,inherited)
+			Ast.MetaId(meta_mcode name,constraints,keep,inherited)
+	| Ast.MetaIdWithParent((name,constraints,keep,inherited), (name1,constraints1,keep1,inherited1)) ->
+	    Ast.MetaIdWithParent((meta_mcode name,constraints,keep,inherited), (meta_mcode name1,constraints1,keep1,inherited1))
 	| Ast.MetaFunc(name,constraints,keep,inherited) ->
 	    Ast.MetaFunc(meta_mcode name,constraints,keep,inherited)
 	| Ast.MetaLocalFunc(name,constraints,keep,inherited) ->

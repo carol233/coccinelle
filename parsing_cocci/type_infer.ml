@@ -323,7 +323,9 @@ let rec propagate_types env =
   let rec strip id =
     match Ast0.unwrap id with
       Ast0.Id(name)                -> [Id(Ast0.unwrap_mcode name)]
-    | Ast0.MetaId(name,_,_,_)      -> [Meta(Ast0.unwrap_mcode name)]
+		| Ast0.MetaId(name,_,_,_)      -> [Meta(Ast0.unwrap_mcode name)]
+		| Ast0.MetaIdWithParent((name,_,_,_), (name1,_,_,_))      
+		                               -> print_string "type_infer.ml: still got my parent" ; [Meta(Ast0.unwrap_mcode name); Meta(Ast0.unwrap_mcode name1)]
     | Ast0.MetaFunc(name,_,_)      -> [Meta(Ast0.unwrap_mcode name)]
     | Ast0.MetaLocalFunc(name,_,_) -> [Meta(Ast0.unwrap_mcode name)]
     | Ast0.DisjId(_,id_list,_,_)   -> List.concat (List.map strip id_list)
