@@ -945,18 +945,24 @@ new_argument:
 
 | typedef_ident_generic TDot nested_field_access
   {
-     
+     (* TODO name of nested_field_access *)
       let recordnm = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
-    Left( mk_e(RecordAccess (recordnm,$3)) [$2] )
+      let nested_name_ii = List.hd (List.rev $3) in 
+      let nested_name = fst nested_name_ii in 
+        Left( mk_e(RecordAccess (recordnm, nested_name)) [$2])
      }
 
  | typedef_ident_generic TDot nested_field_access TOPar  TCPar 
   {
-    let fn = mk_e(Ident ($3)) [] in
-       Left (mk_e(FunCall (fn, [])) [$4;$5]) }
+        let nested_name_ii = List.hd (List.rev $3) in 
+        let nested_name = fst nested_name_ii in 
+        let fn = mk_e(Ident (nested_name)) [] in
+        Left (mk_e(FunCall (fn, [])) [$4;$5]) }
  | typedef_ident_generic TDot nested_field_access TOPar argument_list_ne  TCPar 
   {
-      let fn = mk_e(Ident ($3)) [] in
+       let nested_name_ii = List.hd (List.rev $3) in 
+        let nested_name = fst nested_name_ii in 
+      let fn = mk_e(Ident (nested_name)) [] in
        Left (mk_e(FunCall (fn, $5)) [$4;$6]) 
        }
   /* | type_spec
@@ -1077,7 +1083,22 @@ postfix_expr:
  | Tnew new_argument               { mk_e(New (None, $2))     [$1] }
  | Tnew TOPar argument_list_ne TCPar new_argument { mk_e(New (Some $3, $5))             [$1; $2; $4] }
 
- | postfix_expr TDot nested_field_access { mk_e(RecordAccess ($1,$3)) [$2] }
+ | postfix_expr TDot nested_field_access {  
+     let names_ii = $3 in 
+     let nested_record_access = List.fold_left (fun acc_expr (nm, ii_opt) -> 
+     
+        (match acc_expr, ii_opt with 
+        | None, None     -> Some (mk_e(RecordAccess ($1,   nm)) [$2])
+        | None, Some ii     -> Some (mk_e(RecordAccess ($1,   nm)) [ii])
+        | Some expr, None -> Some (mk_e(RecordAccess (expr, nm)) [$2])
+        | Some expr, Some ii -> Some (mk_e(RecordAccess (expr, nm)) [ii])
+        )
+     ) None names_ii in
+
+    match nested_record_access with 
+    | Some e -> e 
+    | None -> raise (Impossible 501)
+    }
  /* | postfix_expr TDot nested_field_access TOPar TCPar {
      let fn = mk_e(Ident ($3)) [] in
     mk_e(FunCall (fn,[])) [$4; $5;] 
@@ -1100,13 +1121,13 @@ postfix_expr:
      { mk_e(Constructor ($2, (InitList (List.rev $5),[$4;$7] @ $6))) [$1;$3] } */
 
 nested_field_access:
- | ident {   RegularName (mk_string_wrap $1) }
+ | ident {   [(RegularName (mk_string_wrap $1), None)] }
  /*(* maybe some reflection thing, or operation on X.class? *)*/
- | Tclass { RegularName ("class", [$1]) }
- | Tsuper { RegularName ("super", [$1]) }
- | nested_field_access TDot ident { RegularName (mk_string_wrap $3)}
- | nested_field_access TDot Tsuper {  RegularName ("super", [$3]) }
- | nested_field_access TDot Tclass {  RegularName ("class", [$3]) }
+ | Tclass { [(RegularName ("class", [$1]),      None)] }
+ | Tsuper { [(RegularName ("super", [$1]),      None)] }
+ | nested_field_access TDot ident  { $1 @ [(RegularName (mk_string_wrap  $3) , Some $2)] }
+ | nested_field_access TDot Tsuper { $1 @ [(RegularName ("super",       [$3]), Some $2)] }
+ | nested_field_access TDot Tclass { $1 @ [(RegularName ("class",       [$3]), Some $2)] }
  
 
 primary_expr:
@@ -1548,16 +1569,19 @@ type_spec2:
        Right3 (TypeName (name, Ast_c.noTypedefDef())),[] }
  | TypedefIdent generic_opt 
     {
+        (*TODO make name *)
       let name = RegularName (mk_string_wrap $1) in
       Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
     }
 | TypedefIdent TDot nested_field_access 
     {
+        (*TODO make name *)
       let name = RegularName (mk_string_wrap $1) in
       Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
     }
 | TypedefIdent TDot nested_field_access generic_opt
     {
+          (*TODO make name *)
       let name = RegularName (mk_string_wrap $1) in
       Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
     }
