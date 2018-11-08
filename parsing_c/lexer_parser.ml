@@ -166,3 +166,41 @@ let lexer_reset_typedef saved_typedefs =
     | Some t -> _typedef := t);
     _lexer_hint := (default_hint ());
   end
+
+
+(* Tracks *some* subtypes,  but not all! This is a Java-specific hack to handle cases Coccinelle couldn't  *)
+let _subtypes_of = ref [] 
+
+let add_subtype_of subtype t = 
+	(* print_string "we have a name now\n;";
+	print_string ("name is " ^ subtype ^ "\n");
+	let (qualif, (ty, _)) = t in 
+	(match ty with 
+	| Ast_c.TypeName (n, _) -> print_string (Ast_c.str_of_name n); print_string "\n";
+	| _ -> print_string "\n";
+	); *)
+  _subtypes_of  := (subtype, t) :: !_subtypes_of
+
+let known_subtypes _ = 
+  !_subtypes_of
+
+let find_new_name init = 
+  let name_from_new_expr expr = 
+   let ((expr_bis, _), _) = expr in 
+    (match expr_bis with 
+    | Ast_c.New (None, Left((Ast_c.FunCall(((Ast_c.Ident(ident), _), _), _), _), _)) -> 
+       (match ident with 
+	| Ast_c.RegularName (nm, _) -> Some nm
+	| _ -> None (* Not handling yet*)
+	)
+    | _ -> None (* Not handling other cases that maybe we can handle yet*)
+    ) 
+  in 
+  (match init with 
+  | Ast_c.NoInit -> None 
+  | Ast_c.ValInit (_, (initialiser, _)) -> 
+	(match initialiser with 
+	| Ast_c.InitExpr e -> name_from_new_expr e
+	| _ -> (* can't handle the other cases yet!*) None
+	)
+  | Ast_c.ConstrInit _ -> None)

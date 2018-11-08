@@ -203,8 +203,8 @@ let initial_env = ref [
   { empty_frame with
     var_or_func =
     singleton
-      "NULL"
-      (Lib.al_type (Parse_c.type_of_string "void *"),Ast_c.NotLocalVar) }
+      "null"
+      (Lib.al_type (Parse_c.type_of_string "void"),Ast_c.NotLocalVar) }
   (*
    VarOrFunc("malloc",
             (Lib.al_type(Parse_c.type_of_string "void* ( * )(int size)"),
@@ -551,35 +551,46 @@ let new_scope() =
 let del_scope() =
   _scoped_env := List.tl !_scoped_env
 
+
+(* this is not functional at all, so why not use a hash table? *)
+let add_in_scope namedef =
+	let (current, older) = Common.uncons !_scoped_env in
+	let current =
+	  match namedef with
+	    | VarOrFunc (s, typ) ->
+		{current with
+		 var_or_func = StringMap.add s typ current.var_or_func}
+	    | TypeDef   (s, typ) ->
+		let v = typ, current.typedef, current.level in
+		let new_typedef : typedefs = { defs = StringMap.add s v current.typedef.defs } in
+		{current with typedef = new_typedef}
+	    | StructUnionNameDef (s, (su, typ)) ->
+		{current with
+		 struct_union_name_def = StringMap.add s (su, typ) current.struct_union_name_def}
+	    | Macro (s, body) ->
+		{current with macro = StringMap.add s body current.macro}
+	    | EnumConstant (s, body) ->
+		{current with
+		 enum_constant = StringMap.add s body current.enum_constant} in
+	_scoped_env := current::older
+
 let do_in_new_scope f =
   begin
     new_scope();
+
+    (* Hack for java. Add all known subtypes into each scope*)
+    List.iter (fun (s, t) -> 
+	    add_in_scope (TypeDef (s,Lib.al_type t))
+    )
+    (Lexer_parser.known_subtypes ());
+
     let res = f() in
+
+
     del_scope();
     res
   end
 
-(* this is not functional at all, so why not use a hash table? *)
-let add_in_scope namedef =
-  let (current, older) = Common.uncons !_scoped_env in
-  let current =
-    match namedef with
-      | VarOrFunc (s, typ) ->
-	  {current with
-	   var_or_func = StringMap.add s typ current.var_or_func}
-      | TypeDef   (s, typ) ->
-	  let v = typ, current.typedef, current.level in
-	  let new_typedef : typedefs = { defs = StringMap.add s v current.typedef.defs } in
-	  {current with typedef = new_typedef}
-      | StructUnionNameDef (s, (su, typ)) ->
-	  {current with
-	   struct_union_name_def = StringMap.add s (su, typ) current.struct_union_name_def}
-      | Macro (s, body) ->
-	  {current with macro = StringMap.add s body current.macro}
-      | EnumConstant (s, body) ->
-	  {current with
-	   enum_constant = StringMap.add s body current.enum_constant} in
-  _scoped_env := current::older
 
 (* ------------------------------------------------------------ *)
 
@@ -1025,8 +1036,13 @@ let annotater_expr_visitor_subpart = (fun (k,bigf) expr ->
 
     | New (_, ty) ->
 	k expr;
-	pr2_once "Type annotater:not handling New";
-	Type_c.noTypeHere (* TODO *)
+	pr2_once "Type annotater: trying to handle New, but maybe not good enough";
+	(* add_binding (TypeDef (s,Lib.al_type t)) true;
+	Type_c.noTypeHere TODO *)
+	(match ty with 
+	| Left e ->  Ast_c.get_type_expr e
+	| Right _ -> pr2 "weird argument: ignored."; Type_c.noTypeHere)
+	
 
     | Delete (box,e) ->
 	k expr;
@@ -1036,6 +1052,7 @@ let annotater_expr_visitor_subpart = (fun (k,bigf) expr ->
     | Defined _ ->
 	make_info_def (type_of_s "int")
     | AnonymousClassDecl _ -> 
+		(* TODO: when delaring anonymous class, we should at least know what interface it implements. *)
     	k expr;(* recurse to set the types-ref of sub expressions: are there any? *)
     	Type_c.noTypeHere
 
@@ -1161,10 +1178,8 @@ let rec visit_toplevel ~just_add_in_env ~depth elem =
           xs +> List.iter (fun ({v_namei = var; v_type = t;
                                  v_storage = sto; v_local = local} as x
                                    , iicomma) ->
-
             (* to add possible definition in type found in Decl *)
             Visitor_c.vk_type bigf t;
-
 
 		let local =
 		  let stoStatic =
@@ -1204,7 +1219,7 @@ let rec visit_toplevel ~just_add_in_env ~depth elem =
 
 
               match sto with
-              | StoTypedef, _inline ->
+	      | StoTypedef, _inline ->
                   add_binding (TypeDef (s,Lib.al_type t)) true;
               | _ ->
                   add_binding (VarOrFunc (s, (Lib.al_type t, local))) true;
@@ -1216,11 +1231,21 @@ let rec visit_toplevel ~just_add_in_env ~depth elem =
                     (* int x = sizeof(x) is legal so need process ini *)
 		    match iniopt with
 		      Ast_c.NoInit -> ()
-		    | Ast_c.ValInit(iini,init) -> Visitor_c.vk_ini bigf init
+		    | Ast_c.ValInit(iini,init) -> 
+			(* let name_of_ctor = Lexer_parser.find_new_name iniopt in 
+				(match name_of_ctor with 
+				| Some nm -> 
+				    (* add_binding (TypeDef (nm,Lib.al_type t)) true; *)
+
+				(* LP.add_subtype_of nm t *)
+				| None -> ()); *)
+
+		 	   Visitor_c.vk_ini bigf init
 		    | Ast_c.ConstrInit((args,_)) ->
 			args +> List.iter (fun (e,ii) ->
 			  Visitor_c.vk_argument bigf e
 			)
+		    
                   end
             );
           );
@@ -1385,6 +1410,7 @@ let (annotate_program2 :
 
   (* globals (re)initialialisation *)
   _scoped_env := env;
+
 
    let res =
      prog +> List.map (fun elem ->

@@ -4148,7 +4148,7 @@ and classname ida (stob, iib) = (* (class_name : (A.ident, (B.storage * Ast_c.in
 	let success new_ida = return (new_ida, stob) in  
 	match A.unwrap ida with 
 	| A.Id sa -> 
-	print_string ("id? " ^ (term sa) ^ "\n");
+	(* print_string ("id? " ^ (term sa) ^ "\n"); *)
 	    if not (String.contains (term sa) '#') then success ida 
 	    else 
 		let clazz_name_as_str = term sa |> String.split_on_char '#' |> List.hd in 
@@ -4469,10 +4469,16 @@ and compatible_typeC a (b,local) =
     | A.EnumName (_, name),
 	(qub, (B.EnumName (sb),ii)) -> structure_type_name name sb ii
     | A.TypeName sa, (qub, (B.TypeName (namesb, _typb),noii)) ->
+	let find_nested_types typ_b = 
+		(match typ_b with 
+		| Some b -> loop tya b 
+		| None -> fail) in
+	
         let sb = Ast_c.str_of_name namesb in
 	if A.unwrap_mcode sa = sb
 	then ok
-	else fail
+	else find_nested_types _typb
+	(* fail *)
 
     | A.MetaType (ida, cstr, keep, inherited), typb ->
 	let max_min _ = lin_col_by_pos (Lib_parsing_c.ii_of_type typb) in

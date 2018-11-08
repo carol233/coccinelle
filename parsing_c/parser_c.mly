@@ -72,11 +72,10 @@ let nullDecl = {
 let fake_pi = Common.fake_parse_info
 
 let addStorageD  = function
-  | ((x,ii), ({storageD = (y, ii2)} as v)) ->
+  | (x, ({storageD = (y, ii2)} as v)) ->
       { v with storageD = match y, x with 
-            | Sto sclist, Sto xval -> (Sto (List.concat([xval; sclist])), [ii])
-            | NoSto, Sto xval -> (Sto xval, [ii])
-            | _ -> (* should be impossible *) warning "not working" (y, [ii])
+	    | NoSto, StoTypedef -> (StoTypedef, ii2)
+            | _ -> (* should be impossible *) warning "addStorageD getting used in an unexpected way" (y, ii2)
       }
 
 let addInlineD  = function
@@ -385,6 +384,7 @@ let addParentInfo def_list s =
         }, il)
     | x -> x)
   ) def_list
+
 
 (*-------------------------------------------------------------------------- *)
 (* parse_typedef_fix2 *)
@@ -1569,19 +1569,19 @@ type_spec2:
        Right3 (TypeName (name, Ast_c.noTypedefDef())),[] }
  | TypedefIdent generic_opt 
     {
-        (*TODO make name *)
+        (*TODO make name with generic info *)
       let name = RegularName (mk_string_wrap $1) in
       Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
     }
 | TypedefIdent TDot nested_field_access 
     {
-        (*TODO make name *)
+        (*TODO make name with dot info*)
       let name = RegularName (mk_string_wrap $1) in
       Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
     }
 | TypedefIdent TDot nested_field_access generic_opt
     {
-          (*TODO make name *)
+          (*TODO make name with dot info*)
       let name = RegularName (mk_string_wrap $1) in
       Right3 (TypeName (name, Ast_c.noTypedefDef())),[] 
     }
@@ -2120,15 +2120,33 @@ decl2:
      }
  | decl_spec init_declarator_list TPtVirg
      { function local ->
-       let (returnType,storage) = fixDeclSpecForDecl (snd $1) in
+       let (returnType,storage) = fixDeclSpecForDecl (snd $1) in      
        let iistart = Ast_c.fakeInfo () in
        DeclList (
          ($2 +> List.map (fun ((((name,f),attrs,endattrs), ini), iivirg) ->
            let s = str_of_name name in
+
+            let name_of_ctor = find_new_name ini in 
+            let ctor_type = (match returnType, name_of_ctor with 
+            | (_, (TypeName (RegularName(_, ii), x), _)), Some nm -> 
+		(* We want to put the most specific type here *)
+		(* e.g. Put TypeName(ArrayList, _) instead of TypeName(List, _) *)	
+		LP.add_subtype_of nm returnType;
+		let name = RegularName ((nm, ii)) in
+		Some (
+			TypeName (name, x))
+             
+            | _ -> None) in 
+           
 	   if fst (unwrap storage) = StoTypedef
 	   then LP.add_typedef s;
+	   let (qualif, (_, il)) = returnType in 
+	   let t = (match ctor_type with 
+		| None -> returnType
+		| Some ty -> (qualif, (ty, il))
+	   ) in 
            {v_namei = Some (name, ini);
-            v_type = f returnType;
+            v_type = f t;
             v_storage = unwrap storage;
             v_local = local;
             v_attr = (fst $1)@attrs;
@@ -2236,7 +2254,14 @@ primitive_type_array:
 /*(*----------------------------*)*/
 
 decl:      decl2         { et "decl" (); $1 }
-decl_spec: decl_spec2    { dt "declspec" (); $1  }
+decl_spec: decl_spec2    { 
+	dt "declspec" ();  
+	let declaration = $1 in 
+
+
+	declaration 
+	(* (fst declaration, addStorageD (StoTypedef, snd declaration)) *)
+}
 
 /*(*-----------------------------------------------------------------------*)*/
 /*(* declarators (right part of type and variable) *)*/

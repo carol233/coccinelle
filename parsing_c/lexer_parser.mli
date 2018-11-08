@@ -50,3 +50,7 @@ val default_hint : unit -> lexer_hint
 val is_top_or_struct : context -> bool
 
 val string_of_context: context -> string
+
+val add_subtype_of: string -> Ast_c.fullType -> unit
+val known_subtypes: unit -> (string * Ast_c.fullType) list
+val find_new_name: Ast_c.v_init -> string option

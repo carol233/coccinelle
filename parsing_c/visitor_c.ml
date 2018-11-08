@@ -542,7 +542,7 @@ and vk_decl = fun bigf d ->
     | DeclList (xs,ii) ->
 	iif ii;
 	xs +> List.iter (fun (x,ii) ->
-        iif ii;
+	iif ii;
         vk_onedecl bigf x
       );
     | MacroDecl ((_stob, s, args, ptvg),ii) ->
@@ -568,7 +568,6 @@ and vk_onedecl = fun bigf onedecl ->
       v_storage = _sto;
       v_attr = attrs;
       v_endattr = endattrs})  ->
-
     vk_type bigf t;
     (* don't go in tbis *)
     attrs +> List.iter (vk_attribute bigf);
