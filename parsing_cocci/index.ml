@@ -52,6 +52,7 @@ let expression e =
   | Ast0.Sequence(left,op,right) -> [156]
   | Ast0.CondExpr(exp1,why,exp2,colon,exp3) -> [21]
   | Ast0.Postfix(exp,op) -> [22]
+  | Ast0.New(exp,op) -> [550]
   | Ast0.Infix(exp,op) -> [23]
   | Ast0.Unary(exp,op) -> [24]
   | Ast0.Binary(left,op,right) -> [25]

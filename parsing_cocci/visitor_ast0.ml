@@ -143,7 +143,11 @@ let visitor mode bind option_default
 	| Ast0.Postfix(exp,op) ->
 	    let (exp_n,exp) = expression exp in
 	    let (op_n,op) = fix_mcode op in
-	    (bind exp_n op_n, Ast0.Postfix(exp,op))
+		(bind exp_n op_n, Ast0.Postfix(exp,op))
+	| Ast0.New(exp,op) ->
+	    let (op_n,op) = string_mcode op in
+	    let (exp_n,exp) = expression exp in
+	    (bind op_n exp_n, Ast0.New(exp,op))
 	| Ast0.Infix(exp,op) ->
 	    let (op_n,op) = fix_mcode op in
 	    let (exp_n,exp) = expression exp in

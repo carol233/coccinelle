@@ -225,7 +225,7 @@ let check_constraint_allowed () =
 
 %token <Data.clt> TVAEllipsis
 %token <Data.clt> TIf TElse TWhile TFor TDo TSwitch TCase TDefault TReturn
-%token <Data.clt> TBreak TContinue TGoto TSizeof TTypeof TFunDecl Tdecimal Texec
+%token <Data.clt> TBreak TContinue TGoto TSizeof TNew TTypeof TFunDecl Tdecimal Texec
 %token <string * Data.clt> TIdent TTypeId TDeclarerId TIteratorId TSymId
 %token <Parse_aux.midinfo * Parse_aux.midinfo> TIdentWithParentConstraint
 %token <Ast_cocci.added_string * Data.clt> TDirective
@@ -2188,6 +2188,10 @@ postfix_expr(r,pe):
 			      P.clt2mcode ")" $4)) }
  /*(* gccext: also called compound literals *)
    empty case causes conflicts */
+ | TNew postfix_expr(r, pe) {
+      Ast0.wrap(Ast0.New($2, P.clt2mcode "new" $1) 
+      )
+   }
  | TOPar ctype TCPar TOBrace initialize_list TCBrace
      { let init =
        if P.struct_initializer $5

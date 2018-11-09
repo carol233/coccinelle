@@ -155,6 +155,10 @@ let combiner bind option_default
 	  let lexp = expression exp in
 	  let lop = fix_mcode op in
 	  bind lexp lop
+      |  Ast.New(exp,op) ->
+	let lexp = expression exp in
+	let lop = string_mcode op in
+	bind lexp lop
       | Ast.Infix(exp,op) ->
 	  let lop = fix_mcode op in
 	  let lexp = expression exp in
@@ -1078,7 +1082,11 @@ let rebuilder
 	| Ast.Postfix(exp,op) ->
 	    let lexp = expression exp in
 	    let lop = fix_mcode op in
-	    Ast.Postfix(lexp, lop)
+			Ast.Postfix(lexp, lop)
+	| Ast.New(exp,op) ->
+	    let lexp = expression exp in
+	    let lop = string_mcode op in
+	    Ast.New(lexp, lop)
 	| Ast.Infix(exp,op) ->
 	    let lexp = expression exp in
 	    let lop = fix_mcode op in

@@ -486,6 +486,7 @@ let rec expression e =
       print_option (function e -> pr_space(); loop e top) exp2;
       pr_space(); mcode print_string colon; pr_space(); loop exp3 cond
   | Ast.Postfix(exp,op) -> loop exp postfix; mcode fixOp op
+  | Ast.New(exp,op) -> mcode print_string op; loop exp (unary); 
   | Ast.Infix(exp,op) -> mcode fixOp op; loop exp unary
   | Ast.Unary(exp,op) -> mcode unaryOp op; loop exp unary
   | Ast.Binary(left,op,right) ->

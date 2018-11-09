@@ -182,6 +182,17 @@ let rec propagate_types env =
 	| Ast0.CondExpr(exp1,why,None,colon,exp3) -> Ast0.get_type exp3
 	| Ast0.Postfix(exp,op) | Ast0.Infix(exp,op) -> (* op is dec or inc *)
 	    Ast0.get_type exp
+	| Ast0.New(exp, op) -> 
+	    (match Ast0.unwrap exp with 
+		 | Ast0.FunCall(_ , _, _, _) -> 
+		 	Ast0.get_type exp
+			(* Some (
+				Ast0.rewrap e (
+					Ast0.TypeName(
+						
+					))) *)
+		 | _ -> None
+	    )
 	| Ast0.Unary(exp,op) ->
 	    (match Ast0.unwrap_mcode op with
 		 Ast.GetRef ->
@@ -473,7 +484,7 @@ let rec propagate_types env =
 let type_infer code =
   let unknown = Ast0.wrap (Ast0.BaseType (Ast.Unknown, [])) in
   let unknown_ptr = Ast0.wrap (Ast0.Pointer (unknown, dummy)) in
-  let prop = propagate_types [(Id("NULL"), unknown_ptr)] in
+  let prop = propagate_types [(Id("null"), unknown_ptr)] in
   let fn = prop.VT0.combiner_rec_top_level in
   let _ = List.map fn code in
   ()

@@ -193,6 +193,7 @@ let rec expression e =
 	  print_option (function e -> print_string " "; expression e) exp2;
 	  print_string " "; mcode print_string colon; expression exp3
       | Ast0.Postfix(exp,op) -> expression exp; mcode U.fixOp op
+      | Ast0.New(exp,op) -> mcode print_string op; expression exp
       | Ast0.Infix(exp,op) -> mcode U.fixOp op; expression exp
       | Ast0.Unary(exp,op) -> mcode U.unaryOp op; expression exp
       | Ast0.Binary(left,op,right) ->

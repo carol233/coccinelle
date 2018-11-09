@@ -163,7 +163,10 @@ let mk_pretty_printers
 
     | ParenExpr (e), [i1;i2] -> pr_elem i1; pp_expression e; pr_elem i2;
 
-    | New   (None, t),     [i1] -> pr_elem i1; pp_argument t
+    | New   (None, t),     [i1] -> 
+    pr_elem i1; 
+    
+    pp_argument t
     | New   (Some ts, t),     [i1; i2; i3] ->
 	pr_elem i1; pr_elem i2; pp_arg_list ts; pr_elem i3; pp_argument t
     | Delete(false,t), [i1] -> pr_elem i1; pr_space(); pp_expression t

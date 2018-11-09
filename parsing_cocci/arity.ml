@@ -207,6 +207,11 @@ let rec top_expression opt_allowed tgt expr =
       let exp = expression arity exp in
       let op = mcode op in
       make_exp expr tgt arity (Ast0.Postfix(exp,op))
+  | Ast0.New(exp,op) ->
+      let arity = exp_same (mcode2line op) [mcode2arity op] in
+      let exp = expression arity exp in
+      let op = mcode op in
+      make_exp expr tgt arity (Ast0.New(exp,op))
   | Ast0.Infix(exp,op) ->
       let arity = exp_same (mcode2line op) [mcode2arity op] in
       let exp = expression arity exp in

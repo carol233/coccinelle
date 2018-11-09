@@ -408,6 +408,8 @@ and expression e =
 	Ast.CondExpr(exp1,why,exp2,colon,exp3)
     | Ast0.Postfix(exp,op) ->
 	Ast.Postfix(expression exp,mcode op)
+    | Ast0.New(exp,op) ->
+	Ast.New(expression exp,mcode op)
     | Ast0.Infix(exp,op) ->
 	Ast.Infix(expression exp,mcode op)
     | Ast0.Unary(exp,op) ->

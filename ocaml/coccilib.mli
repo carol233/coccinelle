@@ -2559,6 +2559,7 @@ module Ast_cocci :
       | CondExpr of expression * string mcode * expression option *
           string mcode * expression
       | Postfix of expression * fixOp mcode
+      | New of expression * string mcode
       | Infix of expression * fixOp mcode
       | Unary of expression * unaryOp mcode
       | Binary of expression * binaryOp * expression
@@ -3279,6 +3280,7 @@ module Ast0_cocci :
       | CondExpr of expression * string mcode * expression option *
           string mcode * expression
       | Postfix of expression * Ast_cocci.fixOp mcode
+      | New of expression * string mcode
       | Infix of expression * Ast_cocci.fixOp mcode
       | Unary of expression * Ast_cocci.unaryOp mcode
       | Binary of expression * binaryOp * expression

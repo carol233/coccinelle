@@ -320,6 +320,10 @@ let rec expression_pos exp snp
       let c ~exp ~mc = Ast0.Postfix (exp, mc) in
       let alt() = mcode_wrap ~mc:fixmc ~constructor:(c ~exp) snp in
       exp_wrap ~exp ~constructor:(c ~mc:fixmc) ~alt snp
+  | Ast0.New(exp, fixmc) ->
+      let c ~exp ~mc = Ast0.New (exp, mc) in
+      let alt() = mcode_wrap ~mc:fixmc ~constructor:(c ~exp) snp in
+      exp_wrap ~exp ~constructor:(c ~mc:fixmc) ~alt snp
   | Ast0.Infix(exp, fixmc) ->
       let c ~exp ~mc = Ast0.Infix (exp, mc) in
       let alt() = mcode_wrap ~mc:fixmc ~constructor:(c ~exp) snp in

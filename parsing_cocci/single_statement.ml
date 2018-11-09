@@ -130,6 +130,7 @@ let rec left_expression e =
   | Ast0.Sequence(left,op,right) -> left_expression left
   | Ast0.CondExpr(exp1,why,exp2,colon,exp3) -> left_expression exp1
   | Ast0.Postfix(exp,op) -> left_expression exp
+  | Ast0.New(exp,op) -> left_expression exp
   | Ast0.Infix(exp,op) -> modif_before_mcode op
   | Ast0.Unary(exp,op) -> modif_before_mcode op
   | Ast0.Binary(left,op,right) -> left_expression left

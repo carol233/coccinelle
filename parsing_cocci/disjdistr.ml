@@ -161,6 +161,9 @@ and disjexp e =
   | Ast.Postfix(exp,op) ->
       let exp = disjexp exp in
       List.map (function exp -> Ast.rewrap e (Ast.Postfix(exp,op))) exp
+  | Ast.New(exp,op) ->
+      let exp = disjexp exp in
+      List.map (function exp -> Ast.rewrap e (Ast.New(exp,op))) exp
   | Ast.Infix(exp,op) ->
       let exp = disjexp exp in
       List.map (function exp -> Ast.rewrap e (Ast.Infix(exp,op))) exp

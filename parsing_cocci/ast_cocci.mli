@@ -162,6 +162,7 @@ and base_expression =
   | CondExpr       of expression * string mcode (* ? *) * expression option *
 	              string mcode (* : *) * expression
   | Postfix        of expression * fixOp mcode
+  | New            of expression * string mcode
   | Infix          of expression * fixOp mcode
   | Unary          of expression * unaryOp mcode
   | Binary         of expression * binaryOp * expression

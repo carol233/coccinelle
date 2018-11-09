@@ -1337,7 +1337,7 @@ let rec (expression: (A.expression, Ast_c.expression) matcher) =
           ((A.FunCall (ea, ia1, eas, ia2)) +> wa,
           ((B.FunCall (eb, ebs),typ), [ib1;ib2])
         ))))))
-  | A.FunCall (ea, ia1, eas, ia2),  ((B.New (_, 
+  (* | (A.FunCall (ea, ia1, eas, ia2)),  ((B.New (_, 
                                       Left((B.FunCall (eb, ebs), typ), ii)), _), _) ->
         (* todo: Now we just treat constructor as a function call *)
         (* todo: do special case to allow IdMetaFunc, cos doing the
@@ -1359,7 +1359,17 @@ let rec (expression: (A.expression, Ast_c.expression) matcher) =
           return (
             ((A.FunCall (ea, ia1, eas, ia2)) +> wa,
             ((B.FunCall (eb, ebs),typ), [ib1;ib2])
-          ))))))
+	  )))))) *)
+  | A.New (ea, opa), ((B.New (a, Left(eb)), typ), ii) ->
+	  let (ib1) = tuple_of_list1 ii in
+	  tokenf opa ib1 >>= (fun opa ib1 ->
+	  expression ea eb >>= (fun ea eb ->
+            return (
+		(A.New (ea, opa)) +> wa,
+		((B.New (a, Left(eb)), typ), [ib1])
+	    )
+	  )
+	  )
   | A.Assignment (ea1, opa, ea2, simple),
       ((B.Assignment (eb1, opb, eb2), typ),ii) ->
       if ii<>[] then failwith "In cocci_vs_c, ii for Assign should be empty."

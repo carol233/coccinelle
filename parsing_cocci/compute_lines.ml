@@ -385,6 +385,10 @@ let rec expression e =
       let exp = expression exp in
       let op = normal_mcode op in
       mkres e (Ast0.Postfix(exp,op)) exp (promote_mcode op)
+  | Ast0.New(exp,op) ->
+      let exp = expression exp in
+      let op = normal_mcode op in
+      mkres e (Ast0.New(exp,op)) exp (promote_mcode op)
   | Ast0.Infix(exp,op) ->
       let exp = expression exp in
       let op = normal_mcode op in

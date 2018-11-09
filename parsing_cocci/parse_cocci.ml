@@ -173,6 +173,7 @@ let token2c (tok,_) add_clt =
   | PC.TMetaIterator(_,_,_,clt) -> add_clt "itermeta" clt
 
   | PC.TSizeof(clt) -> add_clt "sizeof" clt
+  | PC.TNew (clt) -> add_clt "new" clt
   | PC.TTypeof(clt) -> add_clt "typeof" clt
 
   | PC.TString(x,clt) -> add_clt (Printf.sprintf "\"%s\"" x) clt
@@ -431,7 +432,7 @@ let get_clt (tok,_) =
   | PC.TTypeId(_,clt) | PC.TSymId(_,clt)
   | PC.TDeclarerId(_,clt) | PC.TIteratorId(_,clt)
 
-  | PC.TSizeof(clt) | PC.TTypeof(clt)
+  | PC.TSizeof(clt) | PC.TNew(clt) | PC.TTypeof(clt)
 
   | PC.TString(_,clt) | PC.TChar(_,clt) | PC.TFloat(_,clt) | PC.TInt(_,clt)
   | PC.TDecimalCst(_,_,_,clt)
@@ -621,6 +622,7 @@ let update_clt (tok,x) clt =
   | PC.TSymId(a,_) -> (PC.TSymId(a,clt),x)
 
   | PC.TSizeof(_) -> (PC.TSizeof(clt),x)
+  | PC.TNew(_) -> (PC.TNew(clt),x)
   | PC.TTypeof(_) -> (PC.TTypeof(clt),x)
 
   | PC.TString(s,_) -> (PC.TString(s,clt),x)
@@ -896,7 +898,7 @@ let split_token ((tok,_) as t) =
 
   | PC.TIf(clt) | PC.TElse(clt)  | PC.TWhile(clt) | PC.TFor(clt) | PC.TDo(clt)
   | PC.TSwitch(clt) | PC.TCase(clt) | PC.TDefault(clt)
-  | PC.TSizeof(clt) | PC.TTypeof(clt)
+  | PC.TSizeof(clt) | PC.TNew(clt) | PC.TTypeof(clt)
   | PC.TReturn(clt) | PC.TBreak(clt) | PC.TContinue(clt) | PC.TGoto(clt)
   | PC.TIdent(_,clt)
   | PC.TTypeId(_,clt) | PC.TDeclarerId(_,clt) | PC.TIteratorId(_,clt)

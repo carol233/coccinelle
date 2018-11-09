@@ -1,0 +1,147 @@
+
+** Conflict (shift/reduce) in state 849.
+** Tokens involved: TPtrOp TOPar TOCro TInc TDot TDec
+** The following explanations concentrate on token TPtrOp.
+** This state is reached from iso_main after reading:
+
+TIsoToTestExpression TNew postfix_expr(eexpr,dot_expressions) 
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+iso_main 
+TIsoToTestExpression eexpr list(iso(eexpr)) EOF 
+                     pre_basic_expr(eexpr,dot_expressions) 
+                     basic_expr(eexpr,dot_expressions) 
+                     assign_expr(eexpr,dot_expressions) 
+                     unary_expr(eexpr,dot_expressions) TOpAssign assign_expr_bis 
+                     postfix_expr(eexpr,dot_expressions) 
+                     (?)
+
+** In state 849, looking ahead at TPtrOp, shifting is permitted
+** because of the following sub-derivation:
+
+TNew postfix_expr(eexpr,dot_expressions) 
+     postfix_expr(eexpr,dot_expressions) . TPtrOp disj_ident 
+
+** In state 849, looking ahead at TPtrOp, reducing production
+** postfix_expr(eexpr,dot_expressions) -> TNew postfix_expr(eexpr,dot_expressions) 
+** is permitted because of the following sub-derivation:
+
+postfix_expr(eexpr,dot_expressions) TPtrOp disj_ident // lookahead token appears
+TNew postfix_expr(eexpr,dot_expressions) . 
+
+** Conflict (shift/reduce) in state 709.
+** Tokens involved: TPtrOp TOPar TOCro TInc TDot TDec
+** The following explanations concentrate on token TPtrOp.
+** This state is reached from iso_main after reading:
+
+TIsoTopLevel TNew postfix_expr(expr,invalid) 
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+iso_main 
+TIsoTopLevel nest_start list(iso(nest_start)) EOF 
+             nest_after_dots 
+             expr nest_after_exp 
+             pre_basic_expr(expr,invalid) 
+             basic_expr(expr,invalid) 
+             assign_expr(expr,invalid) 
+             unary_expr(expr,invalid) TOpAssign assign_expr_bis 
+             postfix_expr(expr,invalid) 
+             (?)
+
+** In state 709, looking ahead at TPtrOp, shifting is permitted
+** because of the following sub-derivation:
+
+TNew postfix_expr(expr,invalid) 
+     postfix_expr(expr,invalid) . TPtrOp disj_ident 
+
+** In state 709, looking ahead at TPtrOp, reducing production
+** postfix_expr(expr,invalid) -> TNew postfix_expr(expr,invalid) 
+** is permitted because of the following sub-derivation:
+
+postfix_expr(expr,invalid) TPtrOp disj_ident // lookahead token appears
+TNew postfix_expr(expr,invalid) . 
+
+** Conflict (shift/reduce) in state 656.
+** Tokens involved: TPtrOp TOPar TOCro TInc TDot TDec
+** The following explanations concentrate on token TPtrOp.
+** This state is reached from iso_main after reading:
+
+TIsoToTestExpression TPOEllipsis TNew postfix_expr(eexpr,nest_expressions) 
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+iso_main 
+TIsoToTestExpression eexpr list(iso(eexpr)) EOF 
+                     pre_basic_expr(eexpr,dot_expressions) 
+                     basic_expr(eexpr,dot_expressions) 
+                     assign_expr(eexpr,dot_expressions) 
+                     unary_expr(eexpr,dot_expressions) TOpAssign assign_expr_bis 
+                     postfix_expr(eexpr,dot_expressions) 
+                     primary_expr(eexpr,dot_expressions) 
+                     dot_expressions 
+                     nest_expressions 
+                     TPOEllipsis expr_dots(TEllipsis) TPCEllipsis 
+                                 no_dot_start_end(dexpr,edots_when(TEllipsis,eexpr)) 
+                                 dexpr list(pair(edots_when(TEllipsis,eexpr),dexpr)) 
+                                 pre_basic_expr(eexpr,nest_expressions) 
+                                 basic_expr(eexpr,nest_expressions) 
+                                 assign_expr(eexpr,nest_expressions) 
+                                 unary_expr(eexpr,nest_expressions) TOpAssign assign_expr_bis 
+                                 postfix_expr(eexpr,nest_expressions) 
+                                 (?)
+
+** In state 656, looking ahead at TPtrOp, shifting is permitted
+** because of the following sub-derivation:
+
+TNew postfix_expr(eexpr,nest_expressions) 
+     postfix_expr(eexpr,nest_expressions) . TPtrOp disj_ident 
+
+** In state 656, looking ahead at TPtrOp, reducing production
+** postfix_expr(eexpr,nest_expressions) -> TNew postfix_expr(eexpr,nest_expressions) 
+** is permitted because of the following sub-derivation:
+
+postfix_expr(eexpr,nest_expressions) TPtrOp disj_ident // lookahead token appears
+TNew postfix_expr(eexpr,nest_expressions) . 
+
+** Conflict (shift/reduce) in state 647.
+** Tokens involved: TPtrOp TOPar TOCro TInc TDot TDec
+** The following explanations concentrate on token TPtrOp.
+** This state is reached from minus_main after reading:
+
+loption(filespec) TOInit TNew postfix_expr(eexpr,invalid) 
+
+** The derivations that appear below have the following common factor:
+** (The question mark symbol (?) represents the spot where the derivations begin to differ.)
+
+minus_main 
+minus_body EOF 
+loption(filespec) loption(minus_start) 
+                  minus_start 
+                  top_init 
+                  TOInit initialize_list TCBrace 
+                         empty_list_start(initialize2,edots_when(TEllipsis,initialize)) 
+                         nonempty_list_start(initialize2,edots_when(TEllipsis,initialize)) 
+                         initialize2 
+                         arith_expr(eexpr,invalid) 
+                         cast_expr(eexpr,invalid) 
+                         unary_expr(eexpr,invalid) 
+                         postfix_expr(eexpr,invalid) 
+                         (?)
+
+** In state 647, looking ahead at TPtrOp, shifting is permitted
+** because of the following sub-derivation:
+
+TNew postfix_expr(eexpr,invalid) 
+     postfix_expr(eexpr,invalid) . TPtrOp disj_ident 
+
+** In state 647, looking ahead at TPtrOp, reducing production
+** postfix_expr(eexpr,invalid) -> TNew postfix_expr(eexpr,invalid) 
+** is permitted because of the following sub-derivation:
+
+postfix_expr(eexpr,invalid) TPtrOp disj_ident // lookahead token appears
+TNew postfix_expr(eexpr,invalid) . 
