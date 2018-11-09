@@ -1204,7 +1204,7 @@ and mk_Try (starti :nodei option) (labels :int list)
 	(* we don't do interprocedural analysis, 
 	* potentially any statement in the try-block might throw *)
 	(match finaltry with 
-	| Some node -> add_arc_all_stmt_in_try_to_except finallynode trynode node;
+	| Some node -> add_arc_all_stmt_in_try_to_except catchnode trynode node; add_arc_all_stmt_in_try_to_except finallynode trynode node;
 	| None -> ());
     );
    
