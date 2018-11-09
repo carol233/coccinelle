@@ -557,15 +557,6 @@ return ...; => return;
 // Pointer/Field isomorphisms
 // ---------------------------------------------------------------------------
 
-Expression
-@ ptr_to_array @
-expression E1, E2; // was pure, not sure why that's needed, not good for rule27
-identifier fld;
-@@
-
-E1->fld => E1[E2].fld
-
-
 
 TopLevel
 @ mkinit @
@@ -587,16 +578,6 @@ E.fld = E1; => T I = { .fld = E1, };
 // not really... pure means matches a unitary unplussed metavariable
 // but this rule doesn't work anyway
 
-Expression
-@ fld_to_ptr @
-type T;
-pure T E;
-pure T *E1;
-identifier fld;
-@@
-
-E.fld => E1->fld
-
 
 // ---------------------------------------------------------------------------
 // sizeof isomorphisms
@@ -611,13 +592,6 @@ E.fld => E1->fld
 // sizeof(E) => sizeof E
 
 
-Expression
-@ sizeof_type_expr @
-pure type T; // pure because we drop a metavar
-T E;
-@@
-
-sizeof(T) => sizeof E
 
 // Expression
 // @ fld_func_call @
