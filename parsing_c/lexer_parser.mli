@@ -54,3 +54,5 @@ val string_of_context: context -> string
 val add_subtype_of: string -> Ast_c.fullType -> unit
 val known_subtypes: unit -> (string * Ast_c.fullType) list
 val find_new_name: Ast_c.v_init -> string option
+val add_outer_scope_variable: string -> Ast_c.fullType -> unit
+val get_outer_scope_variables: unit -> (string * Ast_c.fullType) list

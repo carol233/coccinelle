@@ -583,6 +583,10 @@ let do_in_new_scope f =
 	    add_in_scope (TypeDef (s,Lib.al_type t))
     )
     (Lexer_parser.known_subtypes ());
+    List.iter (fun (s, t) -> 
+	add_in_scope (VarOrFunc (s, (Lib.al_type t, NotLocalVar)))
+     )
+     (Lexer_parser.get_outer_scope_variables ());
 
     let res = f() in
 
@@ -1040,7 +1044,20 @@ let annotater_expr_visitor_subpart = (fun (k,bigf) expr ->
 	(* add_binding (TypeDef (s,Lib.al_type t)) true;
 	Type_c.noTypeHere TODO *)
 	(match ty with 
-	| Left e ->  Ast_c.get_type_expr e
+	| Left e ->  
+		(* assume that new A always means it returns type A *)
+		(match Ast_c.unwrap_expr e with 
+		| FunCall (e1, _) ->
+			(match Ast_c.unwrap_expr e1 with 
+			| Ident (RegularName (nm, ii) as ident_name)  -> 
+				make_info_def_fix (Ast_c.nullQualif, (TypeName (ident_name, None), []))
+				
+			| _ -> 
+				(* prolly can't handle *)
+				Ast_c.get_type_expr e
+			)
+		|  _ -> Ast_c.get_type_expr e )
+		
 	| Right _ -> pr2 "weird argument: ignored."; Type_c.noTypeHere)
 	
 

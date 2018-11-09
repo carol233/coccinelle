@@ -204,3 +204,11 @@ let find_new_name init =
 	| _ -> (* can't handle the other cases yet!*) None
 	)
   | Ast_c.ConstrInit _ -> None)
+
+let _known_outer_scope_vars = ref []
+
+let add_outer_scope_variable name typ = 
+  _known_outer_scope_vars:= (name, typ) :: !_known_outer_scope_vars
+
+let get_outer_scope_variables _ = 
+  !_known_outer_scope_vars

@@ -908,9 +908,11 @@ new_argument:
 
 | typedef_ident_generic  TOPar  argument_list_ne TCPar
     { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+    	LP.add_typedef (fst $1);
        Left (mk_e(FunCall (fn, $3)) [$2;$4]) }
  | typedef_ident_generic  TOPar  TCPar
     { let fn = mk_e(Ident (RegularName (mk_string_wrap $1))) [] in
+       LP.add_typedef (fst $1);
        Left (mk_e(FunCall (fn, [])) [$2;$3]) }
  | typedef_ident_generic TOPar TCPar TOBrace class_body TCBrace 
     
@@ -1858,7 +1860,14 @@ parameter_decl2:
        }
 
 field_decls:
-  | decl {} /*(* parse and throw away*)*/
+  | decl {
+	  $1 Ast_c.NotLocalDecl |>
+	   (fun decl_list -> 
+	  	match decl_list with
+		  | DeclList (ls, ii) -> ls
+		  | _ -> []
+	  )
+  } 
 
 
 extends: 
@@ -1870,7 +1879,18 @@ extends:
 class_body:
   | { ([], []) }
   | class_body function_definition { (Definition $2 :: (fst $1), (snd $2) @ (snd $1)) } /*(* tuple's 2nd part is il *)*/
-  | class_body field_decls { $1 } /*(* drop field names. We'll assume any non-local declaration is a field. *)*/
+  | class_body field_decls { 
+	  $2 |>  List.iter(fun (one_decl, ii) ->
+	  	let nm = one_decl.v_namei in
+		let typ  = one_decl.v_type in 
+		(match nm with 
+		| None -> ()
+		| Some (name, ini) -> 	
+			LP.add_outer_scope_variable (Ast_c.str_of_name name) typ
+
+		)
+	  );
+	  $1 } /*(* drop field names. We'll assume any non-local declaration is a field. *)*/
   | class_body class_decl { (snd $2 :: (fst $1)), snd $1 }
   | class_body init_block { $1 } 
 
