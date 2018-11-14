@@ -558,6 +558,7 @@ let add_in_scope namedef =
 	let current =
 	  match namedef with
 	    | VarOrFunc (s, typ) ->
+	    (* maybe todo: if an old binding exists already, replace it! *)
 		{current with
 		 var_or_func = StringMap.add s typ current.var_or_func}
 	    | TypeDef   (s, typ) ->

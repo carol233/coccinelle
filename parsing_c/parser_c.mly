@@ -792,26 +792,6 @@ ident_cpp:
 
 
 
-ident_extra_cpp:
- | TIdent TCppConcatOp identifier_cpp_list
-     {
-       CppConcatenatedName (
-         match $3 with
-         | [] -> raise (Impossible 87)
-         | (x,concatnull)::xs ->
-             assert (concatnull = []);
-             (mk_string_wrap $1, [])::(x,[$2])::xs
-       )
-   }
- | TCppConcatOp TIdent
-     { CppVariadicName (fst $2, [$1; snd $2]) }
- | TMacroIdentBuilder TOPar param_define_list TCPar
-     { CppIdentBuilder ((fst $1, [snd $1;$2;$4]), $3) }
-
-identifier_cpp_list:
- | TIdent { [mk_string_wrap $1, []] }
- | identifier_cpp_list TCppConcatOp TIdent { $1 @ [mk_string_wrap $3, [$2]] }
-
 /*(*************************************************************************)*/
 /*(* expr *)*/
 /*(*************************************************************************)*/
@@ -1334,8 +1314,9 @@ selection:
  | TUifdef Tif TOPar expr TCPar statement Telse TUelseif statement TUendif statement
      { Ifdef_Ite2 ($4,$6,$9,$11), [$1;$2;$3;$5;$7;$8;$10] }
  /* | Ttry statement Tcatch TOPar union_type ident TCPar statement Tfinally statement { Try ($2, Some $8, Some $10), [$1;$3;$4;$7;$9;]  } */
- | try_maybe_expr statement multiple_catches Tfinally statement { Try ($2, Some (fst $3), Some $5), [(snd $1);] @ (snd $3)  @ [ $4; ] }
  /* | Ttry statement Tcatch TOPar union_type ident TCPar statement %prec SHIFTHERE { Try ($2, Some $8, None), [$1;$3;$4;$7] }  */
+
+ | try_maybe_expr statement multiple_catches Tfinally statement { Try ($2, Some (fst $3), Some $5), [(snd $1);] @ (snd $3)  @ [ $4; ] }
  | try_maybe_expr statement multiple_catches %prec SHIFTHERE { Try ($2, Some (fst $3), None), [(snd $1);] @ (snd $3) } 
  | try_maybe_expr statement Tfinally statement { Try ($2, None, Some $4), [(snd $1);$3;] } 
  
@@ -1415,8 +1396,8 @@ jump:
  | Tassert expr { ReturnExpr ($2), [$1] } /*(* TODO Wrong, but this shouldn't affect analysis that much.. **/
 
 
-class_as_expr:
- | class_decl { $1, [] }
+/* class_as_expr:
+ | class_decl { $1, [] } */
 
 /*(*----------------------------*)*/
 /*(* gccext: *)*/
@@ -1640,7 +1621,7 @@ attribute:
  * Pointer (Func(int,int)
  *)*/
 
-declarator_typedef: 
+/* declarator_typedef: 
  | declarator_typedef2 {
      (Ast_c.noattr, $1)
  }
@@ -1660,7 +1641,7 @@ declarator_typedef2:
 | declarator_typedef2 topar parameter_type_list tcpar
      { (fst $1,fun x->(snd $1)
        (mk_ty (FunctionType (x, $3)) [$2;$4]))
-     }
+     } */
 
 
 declarator:
@@ -1788,17 +1769,7 @@ parameter_decl2:
          p_register = (hasreg, iihasreg);
        }
      }
- | annotation_list decl_spec declaratorp
-     { 
-         
-         LP.kr_impossible();
-       let ((returnType,hasreg),iihasreg) = fixDeclSpecForParam (snd $2) in
-       let (name, ftyp) = $3 in
-       { p_namei = Some (name);
-         p_type = ftyp returnType;
-         p_register = (hasreg, iihasreg);
-       }
-     }
+
  | decl_spec abstract_declaratorp
      { 
         
@@ -1809,16 +1780,7 @@ parameter_decl2:
          p_register = hasreg, iihasreg;
        }
      }
-| annotation_list decl_spec abstract_declaratorp
-     { 
-         
-         LP.kr_impossible();
-       let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam (snd $2) in
-       { p_namei = None;
-         p_type = $3 returnType;
-         p_register = hasreg, iihasreg;
-       }
-     }
+
  | decl_spec
      { 
          LP.kr_impossible();
@@ -1828,16 +1790,7 @@ parameter_decl2:
          p_register = hasreg, iihasreg;
        }
      }
- | annotation_list decl_spec
-     { 
-       
-         LP.kr_impossible();
-       let ((returnType,hasreg), iihasreg) = fixDeclSpecForParam (snd $2) in
-       { p_namei = None;
-         p_type = returnType;
-         p_register = hasreg, iihasreg;
-       }
-     }
+
 | TDefParamVariadic declaratorp
       {
 	let name = RegularName (mk_string_wrap $1) in
@@ -1931,10 +1884,17 @@ init_block:
  | Tstatic compound {}
  | compound {}
 
-comma_separated_ident_or_values:
+/* comma_separated_ident_or_values:
  | comma_separated_ident_or_values TComma ident_or_value {}
  | comma_separated_ident_or_values TComma {}
- | ident_or_value {}
+ | ident_or_value {} */
+
+primitive_type_decl:
+ | TInt {}
+ | TString {}
+ | TDecimal {}
+ | TFloat {}
+ | TChar {}
 
 ident_or_value:
  | ident_or_fun_call  {}
@@ -1943,10 +1903,12 @@ ident_or_value:
  | TDecimal {}
  | TFloat {}
  | TChar {}
- | unary_op ident_or_value {} 
- | ident_or_value binary_op  ident_or_value {}
+ | unary_op primitive_type_decl {} 
+ | ident_or_value binary_op  primitive_type_decl {}
+ | ident_or_value binary_op  ident_or_fun_call {}
  | Tnew new_argument {}
- | TOPar type_name TCPar ident_or_value {}
+ | TOPar type_name TCPar ident_or_fun_call {}
+ | TOPar type_name TCPar primitive_type_decl {}
  /* | Tnew ident_or_fun_call {} */
 
 binary_op:
@@ -2061,17 +2023,7 @@ decl_without_semicolon:
                 },[]],
                 (iistart::snd storage))
      }
-| annotation_list decl_spec 
-     { function local ->
-       let (returnType,storage) = fixDeclSpecForDecl (snd $2) in
-       let iistart = Ast_c.fakeInfo () in
-       DeclList ([{v_namei = None; v_type = returnType;
-                   v_storage = unwrap storage; v_local = local;
-                v_attr = fst $2; v_endattr = Ast_c.noattr;
-                   v_type_bis = ref None;
-                },[]],
-                (iistart::snd storage))
-     }
+
  | decl_spec init_declarator_list 
      { function local ->
        let (returnType,storage) = fixDeclSpecForDecl (snd $1) in
@@ -2093,27 +2045,7 @@ decl_without_semicolon:
          )
          ),  (iistart::snd storage))
      }
-| annotation_list decl_spec init_declarator_list 
-     { function local ->
-       let (returnType,storage) = fixDeclSpecForDecl (snd $2) in
-       let iistart = Ast_c.fakeInfo () in
-       DeclList (
-         ($3 +> List.map (fun ((((name,f),attrs,endattrs), ini), iivirg) ->
-           let s = str_of_name name in
-	   if fst (unwrap storage) = StoTypedef
-	   then LP.add_typedef s;
-           {v_namei = Some (name, ini);
-            v_type = f returnType;
-            v_storage = unwrap storage;
-            v_local = local;
-            v_attr = (fst $2)@attrs;
-            v_endattr = endattrs;
-            v_type_bis = ref None;
-           },
-           iivirg
-         )
-         ),  (iistart::snd storage))
-     }
+
 
 decl2:
  | decl_spec TPtVirg
@@ -2127,17 +2059,7 @@ decl2:
                 },[]],
                 ($2::iistart::snd storage))
      }
-| annotation_list decl_spec TPtVirg
-     { function local ->
-       let (returnType,storage) = fixDeclSpecForDecl (snd $2) in
-       let iistart = Ast_c.fakeInfo () in
-       DeclList ([{v_namei = None; v_type = returnType;
-                   v_storage = unwrap storage; v_local = local;
-                v_attr = fst $2; v_endattr = Ast_c.noattr;
-                   v_type_bis = ref None;
-                },[]],
-                ($3::iistart::snd storage))
-     }
+
  | decl_spec init_declarator_list TPtVirg
      { function local ->
        let (returnType,storage) = fixDeclSpecForDecl (snd $1) in      
@@ -2177,27 +2099,7 @@ decl2:
          )
          ),  ($3::iistart::snd storage))
      }
-| annotation_list decl_spec init_declarator_list TPtVirg
-     { function local ->
-       let (returnType,storage) = fixDeclSpecForDecl (snd $2) in
-       let iistart = Ast_c.fakeInfo () in
-       DeclList (
-         ($3 +> List.map (fun ((((name,f),attrs,endattrs), ini), iivirg) ->
-           let s = str_of_name name in
-	   if fst (unwrap storage) = StoTypedef
-	   then LP.add_typedef s;
-           {v_namei = Some (name, ini);
-            v_type = f returnType;
-            v_storage = unwrap storage;
-            v_local = local;
-            v_attr = (fst $2)@attrs;
-            v_endattr = endattrs;
-            v_type_bis = ref None;
-           },
-           iivirg
-         )
-         ),  ($4::iistart::snd storage))
-     }
+
  /* | storage_const_opt enum_spec 
      {
 
@@ -2217,12 +2119,13 @@ decl_spec2:
  | Tinline            { ([], {nullDecl with inlineD = (true, [$1]) }) }
  | attribute          { ([$1], nullDecl) }
  | generic_opt        { ([], nullDecl) }
+ | annotation_list    { ([], nullDecl) }
  | decl_spec2 type_spec           {(fst $1, addTypeD    ($2, snd $1)) }
  | decl_spec2 type_qualif         { (fst $1, addQualifD  ($2, snd $1)) }
  | decl_spec2 Tinline             { (fst $1, addInlineD ((true, $2), snd $1)) }
  | decl_spec2 attribute           { ($2::(fst $1), snd $1) }
  | decl_spec2 generic_opt         { $1 }
-
+ | decl_spec2 annotation_list     { $1 }
 
 
 /*(* can simplify by putting all in _opt ? must have at least one otherwise
@@ -2265,9 +2168,9 @@ ident_or_primitive_array_or_wildcard:
   | TWhy Tsuper generic_list {      }
 
 
-primitive_type_array:
+/* primitive_type_array:
  | primitive_types TOCro TCCro {}
- | primitive_type_array  TOCro TCCro {}
+ | primitive_type_array  TOCro TCCro {} */
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
@@ -2516,24 +2419,24 @@ struct_decl_list_gcc:
      { Enum (Some (fst $2), $4),     [$1; snd $2; $3;$6] @ $5 }
  | Tenum ident
      { EnumName (fst $2),       [$1; snd $2] } */
-
+/* 
 enum_spec:
  | Tenum ident  tobrace_enum enumerator_list gcc_comma_opt_struct tcbrace_enum
      { Enum (Some (fst $2), $4),     [$1; snd $2; $3;$6] @ $5 }
-
+ */
 
  
 
-enumerator:
+/* enumerator:
  | idente                 { $1, None     }
- | idente  TEq const_expr { $1, Some ($2, $3) }
+ | idente  TEq const_expr { $1, Some ($2, $3) } */
 
 
 /*(*----------------------------*)*/
 /*(* workarounds *)*/
 /*(*----------------------------*)*/
 
-idente: ident_cpp { LP.add_ident (str_of_name $1); $1 }
+/* idente: ident_cpp { LP.add_ident (str_of_name $1); $1 } */
 
 
 
@@ -2586,32 +2489,7 @@ start_fun2:
        let (id, attrs) = $2 in
        (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $1)@attrs)
      }
-   | annotation_list  decl_spec declaratorfd throws_opt
-     { let (returnType,storage) = fixDeclSpecForFuncDef (snd $2) in
-       let (id, attrs) = $3 in
-       (fst id, fixOldCDecl ((snd id) returnType) , storage, (fst $2)@attrs)
-     }  
-    | annotation_list Tconstructorname topar            tcpar throws_opt 
-   {
-       (*let returnType = mk_ty (TypeName (RegularName (fst $2, []), Ast_c.noTypedefDef())) [] in *)
 
-       let ret = mk_ty NoType [] in
-       let ty = mk_ty (FunctionType (ret, (([], (false, []))))) [$3;$4] in
-
-       (*let ret = mk_ty NoType [] in*)
-       (*let ty = mk_ty (FunctionType (returnType, (([], (false, []))))) [$3;$4] in *)
-       (RegularName (fst $2, [snd $2]), ty, ((NoSto, false),[] ), Ast_c.noattr )
-   }
-    | annotation_list Tconstructorname topar  parameter_type_list  tcpar throws_opt 
-   {
-       (*let returnType = mk_ty (TypeName (RegularName (fst $2, []), Ast_c.noTypedefDef())) [] in *)
-       let ret = mk_ty NoType [] in
-       let ty = mk_ty (FunctionType (ret, $4)) [$3;$5] in
-
-       (*let ret = mk_ty NoType [] in*)
-       (*let ty = mk_ty (FunctionType (returnType, $4)) [$3;$5] in*)
-       (RegularName (fst $2, [snd $2]), ty, ((NoSto, false),[] ), Ast_c.noattr )
-   }
    | Tconstructorname topar            tcpar throws_opt 
    {
        (*let returnType = mk_ty (TypeName (RegularName (fst $1, []), Ast_c.noTypedefDef())) [] in *)
@@ -2862,15 +2740,7 @@ celem:
 
 class_decl:
 
- | annotation_list decl_spec class_or_interface ident extends TOBrace class_body TCBrace 
-    {  
-        let nm = mk_string_wrap $4 in 
-        RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $7) (fst nm), $3 :: (snd $7 @ [snd $4; $6; $8])) } 
-  | annotation_list  class_or_interface ident extends TOBrace class_body TCBrace 
-    {  
-        let nm = mk_string_wrap $3 in
-        RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $6) (fst nm), $2 :: (snd $6 @ [snd $3; $5; $7])) } 
- 
+
  | decl_spec class_or_interface ident  extends TOBrace class_body TCBrace 
     {  
         let nm = mk_string_wrap $3 in
@@ -2888,9 +2758,7 @@ class_decl:
   | decl_spec Tenum ident extends tobrace_enum enum_body tcbrace_enum  {
       let nm =  mk_string_wrap $3 in
 	  RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $6) (fst nm), $2 :: (snd $6 @ [snd $3; $5; $7])) } 
-  | annotation_list decl_spec Tenum ident extends tobrace_enum enum_body tcbrace_enum  {
-      let nm = mk_string_wrap $4 in 
-	  RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $7) (fst nm), $3 :: (snd $7 @ [snd $4; $6; $8])) } 
+  
   | Tenum ident extends tobrace_enum enum_body tcbrace_enum  {
       let nm = mk_string_wrap $2 in 
 	  RegularName (nm), Namespace (Some (RegularName (nm)), addParentInfo (fst $5) (fst nm), $1 :: (snd $5 @ [snd $2; $4; $6])) } 
@@ -3039,11 +2907,11 @@ struct_declarator_list:
  | struct_declarator_list TComma struct_declarator { $1 @ [$3,     [$2]] }
 
 
-enumerator_list:
+/* enumerator_list:
  | enumerator                        { [$1,          []]   }
  | enumerator_list TComma cpp_directive_list enumerator
      { $1 @ [$4, [$2]] }
- | enumerator_list TComma enumerator { $1 @ [$3,    [$2]] }
+ | enumerator_list TComma enumerator { $1 @ [$3,    [$2]] } */
 
 
 init_declarator_list:

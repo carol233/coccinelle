@@ -239,12 +239,23 @@ let get_fakeInfo_and_tokens celem toks =
     | Ast_c.OriginTok _ | Ast_c.ExpandedTok _ ->
       (* get the associated comments/space/cppcomment tokens *)
       (* let _ = print_string "GONNA split ;\n" in
-      let _ =print_string (Ast_c.str_of_info info) in
+      let _ =print_string (match info.pinfo with 
+       | Ast_c.OriginTok pi -> "original " ^ pi.Common.str
+      | Ast_c.ExpandedTok (pi,_) -> "expanded " ^ pi.Common.str
+      | Ast_c.FakeTok (s,_) -> "faketok " ^ s
+      | Ast_c.AbstractLineTok pi -> "al " ^ pi.Common.str) in
       let _ = print_string "\ntok_ins in = \n" in
       let _ =  (!toks_in |> List.fold_left (fun acc x -> acc ^ (TH.str_of_tok x)) "" )|> print_string  in
       let _ = print_string ";\n" in *)
     let (before, x, after) =      
         !toks_in +> split_when (fun tok ->
+        (* let tok_i = TH.info_of_tok tok in 
+        print_string "split_func:\n";
+          print_string (match tok_i.pinfo  with 
+          Ast_c.OriginTok pi -> "original " ^ pi.Common.str
+        | Ast_c.ExpandedTok (pi,_) -> "expanded " ^ pi.Common.str
+        | Ast_c.FakeTok (s,_) -> "faketok " ^ s
+        | Ast_c.AbstractLineTok pi -> "al " ^ pi.Common.str); *)
           info = TH.info_of_tok tok)
       in
       assert(info = TH.info_of_tok x);
