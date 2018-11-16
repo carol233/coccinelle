@@ -458,12 +458,37 @@ let rec aux_statement : (nodei option * xinfo) -> statement -> nodei option =
         | None -> "empty;"
         | Some e ->
             (match Ast_c.unwrap_expr e with
-            | FunCall (e, _args) ->
+	    | FunCall (e, args) ->
+		List.iter (fun arg -> 
+			(match unwrap2 arg with 
+			| Left e -> 	 
+				(match Ast_c.unwrap_expr e with 
+				| New (_, Left ((AnonymousClassDecl nested_toplevel, _), _)) -> 
+				(* | New _ ->  *)
+					(* side effect: create CFG nodes for anonymous class *)
+					(match nested_toplevel with 
+					 | Ast_c.Namespace (name, nested_defs, _) -> 
+					 	
+					 	let anon_root = !g +> add_node (TopNode) lbl "[non class]" in 
+						ast_to_control_flow_namespace name nested_defs anon_root;
+						()
+					 | _ -> raise (Impossible 700)
+					)
+
+					(* () *)
+				 | _ -> ())
+			
+			| _ ->  ())
+			
+		) args;
+		    
                 (match Ast_c.unwrap_expr e with
                 | Ident namef ->
-                    Ast_c.str_of_name namef ^ "(...)"
+		    Ast_c.str_of_name namef ^ "(...)"
                 | _ -> "statement"
-                )
+		)
+		
+
             | Assignment (e1, (SimpleAssign,_), e2) ->
                 (match Ast_c.unwrap_expr e1 with
                 | Ident namevar ->
@@ -1484,11 +1509,11 @@ and ast_to_control_flow e =
     result;
 
 and ast_to_control_flow_namespace name_opt defs root =
-  let name = (match name_opt with 
-    | Some nm -> nm 
-    | None -> raise (Impossible 808)
+  let new_root = (match name_opt with 
+    | Some nm -> !g +> add_node (ClassNode nm) lbl_0 "[class]" 
+    | None -> !g +> add_node (TopNode) lbl_0 "[anon class]" 
   ) in
-  let new_root = !g +> add_node (ClassNode name) lbl_0 "[class]" in 
+  
   let _ = !g#add_arc ((root, new_root),Direct) in 
   let rec loop defs =
   match defs with

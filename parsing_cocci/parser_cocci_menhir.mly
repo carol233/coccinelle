@@ -1453,9 +1453,10 @@ tcpar:
 
 single_fundecl:
   f=fninfo
-  TFunDecl i=fn_ident lp=topar arglist=arg_list(decl) rp=tcpar
+  TFunDecl i=fn_ident lp=topar arglist=arg_list(decl_typedef) rp=tcpar
   lb=TOBrace b=fun_start rb=TCBrace
       { let (args,vararg) = arglist in
+      (*print_string" single fundecl\n";*)
         Ast0.wrap(Ast0.FunDecl((Ast0.default_info(),Ast0.context_befaft()),
 			       f, i,
 			       P.clt2mcode "(" (lp), args, vararg,
@@ -1511,17 +1512,38 @@ storage:
 
 decl: t=ctype i=disj_ident a=list(array_dec)
 	{ let t = P.arrayify t a in Ast0.wrap(Ast0.Param(t, Some i)) }
-    | t=ctype { (*verify in FunDecl*) Ast0.wrap(Ast0.Param(t, None)) }
+    | t=ctype { (*verify in FunDecl*)Ast0.wrap(Ast0.Param(t, None)) }
     | t=ctype lp=TOPar s=TMul i=disj_ident rp=TCPar
 	lp1=TOPar d=decl_list(name_opt_decl) rp1=TCPar
-        { let fnptr =
+        { 
+	let fnptr =
 	  Ast0.wrap
 	    (Ast0.FunctionPointer
 	       (t,P.clt2mcode "(" lp,P.clt2mcode "*" s,P.clt2mcode ")" rp,
 		P.clt2mcode "(" lp1,d,P.clt2mcode ")" rp1)) in
 	Ast0.wrap(Ast0.Param(fnptr, Some i)) }
     | TMetaParam
-	{ let (nm,cstr,pure,clt) = $1 in
+	{ 
+		
+		let (nm,cstr,pure,clt) = $1 in
+	Ast0.wrap(Ast0.MetaParam(P.clt2mcode nm clt,cstr,pure)) }
+    | TMeta { tmeta_to_param $1 }
+
+decl_typedef: t=typedef_ident_typename i=disj_ident a=list(array_dec)
+	{ let t = P.arrayify t a in Ast0.wrap(Ast0.Param(t, Some i)) }
+    | t=typedef_ident_typename { (*verify in FunDecl*) Ast0.wrap(Ast0.Param(t, None)) }
+    | t=typedef_ident_typename lp=TOPar s=TMul i=disj_ident rp=TCPar
+	lp1=TOPar d=decl_list(name_opt_decl) rp1=TCPar
+        { 
+	let fnptr =
+	  Ast0.wrap
+	    (Ast0.FunctionPointer
+	       (t,P.clt2mcode "(" lp,P.clt2mcode "*" s,P.clt2mcode ")" rp,
+		P.clt2mcode "(" lp1,d,P.clt2mcode ")" rp1)) in
+	Ast0.wrap(Ast0.Param(fnptr, Some i)) }
+  | TMetaParam
+	{ 
+		let (nm,cstr,pure,clt) = $1 in
 	Ast0.wrap(Ast0.MetaParam(P.clt2mcode nm clt,cstr,pure)) }
     | TMeta { tmeta_to_param $1 }
 
@@ -2659,6 +2681,17 @@ typedef_ident:
          { let (nm,cstr,pure,clt) = $1 in
 	 Ast0.wrap(Ast0.MetaType(P.clt2mcode nm clt,cstr,pure)) }
 
+typedef_ident_typename:
+       pure_ident_or_symbol
+         { Ast0.wrap(Ast0.TypeName(P.id2mcode $1)) }
+     | TMeta { tmeta_to_type $1 }
+     | TMetaType
+         { let (nm,cstr,pure,clt) = $1 in
+	 Ast0.wrap(Ast0.MetaType(P.clt2mcode nm clt,cstr,pure)) }
+     | TTypeId 
+         { Ast0.wrap(Ast0.TypeName(P.id2mcode $1)) }
+     | ctype 
+        { $1 }
 /*****************************************************************************/
 
 decl_list(decl):

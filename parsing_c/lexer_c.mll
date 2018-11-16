@@ -750,7 +750,7 @@ rule token = parse
       { TDefParamVariadic (s, tokinfo lexbuf) }
 
   (* Java annotation *)
-  | "@" letter (letter | digit | ".") * {
+  | "@" letter (letter | digit | "." | "()") *  {
 	   let info = tokinfo lexbuf in 
 	  Tannotate(info) }
 

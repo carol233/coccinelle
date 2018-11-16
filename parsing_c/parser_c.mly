@@ -2926,8 +2926,8 @@ parameter_list:
  | parameter_list TComma parameter_decl { $1 @ [$3,  [$2]] }
 
 taction_list_ne:
- | TAction                 { [$1] }
- | TAction taction_list_ne { $1 :: $2 }
+ | TAction                 { print_string "TACTION\n" ;[$1] }
+ | TAction taction_list_ne { print_string "TACTION 2\n" ; $1 :: $2 }
 
 taction_list:
 /*old: was generating conflict, hence now taction_list_ne

@@ -1901,7 +1901,7 @@ let fix_tokens_cpp2 ~macro_defs err_pos tokens =
     (* obsolete: actions ? not yet *)
     let cleaner = !tokens2 +> filter_cpp_stuff in
     let paren_grouped = TV.mk_parenthised  cleaner in
-    find_actions  paren_grouped;
+    (* find_actions  paren_grouped; *)
 
     insert_virtual_positions (!tokens2 +> Common.acc_map (fun x -> x.tok))
   end
@@ -2322,7 +2322,14 @@ let lookahead2 ~pass next before =
          (* && not_annot s2 BUT lead to false positive*)
       msg_typedef s i1 2; LP.add_typedef_root s;
       TypedefIdent (s, i1)
-
+  | (TIdent (s, i1)::TOr (i2)::rest  , TOPar _ :: Tcatch _ :: _) 
+        ->
+      msg_typedef s i1 100; LP.add_typedef_root s;
+      TypedefIdent (s, i1)
+  | (TIdent (s, i1)::TOr (i2)::rest  , TOr _ :: TypedefIdent _ :: _) 
+      ->
+    msg_typedef s i1 101; LP.add_typedef_root s;
+    TypedefIdent (s, i1)  
   (* xx < yy > *)
   | (TIdent (s, i1):: TInf _ :: (TIdent _ | TWhy _) :: (TSup _ | Textends _ | Tsuper _ | TInf _ ) ::rest  , _) when not_struct_enum before
   && ok_typedef s 

@@ -2248,8 +2248,7 @@ let parse file =
 	    let minus_tokens = prepare_tokens false minus_tokens in
 	    let plus_tokens = prepare_tokens true plus_tokens in
 
-	    (*
-	       print_tokens "minus tokens" minus_tokens;
+	       (*
 	       print_tokens "plus tokens" plus_tokens;
 	    *)
 
