@@ -144,7 +144,7 @@ let interpret_grep strict x virt =
 	then failwith (false_on_top_err virt)
 	else add "False" collected in
   match x with
-    True -> print_string "Here it is TRUE!\n" ; None
+    True -> None
   | False when strict ->
       failwith (false_on_top_err virt)
   | _ -> Some (loop [] x)

@@ -2728,6 +2728,7 @@ celem:
 
  | Tpackage nested_field_access TPtVirg {EmptyDef ($1 ::  [$3])  }
  | import {EmptyDef $1}
+ | cpp_directive { CppTop $1 }
 
  /*
  (* in ~/kernels/src/linux-2.5.2/drivers/isdn/hisax/isdnl3.c sometimes
@@ -2926,8 +2927,8 @@ parameter_list:
  | parameter_list TComma parameter_decl { $1 @ [$3,  [$2]] }
 
 taction_list_ne:
- | TAction                 { print_string "TACTION\n" ;[$1] }
- | TAction taction_list_ne { print_string "TACTION 2\n" ; $1 :: $2 }
+ | TAction                 {  [$1] }
+ | TAction taction_list_ne {  $1 :: $2 }
 
 taction_list:
 /*old: was generating conflict, hence now taction_list_ne

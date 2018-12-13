@@ -1065,6 +1065,38 @@ let find_function_names l =
 	else t :: (loop rest) in
   loop l
 
+let change_typedef_to_ident l = 
+  let is_dot = function 
+    (PC.TDot _, info) -> true 
+    | _ -> false 
+  in
+  let is_open_paren = function 
+	(PC.TOPar0(_),info) -> true
+	| (PC.TOPar(_),info) -> true
+	| _ -> false
+  in
+  (* is_type hacks over nested types to treat them as field access *)
+  let is_type = function
+    (PC.TTypeId(_,clt), info) -> true 
+    | _ -> false 
+  in
+  let rec loop = function
+  [] -> []
+  | i :: [] -> [i]
+  | t :: next :: rest ->
+    
+    if is_type t && (is_dot next || is_open_paren next)
+    then
+    let (t,rest) =
+	(match t with 
+	| (PC.TTypeId(s,clt),info) -> 
+		([(PC.TIdent(s, clt), info)], next :: rest)
+	| _ -> raise (Common.Impossible 501))
+	in
+    t @ (loop (rest))
+    else t :: (loop (next :: rest)) in
+  loop l
+
 (* ----------------------------------------------------------------------- *)
 (* an attribute is an identifier that precedes another identifier and
    begins with __ *)
@@ -1752,11 +1784,12 @@ let prepare_tokens plus tokens =
   find_top_init
     (translate_when_true_false (* after insert_line_end *)
        (insert_line_end
+       (change_typedef_to_ident
 	  (detect_types false
 	     (find_function_names
 		(detect_attr
 		   (check_nests
-		      (check_parentheses plus tokens)))))))
+		      (check_parentheses plus tokens))))))))
 
 let prepare_mv_tokens tokens =
   detect_types false (detect_attr tokens)
@@ -1986,6 +2019,7 @@ let get_script_metavars parse_fn table file lexbuf =
       metavariable_decl_tokens_all table file true lexbuf
 	(in_list [PC.TArobArob; PC.TMPtVirg]) in
     let tokens = prepare_tokens false tokens in
+    
     match tokens with
       [(PC.TArobArob, _)] -> List.rev acc
     | _ ->
@@ -2248,8 +2282,9 @@ let parse file =
 	    let minus_tokens = prepare_tokens false minus_tokens in
 	    let plus_tokens = prepare_tokens true plus_tokens in
 
-	       (*
-	       print_tokens "plus tokens" plus_tokens;
+	    (*
+	       print_tokens "minus tokens" minus_tokens;
+	       print_tokens "plus tokens" plus_tokens; 
 	    *)
 
             let plus_tokens =

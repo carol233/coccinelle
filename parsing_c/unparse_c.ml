@@ -29,7 +29,7 @@ let default_indent = ref "\t"
 (*****************************************************************************)
 (* Wrappers *)
 (*****************************************************************************)
-let pr2, pr2_once = mk_pr2_wrappers (ref true)
+let pr2, pr2_once = mk_pr2_wrappers Flag_parsing_c.verbose_unparsing
 
 (*****************************************************************************)
 (* Types used during the intermediate phases of the unparsing *)
