@@ -1,7 +1,0 @@
-@superTrivialRule@
-int E;
-@@
-
-* E
-...
-

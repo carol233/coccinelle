@@ -1,6 +1,0 @@
-
-@@
-ArrayList i;
-@@
-
-* i
