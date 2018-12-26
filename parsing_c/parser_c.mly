@@ -900,10 +900,17 @@ new_argument:
     Left (mk_e(AnonymousClassDecl (Namespace (None, fst $5,  []) )) [])
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
- | typedef_ident_generic TOPar  TOPar TCPar TLeftArrow functional_interface_class_body  TCPar
+ | typedef_ident_generic TOPar  TCPar TLeftArrow functional_interface_class_body  TCPar
     
  {
-    Left (mk_e(AnonymousClassDecl (Namespace (None, fst $6,  []) )) [$5])
+    Left (mk_e(AnonymousClassDecl (Namespace (None, fst $5,  []) )) [$4])
+    (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
+ }
+
+  | typedef_ident_generic TLeftArrow functional_interface_class_body  TCPar
+    
+ {
+    Left (mk_e(AnonymousClassDecl (Namespace (None, fst $3,  []) )) [$2])
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
   | typedef_ident_generic TDot nested_field_access TOPar TCPar TOBrace class_body TCBrace 

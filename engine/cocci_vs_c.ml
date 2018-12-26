@@ -1239,12 +1239,12 @@ let rec (expression: (A.expression, Ast_c.expression) matcher) =
         ((B.Ident (nameidb), typ),Ast_c.noii)
           ))
 
-  | A.Ident ida,   ((B.RecordAccess (eb, idb), typ),ii)  ->
+  (* | A.Ident ida,   ((B.RecordAccess (eb, idb), typ),ii)  ->
 	ident_cpp DontKnow ida idb >>= (fun ida nameidb ->
 	    return (
 	    ((A.Ident ida)) +> wa,
 	    ((B.Ident (idb), typ),Ast_c.noii)
-	      ))
+	      )) *)
 
 
   | A.MetaErr _,     _ -> failwith "not handling MetaErr"

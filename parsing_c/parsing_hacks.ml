@@ -3046,7 +3046,8 @@ msg_not_typedef s i1 11;
       msg_typedef s i1 28; LP.add_typedef_root s;
       TypedefIdent (s, i1)
 
-
+  | (TOPar (i1) :: TCPar _ :: TLeftArrow _ :: _, _ )
+     -> msg_typedef "()" i1 128; LP.add_typedef_root "()"; TypedefIdent ("()", i1)
 
   (* ----------------------------------- *)
   (* old: why not do like for other rules and start with TIdent ?

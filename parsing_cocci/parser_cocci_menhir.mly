@@ -1473,7 +1473,7 @@ fninfo:
 	  List.find (function Ast0.FStorage(_) -> true | _ -> false) $2 in
 	raise (Semantic_cocci.Semantic "duplicate storage")
       with Not_found -> (Ast0.FStorage($1))::$2 }
-  | t=ctype r=fninfo_nt { (Ast0.FType(t))::r }
+  | t=typedef_ident_typename r=fninfo_nt { (Ast0.FType(t))::r }
   | Tinline  fninfo
       { try
 	let _ = List.find (function Ast0.FInline(_) -> true | _ -> false) $2 in

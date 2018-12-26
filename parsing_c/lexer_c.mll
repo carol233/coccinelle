@@ -750,6 +750,10 @@ rule token = parse
       { TDefParamVariadic (s, tokinfo lexbuf) }
 
   (* Java annotation *)
+  | "@interface"   {
+	   let info = tokinfo lexbuf in 
+	    TypedefIdent("@interface", info) }
+
   | "@" letter (letter | digit | "." | "()") *  {
 	   let info = tokinfo lexbuf in 
 	  Tannotate(info) }
@@ -758,6 +762,7 @@ rule token = parse
     let info = tokinfo lexbuf in 
     Tsynchronizedblock(info)
   }
+
 
   | ("->") {
     let info = tokinfo lexbuf in 
