@@ -18,8 +18,13 @@ else:
     path = '.'
 
 output = subprocess.check_output(cmd.format(path), shell = True)
-parsed = output.decode('ascii').split('\n')
+try:
+    parsed = output.decode('utf-8').split('\n')
+except Exception as e:
+    print(e)
+    print(output)
 filtered = [qualified_identifier for qualified_identifier in parsed if len(qualified_identifier.split('.')) > 1]
+filtered = set(filtered)
 
 for qualified_identifier in filtered:
     ident = qualified_identifier.split('.')[-1]

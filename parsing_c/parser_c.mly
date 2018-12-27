@@ -907,7 +907,7 @@ new_argument:
     (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
  }
 
-  | typedef_ident_generic TLeftArrow functional_interface_class_body  TCPar
+  | typedef_ident_generic TLeftArrow functional_interface_class_body 
     
  {
     Left (mk_e(AnonymousClassDecl (Namespace (None, fst $3,  []) )) [$2])
@@ -1067,7 +1067,12 @@ postfix_expr:
  | postfix_expr TPtrOp ident_cpp { mk_e(RecordPtAccess ($1,$3)) [$2] }
  | postfix_expr TInc          { mk_e(Postfix ($1, Inc)) [$2] }
  | postfix_expr TDec          { mk_e(Postfix ($1, Dec)) [$2] }
-
+| postfix_expr TLeftArrow functional_interface_class_body 
+    
+ {
+    mk_e(AnonymousClassDecl (Namespace (None, fst $3,  []) )) [$2]
+    (*/* ([snd $1]  @ snd $5 @ [$4; $6]) */*)
+ }
 
  | Tnew new_argument               { mk_e(New (None, $2))     [$1] }
  | Tnew TOPar argument_list_ne TCPar new_argument { mk_e(New (Some $3, $5))             [$1; $2; $4] }
