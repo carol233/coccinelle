@@ -229,7 +229,6 @@ let token2c (tok,_) add_clt =
   | PC.TMetaLocalIdExp(_,_,_,_,clt) -> add_clt "localidexpmeta" clt
   | PC.TMetaGlobalIdExp(_,_,_,_,clt) -> add_clt "globalidexpmeta" clt
   | PC.TMetaExpList(_,_,_,_,clt) -> add_clt "explistmeta" clt
-  | PC.TIdentWithParentConstraint( (nm,_,_,_,clt), _) -> "idmetawithparent-"^add_clt (Dumper.dump nm) clt
   | PC.TMetaId(nm,_,_,_,clt)    -> "idmeta-"^add_clt (Dumper.dump nm) clt
   | PC.TMetaType(_,_,_,clt)    -> add_clt "typemeta" clt
   | PC.TMetaInit(_,_,_,clt)    -> add_clt "initmeta" clt
@@ -452,7 +451,6 @@ let get_clt (tok,_) =
   | PC.TMetaAssignOp(_,_,_,clt) | PC.TMetaBinaryOp(_,_,_,clt)
   | PC.TMetaExpList(_,_,_,_,clt)
   | PC.TMetaId(_,_,_,_,clt)
-  | PC.TIdentWithParentConstraint((_,_,_,_,clt), _)
   | PC.TMetaType(_,_,_,clt) | PC.TMetaInit(_,_,_,clt)
   | PC.TMetaInitList(_,_,_,_,clt)
   | PC.TMetaStm(_,_,_,clt) | PC.TMetaStmList(_,_,_,_,clt)
@@ -660,7 +658,6 @@ let update_clt (tok,x) clt =
   | PC.TMetaGlobalIdExp(a,b,c,d,_) -> (PC.TMetaGlobalIdExp(a,b,c,d,clt),x)
   | PC.TMetaExpList(a,b,c,d,_) -> (PC.TMetaExpList(a,b,c,d,clt),x)
   | PC.TMetaId(a,b,c,d,_)    -> (PC.TMetaId(a,b,c,d,clt),x)
-  | PC.TIdentWithParentConstraint((a,b,c,d,_), q)    -> (PC.TIdentWithParentConstraint((a,b,c,d,clt), q),x)
   | PC.TMetaAssignOp(a,b,c,_)    -> (PC.TMetaAssignOp(a,b,c,clt),x)
   | PC.TMetaBinaryOp(a,b,c,_)    -> (PC.TMetaBinaryOp(a,b,c,clt),x)
   | PC.TMetaType(a,b,c,_)    -> (PC.TMetaType(a,b,c,clt),x)
@@ -910,7 +907,7 @@ let split_token ((tok,_) as t) =
   | PC.TMetaAssignOp(_,_,_,clt) | PC.TMetaBinaryOp(_,_,_,clt)
   | PC.TMetaExpList(_,_,_,_,clt)
   | PC.TMetaParam(_,_,_,clt) | PC.TMetaParamList(_,_,_,_,clt)
-  | PC.TMetaId(_,_,_,_,clt) | PC.TIdentWithParentConstraint((_,_,_,_,clt), _) | PC.TMetaType(_,_,_,clt)
+  | PC.TMetaId(_,_,_,_,clt) | PC.TMetaType(_,_,_,clt)
   | PC.TMetaInit(_,_,_,clt) | PC.TMetaInitList(_,_,_,_,clt)
   | PC.TMetaDecl(_,_,_,clt) | PC.TMetaField(_,_,_,clt)
   | PC.TMetaFieldList(_,_,_,_,clt)
@@ -992,7 +989,6 @@ let find_function_names l =
       (PC.TIdent(_,clt),info)
     | (PC.TMeta(_,_,_,clt),info)
     | (PC.TMetaId(_,_,_,_,clt),info)
-    | (PC.TIdentWithParentConstraint((_,_,_,_,clt), (_,_,_,_,_)),info)
     | (PC.TMetaFunc(_,_,_,clt),info)
     | (PC.TMetaLocalFunc(_,_,_,clt),info) -> true
     | _ -> false in

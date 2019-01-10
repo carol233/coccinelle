@@ -1907,9 +1907,6 @@ and (ident: info_ident -> (A.ident, string * Ast_c.info) matcher) =
             (idb, iib)
             )))
       ))
-  | A.MetaIdWithParent( ( mida,constraints,keep,inherited), (mida1, _, _, _) ) ->
-      failwith "In Cocci_vs_c, should have converted MetaIdWithParent already"
-
   | A.MetaFunc(mida,constraints,keep,inherited) ->
       let is_function _ =
 	check_constraints constraints mida (B.MetaIdVal idb)
@@ -4181,37 +4178,6 @@ and classname ida (stob, iib) = (* (class_name : (A.ident, (B.storage * Ast_c.in
 				name = clazz_name_as_str
 			    | _ -> true)
 			) true sto_class_list) then (success new_ida) else fail
-		    ))
-    
-	(* i want to return updated_ida where the `clazz# ` is removed *)
-	(* and this checks if a binding of MetaId to classname is possible *)
-	| A.MetaIdWithParent((mida,constraints,keep,inherited), (mida1, a, b, c)) ->
-	    let new_ida = A.rewrap 
-			  ida 
-		  (* replace with MetaId since the information about the containing clazz is not needed anymore*)
-			  (A.MetaId (mida,constraints,keep,inherited))
-			  (* (A.MetaIdWithParent((mida,constraints,keep,inherited), (mida1, a, b, c))) *)
-	    in 
-	        let (metaname, info, mc, meta_pos) = mida1 in
-		let clazz_name_as_str = (snd metaname)  in 
-
-		let updated_mida1 = (metaname, info, mc, meta_pos) in
-		let (sto_bis, boo) = stob in 
-		(match sto_bis with 
-		    | B.NoSto -> fail
-		    | B.StoTypedef -> fail 
-		    | B.Sto sto_class_list -> (
-			let with_parent = List.map (fun sto_class -> 
-			    match sto_class with 
-			    | B.WithParentClass clazz_name -> [clazz_name] 
-			    | _ -> []
-			) sto_class_list |> List.flatten |>  List.hd 
-			in 
-		
-			X.envf keep c (A.drop_pos updated_mida1, Ast_c.MetaIdVal with_parent, (fun () -> None))
-			(* unit -> tin -> 'x tout *)
-			(fun () -> success new_ida)
-    
 		    ))
     
 	| x -> return (ida, stob)

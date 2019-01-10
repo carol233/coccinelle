@@ -1,5 +1,5 @@
 
-** Conflict (reduce/reduce) in state 2347.
+** Conflict (reduce/reduce) in state 2346.
 ** Tokens involved: TComma TCPar
 ** The following explanations concentrate on token TComma.
 ** This state is reached from minus_main after reading:
@@ -23,20 +23,20 @@ loption(filespec) loption(minus_start)
                                                  decl_typedef // lookahead token is inherited
                                                  (?)
 
-** In state 2347, looking ahead at TComma, reducing production
+** In state 2346, looking ahead at TComma, reducing production
 ** decl_typedef -> TMeta 
 ** is permitted because of the following sub-derivation:
 
 TMeta . 
 
-** In state 2347, looking ahead at TComma, reducing production
+** In state 2346, looking ahead at TComma, reducing production
 ** typedef_ident_typename -> TMeta 
 ** is permitted because of the following sub-derivation:
 
 typedef_ident_typename // lookahead token is inherited
 TMeta . 
 
-** Conflict (reduce/reduce) in state 2326.
+** Conflict (reduce/reduce) in state 2325.
 ** Tokens involved: Tstatic Tregister Tinline Textern Tauto Tattr TFunDecl
 ** The following explanations concentrate on token Tstatic.
 ** This state is reached from minus_main after reading:
@@ -52,7 +52,7 @@ loption(filespec) loption(minus_start)
                   minus_start 
                   (?)
 
-** In state 2326, looking ahead at Tstatic, reducing production
+** In state 2325, looking ahead at Tstatic, reducing production
 ** statement -> TMeta 
 ** is permitted because of the following sub-derivation:
 
@@ -61,7 +61,7 @@ decl_statement_expr toplevel_after_stm // lookahead token appears because toplev
 statement // lookahead token is inherited
 TMeta . 
 
-** In state 2326, looking ahead at Tstatic, reducing production
+** In state 2325, looking ahead at Tstatic, reducing production
 ** typedef_ident_typename -> TMeta 
 ** is permitted because of the following sub-derivation:
 
@@ -71,8 +71,8 @@ fninfo TFunDecl fn_ident topar arg_list(decl_typedef) tcpar TOBrace fun_start TC
 typedef_ident_typename fninfo_nt // lookahead token appears because fninfo_nt can begin with Tstatic
 TMeta . 
 
-** Conflict (reduce/reduce) in state 2294.
-** Tokens involved: Tstatic Tregister Tinline Textern Tauto Tattr TSymId TOPar0 TOPar TMetaId TMeta TIdentWithParentConstraint TIdent TFunDecl TComma TCPar
+** Conflict (reduce/reduce) in state 2293.
+** Tokens involved: Tstatic Tregister Tinline Textern Tauto Tattr TSymId TOPar0 TOPar TMetaId TMeta TIdent TFunDecl TComma TCPar
 ** The following explanations concentrate on token Tstatic.
 ** This state is reached from minus_main after reading:
 
@@ -91,7 +91,7 @@ loption(filespec) loption(minus_start)
                   typedef_ident_typename fninfo_nt // lookahead token appears because fninfo_nt can begin with Tstatic
                   (?)
 
-** In state 2294, looking ahead at Tstatic, reducing production
+** In state 2293, looking ahead at Tstatic, reducing production
 ** signable_types_no_ident -> TMetaType 
 ** is permitted because of the following sub-derivation:
 
@@ -101,14 +101,14 @@ signable_types // lookahead token is inherited
 signable_types_no_ident // lookahead token is inherited
 TMetaType . 
 
-** In state 2294, looking ahead at Tstatic, reducing production
+** In state 2293, looking ahead at Tstatic, reducing production
 ** typedef_ident_typename -> TMetaType 
 ** is permitted because of the following sub-derivation:
 
 TMetaType . 
 
-** Conflict (reduce/reduce) in state 2293.
-** Tokens involved: Tstatic Tregister Tinline Textern Tauto Tattr TSymId TOPar0 TOPar TMetaId TMeta TIdentWithParentConstraint TIdent TFunDecl TComma TCPar
+** Conflict (reduce/reduce) in state 2292.
+** Tokens involved: Tstatic Tregister Tinline Textern Tauto Tattr TSymId TOPar0 TOPar TMetaId TMeta TIdent TFunDecl TComma TCPar
 ** The following explanations concentrate on token Tstatic.
 ** This state is reached from minus_main after reading:
 
@@ -127,7 +127,7 @@ loption(filespec) loption(minus_start)
                   typedef_ident_typename fninfo_nt // lookahead token appears because fninfo_nt can begin with Tstatic
                   (?)
 
-** In state 2293, looking ahead at Tstatic, reducing production
+** In state 2292, looking ahead at Tstatic, reducing production
 ** non_signable_types -> TTypeId 
 ** is permitted because of the following sub-derivation:
 
@@ -136,13 +136,13 @@ all_basic_types list(mul) // lookahead token is inherited because list(mul) can 
 non_signable_types // lookahead token is inherited
 TTypeId . 
 
-** In state 2293, looking ahead at Tstatic, reducing production
+** In state 2292, looking ahead at Tstatic, reducing production
 ** typedef_ident_typename -> TTypeId 
 ** is permitted because of the following sub-derivation:
 
 TTypeId . 
 
-** Conflict (shift/reduce) in state 849.
+** Conflict (shift/reduce) in state 848.
 ** Tokens involved: TPtrOp TOPar TOCro TInc TDot TDec
 ** The following explanations concentrate on token TPtrOp.
 ** This state is reached from iso_main after reading:
@@ -161,20 +161,20 @@ TIsoToTestExpression eexpr list(iso(eexpr)) EOF
                      postfix_expr(eexpr,dot_expressions) 
                      (?)
 
-** In state 849, looking ahead at TPtrOp, shifting is permitted
+** In state 848, looking ahead at TPtrOp, shifting is permitted
 ** because of the following sub-derivation:
 
 TNew postfix_expr(eexpr,dot_expressions) 
      postfix_expr(eexpr,dot_expressions) . TPtrOp disj_ident 
 
-** In state 849, looking ahead at TPtrOp, reducing production
+** In state 848, looking ahead at TPtrOp, reducing production
 ** postfix_expr(eexpr,dot_expressions) -> TNew postfix_expr(eexpr,dot_expressions) 
 ** is permitted because of the following sub-derivation:
 
 postfix_expr(eexpr,dot_expressions) TPtrOp disj_ident // lookahead token appears
 TNew postfix_expr(eexpr,dot_expressions) . 
 
-** Conflict (shift/reduce) in state 709.
+** Conflict (shift/reduce) in state 708.
 ** Tokens involved: TPtrOp TOPar TOCro TInc TDot TDec
 ** The following explanations concentrate on token TPtrOp.
 ** This state is reached from iso_main after reading:
@@ -195,20 +195,20 @@ TIsoTopLevel nest_start list(iso(nest_start)) EOF
              postfix_expr(expr,invalid) 
              (?)
 
-** In state 709, looking ahead at TPtrOp, shifting is permitted
+** In state 708, looking ahead at TPtrOp, shifting is permitted
 ** because of the following sub-derivation:
 
 TNew postfix_expr(expr,invalid) 
      postfix_expr(expr,invalid) . TPtrOp disj_ident 
 
-** In state 709, looking ahead at TPtrOp, reducing production
+** In state 708, looking ahead at TPtrOp, reducing production
 ** postfix_expr(expr,invalid) -> TNew postfix_expr(expr,invalid) 
 ** is permitted because of the following sub-derivation:
 
 postfix_expr(expr,invalid) TPtrOp disj_ident // lookahead token appears
 TNew postfix_expr(expr,invalid) . 
 
-** Conflict (shift/reduce) in state 656.
+** Conflict (shift/reduce) in state 655.
 ** Tokens involved: TPtrOp TOPar TOCro TInc TDot TDec
 ** The following explanations concentrate on token TPtrOp.
 ** This state is reached from iso_main after reading:
@@ -238,20 +238,20 @@ TIsoToTestExpression eexpr list(iso(eexpr)) EOF
                                  postfix_expr(eexpr,nest_expressions) 
                                  (?)
 
-** In state 656, looking ahead at TPtrOp, shifting is permitted
+** In state 655, looking ahead at TPtrOp, shifting is permitted
 ** because of the following sub-derivation:
 
 TNew postfix_expr(eexpr,nest_expressions) 
      postfix_expr(eexpr,nest_expressions) . TPtrOp disj_ident 
 
-** In state 656, looking ahead at TPtrOp, reducing production
+** In state 655, looking ahead at TPtrOp, reducing production
 ** postfix_expr(eexpr,nest_expressions) -> TNew postfix_expr(eexpr,nest_expressions) 
 ** is permitted because of the following sub-derivation:
 
 postfix_expr(eexpr,nest_expressions) TPtrOp disj_ident // lookahead token appears
 TNew postfix_expr(eexpr,nest_expressions) . 
 
-** Conflict (shift/reduce) in state 647.
+** Conflict (shift/reduce) in state 646.
 ** Tokens involved: TPtrOp TOPar TOCro TInc TDot TDec
 ** The following explanations concentrate on token TPtrOp.
 ** This state is reached from minus_main after reading:
@@ -276,13 +276,13 @@ loption(filespec) loption(minus_start)
                          postfix_expr(eexpr,invalid) 
                          (?)
 
-** In state 647, looking ahead at TPtrOp, shifting is permitted
+** In state 646, looking ahead at TPtrOp, shifting is permitted
 ** because of the following sub-derivation:
 
 TNew postfix_expr(eexpr,invalid) 
      postfix_expr(eexpr,invalid) . TPtrOp disj_ident 
 
-** In state 647, looking ahead at TPtrOp, reducing production
+** In state 646, looking ahead at TPtrOp, reducing production
 ** postfix_expr(eexpr,invalid) -> TNew postfix_expr(eexpr,invalid) 
 ** is permitted because of the following sub-derivation:
 

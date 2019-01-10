@@ -89,11 +89,6 @@ let rec ident context old_metas table minus i =
   | Ast0.MetaId(name,_,seedval,_) ->
       check_table table minus name;
       seed table minus seedval
-  | Ast0.MetaIdWithParent((name,_,seedval,_), (name1,_,seedval1,_)) ->
-      check_table table minus name;
-      check_table table minus name1;
-      seed table minus seedval;
-      seed table minus seedval1
   | Ast0.MetaFunc(name,_,_) -> check_table table minus name
   | Ast0.MetaLocalFunc(name,_,_) -> check_table table minus name
   | Ast0.AsIdent(id,asid) -> failwith "not generated yet"

@@ -227,7 +227,6 @@ let check_constraint_allowed () =
 %token <Data.clt> TIf TElse TWhile TFor TDo TSwitch TCase TDefault TReturn
 %token <Data.clt> TBreak TContinue TGoto TSizeof TNew TTypeof TFunDecl Tdecimal Texec
 %token <string * Data.clt> TIdent TTypeId TDeclarerId TIteratorId TSymId
-%token <Parse_aux.midinfo * Parse_aux.midinfo> TIdentWithParentConstraint
 %token <Ast_cocci.added_string * Data.clt> TDirective
 %token <Data.clt> TAttr_
 
@@ -2633,13 +2632,7 @@ mident: pure_ident
          { let (nm,constraints,seed,pure,clt) = $1 in
          Ast0.wrap(Ast0.MetaId(P.clt2mcode nm clt,constraints,seed,pure)) }
 
-     | TIdentWithParentConstraint
-         { let ((nm,constraints,seed,pure,clt), (nm2,constraints2,seed2,pure2,clt2)) = $1 in
-         let ret =  Ast0.wrap(Ast0.MetaIdWithParent((P.clt2mcode nm clt,constraints,seed,pure), (P.clt2mcode nm2 clt2,constraints2,seed2,pure2)))
-         
-	      in
-         ret
-	  }
+	  
 
 disj_ident:
        mident { $1 }

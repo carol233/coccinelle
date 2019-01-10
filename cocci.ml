@@ -516,13 +516,6 @@ let worth_trying2 cfiles (tokens,_,query,_) =
   (* drop the following line for a list of list by rules.  since we don't
      allow multiple minirules, all the tokens within a rule should be in
      a single CFG entity *)
- let tokens = 
-    if !Flag.java then 
-	match tokens with 
-	| Some toks -> Some (toks |> List.map (fun s -> (String.split_on_char '#' s) |> Common.last))
-	| None -> tokens
-    else tokens 
-  in 
   let res =
   match (!Flag_cocci.windows,!Flag.scanner,tokens,query,cfiles) with
     (true,_,_,_,_) | (_,_,None,_,_) | (_,_,_,None,_) | (_,Flag.CocciGrep,_,_,_)

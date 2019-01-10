@@ -271,12 +271,6 @@ let rec full_ident i =
       let nm = normal_mcode nm in
       let name = promote_mcode nm in
       mkidres i (Ast0.MetaId(nm,a,b,c)) name name (Some name)
-  | Ast0.MetaIdWithParent((nm,a,b,c), (nm1,a1,b1,c1) ) ->
-      let nm = normal_mcode nm in
-      let name = promote_mcode nm in
-      let nm1 = normal_mcode nm1 in
-      let name1 = promote_mcode nm1 in
-      mkidres i (Ast0.MetaIdWithParent((nm,a,b,c), (nm1, a1, b1, c1))) name name (Some name)
   | Ast0.MetaFunc(nm,a,b) ->
       let nm = normal_mcode nm in
       let name = promote_mcode nm in

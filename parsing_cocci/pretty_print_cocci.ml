@@ -190,7 +190,6 @@ let rec ident i =
   match Ast.unwrap i with
     Ast.Id(name) -> mcode print_string name
   | Ast.MetaId(name,_,keep,inherited) -> mcode print_meta name
-  | Ast.MetaIdWithParent((name,_,keep,inherited), (name1,_,keep1,inherited1)) -> print_string "pretty print cocci..ml: still got my parent" ; mcode print_meta name
   | Ast.MetaFunc(name,_,_,_) -> mcode print_meta name
   | Ast.MetaLocalFunc(name,_,_,_) -> mcode print_meta name
   | Ast.AsIdent(id,asid) -> ident id; print_string "@"; ident asid

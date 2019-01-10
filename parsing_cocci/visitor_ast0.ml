@@ -79,10 +79,6 @@ let visitor mode bind option_default
 	| Ast0.MetaId(name,constraints,seed,pure) ->
 	    let (n,name) = meta_mcode name in
 		(n,Ast0.MetaId(name,constraints,seed,pure))
-	| Ast0.MetaIdWithParent((name,constraints,seed,pure), ((name1, c, s, p))) ->
-		let (n,name) = meta_mcode name in
-		let (n1,name1) = meta_mcode name1 in
-	    (n,Ast0.MetaIdWithParent((name,constraints,seed,pure), (name1, c, s, p)))
 	| Ast0.MetaFunc(name,constraints,pure) ->
 	    let (n,name) = meta_mcode name in
 	    (n,Ast0.MetaFunc(name,constraints,pure))

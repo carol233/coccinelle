@@ -134,8 +134,6 @@ and base_ident =
     Id            of string mcode
   | MetaId        of
       meta_name mcode * constraints * keep_binding * inherited
-  | MetaIdWithParent  of
-      (meta_name mcode * constraints * keep_binding * inherited) * (meta_name mcode * constraints * keep_binding * inherited)
   | MetaFunc      of
       meta_name mcode * constraints * keep_binding * inherited
   | MetaLocalFunc of

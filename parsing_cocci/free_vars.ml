@@ -77,16 +77,6 @@ let collect_refs include_constraints =
 	    then Ast.cstr_meta_names idconstraint
 	    else [] in
 	  bind metas [metaid name]
-      | Ast.MetaIdWithParent((name,idconstraint,_,_), (name1,idconstraint1,_,_) ) -> 
-	let metas =
-		if include_constraints
-		then Ast.cstr_meta_names idconstraint
-		else [] in
-	let metas1 =
-		if include_constraints
-		then Ast.cstr_meta_names idconstraint1
-		else [] in
-	bind (metas @ metas1) [metaid name; metaid name1]
       | Ast.DisjId(ids) -> bind_disj (List.map k ids)
       | _ -> option_default) in
 
@@ -663,11 +653,6 @@ let classify_variables metavar_decls minirules used_after =
 	let (unitary,inherited) = classify name in
 	Ast.rewrap e
 	  (Ast.MetaId(name,constraints,unitary,inherited))
-    | Ast.MetaIdWithParent ((name, constraints, _, _), (name1, constraints1, _, _)) ->
-    	  let (unitary,inherited) = classify name in
-	  let (unitary1, inherited1) = classify name1 in
-	  Ast.rewrap e
-            (Ast.MetaIdWithParent ((name, constraints, unitary, inherited), (name1, constraints1, unitary1, inherited1)))
     | Ast.MetaFunc(name,constraints,_,_) ->
 	let (unitary,inherited) = classify name in
 	Ast.rewrap e (Ast.MetaFunc(name,constraints,unitary,inherited))
@@ -684,12 +669,6 @@ let classify_variables metavar_decls minirules used_after =
           let (unitary, inherited) =
             classify (Ast.unwrap_mcode name, (), (), []) in
           Ast.MetaId (name, Ast.CstrTrue, unitary, inherited)
-      | Ast.MetaIdWithParent ((name, _, _, _), (name1, _, _, _)) ->
-          let (unitary, inherited) =
-            classify (Ast.unwrap_mcode name, (), (), []) in
-          let (unitary1, inherited1) =
-              classify (Ast.unwrap_mcode name1, (), (), []) in
-          Ast.MetaIdWithParent ((name, Ast.CstrTrue, unitary, inherited), (name1, Ast.CstrTrue, unitary1, inherited1))
       | Ast.MetaFunc (name, _, _, _) ->
           let (unitary, inherited) =
             classify (Ast.unwrap_mcode name, (), (), []) in

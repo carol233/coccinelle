@@ -363,10 +363,6 @@ and ident i =
 	let cstr' = constraints cstr in
 	
 	Ast.MetaId(mcode name,cstr',unitary,false)
-    | Ast0.MetaIdWithParent((name,cstr,_,_), (name1,cstr1,_,_) ) ->
-	let cstr' = constraints cstr in
-	let cstr1' = constraints cstr1 in
-	Ast.MetaIdWithParent((mcode name,cstr',unitary,false), (mcode name1,cstr1',unitary,false))
     | Ast0.MetaFunc(name,cstr,_) ->
 	let cstr' = constraints cstr in
 	Ast.MetaFunc(mcode name,cstr',unitary,false)

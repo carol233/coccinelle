@@ -149,8 +149,6 @@ and base_ident =
     Id            of string mcode
   | MetaId        of
       meta_name mcode * constraints * keep_binding * inherited
-  | MetaIdWithParent        of
-      (meta_name mcode * constraints * keep_binding * inherited) * (meta_name mcode * constraints * keep_binding * inherited)
   | MetaFunc      of
       meta_name mcode * constraints * keep_binding * inherited
   | MetaLocalFunc of
@@ -1068,7 +1066,6 @@ let rec string_of_ident id =
   match unwrap id with
     Id id -> unwrap_mcode id
   | MetaId (m, _, _, _)
-  | MetaIdWithParent ((m, _, _, _), (_, _, _, _))
   | MetaFunc (m, _, _, _)
   | MetaLocalFunc (m, _, _, _) -> string_of_meta_name (unwrap_mcode m)
   | AsIdent (id, _) -> string_of_ident id
@@ -1263,7 +1260,6 @@ let rec ident_fold_meta_names f ident v =
   match unwrap ident with
     Id _ -> v
   | MetaId (tyname, _, _, _)
-  | MetaIdWithParent ((tyname, _, _, _), (_, _, _, _))
   | MetaFunc (tyname, _, _, _)
   | MetaLocalFunc (tyname, _, _, _) -> f (unwrap_mcode tyname) v
   | AsIdent (ident0, ident1) ->
