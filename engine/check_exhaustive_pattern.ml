@@ -112,6 +112,7 @@ let dumb_astcocci_expr = function
  | A.Sequence (ea1, opa, ea2) -> ()
  | A.CondExpr (ea1,_,ea2opt,_,ea3) -> ()
  | A.Postfix (ea, opa) -> ()
+ | A.New (ea, op) -> ()
  | A.Infix (ea, opa) -> ()
  | A.Unary (ea, opa) -> ()
  | A.Binary (ea1, opa, ea2) -> ()

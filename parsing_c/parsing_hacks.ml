@@ -1891,7 +1891,7 @@ let fix_tokens_cpp2 ~macro_defs err_pos tokens =
     let cleaner = !tokens2 +> filter_cpp_stuff in
 
     let paren_grouped      = TV.mk_parenthised  cleaner in
-    let line_paren_grouped = TV.mk_line_parenthised paren_grouped in
+    (* let line_paren_grouped = TV.mk_line_parenthised paren_grouped in *)
     find_define_init_brace_paren paren_grouped;
     find_string_macro_paren paren_grouped;
     (* find_macro_lineparen    true line_paren_grouped; *)
@@ -1899,8 +1899,8 @@ let fix_tokens_cpp2 ~macro_defs err_pos tokens =
 
 
     (* obsolete: actions ? not yet *)
-    let cleaner = !tokens2 +> filter_cpp_stuff in
-    let paren_grouped = TV.mk_parenthised  cleaner in
+    (* let cleaner = !tokens2 +> filter_cpp_stuff in *)
+    (* let paren_grouped = TV.mk_parenthised  cleaner in *)
     (* find_actions  paren_grouped; *)
 
     insert_virtual_positions (!tokens2 +> Common.acc_map (fun x -> x.tok))
@@ -2199,11 +2199,11 @@ let lookahead2 ~pass next before =
     -> msg_typedef s i1 101; LP.add_typedef_root s;
     TypedefIdent (s, i1)
 
-    (* any X x must mean that x is not a typedefIdent *)
+    (* any X x must mean that x is not a typedefIdent
   | (TypedefIdent(s,i1) :: rest, (TypedefIdent _ | Tlong _| Tchar _ | Tint _ | Tfloat _ | Tdouble _ | Tshort _ | Tlong _ ) :: _ )
     ->
     msg_not_typedef s i1 1;
-    TIdent (s, i1)
+    TIdent (s, i1) *)
 
   (* package something.enum *)
     | (Tenum(i1) :: rest, TDot _ :: _ )
@@ -2338,7 +2338,7 @@ let lookahead2 ~pass next before =
   TypedefIdent (s, i1)
 
 
-   | (TIdent (s, i1):: TInf _ :: ((TypedefIdent _ | TIdent _ | Tchar _ | Tint _ | Tfloat _ | Tdouble _ | Tshort _ | Tlong _) as i)  :: rest  , _) when not_struct_enum before
+   | (TIdent (s, i1):: TInf _ :: ((TypedefIdent _ | TIdent _ | Tchar _ | Tint _ | Tfloat _ | Tdouble _ | Tshort _ | Tlong _))  :: rest  , _) when not_struct_enum before
    && ok_typedef s &&
    (
 	   is_followed_by_closing_generic_within_n rest 3
@@ -2795,11 +2795,11 @@ msg_not_typedef s i1 11;
     LP.add_typedef_root s;
     TypedefIdent (s, i1) 
     (* T[] somename() *)
-  | (TIdent (s, i1) :: TOCro _  :: TCCro _ :: TIdent _ :: TOPar _ :: next :: rest, _) 
+  (* | (TIdent (s, i1) :: TOCro _  :: TCCro _ :: TIdent _ :: TOPar _ :: next :: rest, _) 
     -> 
     msg_typedef s i1 120;
     LP.add_typedef_root s;
-    TypedefIdent (s, i1) 
+    TypedefIdent (s, i1)  *)
     
   (* extends/implements/instanceof X -> X is a type*)
   | (TIdent (s, i1) :: rest, (Textends _ | Timplements _ | Tinstanceof _) :: _ )

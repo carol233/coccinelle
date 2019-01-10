@@ -475,7 +475,6 @@ let rec aux_statement : (nodei option * xinfo) -> statement -> nodei option =
 					 | _ -> raise (Impossible 700)
 					)
 
-					(* () *)
 				 | _ -> ())
 			
 			| _ ->  ())
