@@ -212,7 +212,11 @@ let interpret_cocci_git_grep strict x virt =
   let wordify x = 
     (* HJ: handle clazz#ident for java, search on just `ident`, and ignore `clazz` *)
     if !Flag.java then 
-	("\\b" ^ ((String.split_on_char '#' x) |> Common.last) ^ "\\b")
+	(if String.contains x '>' then 
+		("\\b" ^ x )  else 
+		("\\b" ^ x ^ "\\b")
+	)
+
     else "\\b" ^ x ^ "\\b"  
   in
   match x with

@@ -516,7 +516,6 @@ let worth_trying2 cfiles (tokens,_,query,_) =
   (* drop the following line for a list of list by rules.  since we don't
      allow multiple minirules, all the tokens within a rule should be in
      a single CFG entity *)
- (* HJ: handle clazz#ident for java, just search on ident *)
  let tokens = 
     if !Flag.java then 
 	match tokens with 
