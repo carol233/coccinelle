@@ -82,7 +82,6 @@ AC_SUBST([PKG_CONFIG],["$COCCI_SRCDIR/setup/fake-subst.sh $PKG_CONFIG_ORIG"])
 dnl  ocaml compiler configuration
 AC_PROG_OCAML
 AC_CHECK_OCAMLVERSION([OCAMLATLEAST312],[3.12])
-AS_IF([test "x$OCAMLATLEAST312" = xno],[AC_MSG_ERROR([OCaml >= 3.12 is required to compile Coccinelle])])
 AC_CHECK_OCAMLVERSION([OCAMLATLEAST4020],[4.02])
 AC_SUBST([OCAMLCORIG],["$OCAMLC"])
 
