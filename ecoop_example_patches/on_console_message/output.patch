@@ -1,0 +1,16 @@
+--- ViewFileFragment.java
++++ /tmp/cocci-output-19670-435520-ViewFileFragment.java
+@@ -63,10 +63,9 @@ public class ViewFileFragment extends Ba
+         webSettings.setJavaScriptEnabled(true);
+         mFileContent.setWebChromeClient(new WebChromeClient() {
+             @Override
+-            public void onConsoleMessage(String message, int lineNumber,
+-                                         String sourceID) {
+-                Log.d("MyApplication", message + " -- From line " + lineNumber
+-                        + " of " + sourceID);
++            public void onConsoleMessage(ConsoleMessage cs) {
++                Log.d("MyApplication", cs.message() + " -- From line " + cs.lineNumber()
++                        + " of " + cs.sourceId());
+             }
+ 
+             public boolean shouldOverrideUrlLoading(WebView view, String url) {

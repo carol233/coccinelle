@@ -1,0 +1,33 @@
+--- IncomingRinger.java
++++ /tmp/cocci-output-19615-f8a3b3-IncomingRinger.java
+@@ -103,7 +103,8 @@ public class IncomingRinger {
+ 
+   private boolean shouldVibrateOld(Context context, boolean vibrate) {
+     AudioManager audioManager = ServiceUtil.getAudioManager(context);
+-    return vibrate && audioManager.shouldVibrate(AudioManager.VIBRATE_TYPE_RINGER);
++    return vibrate && shouldVibrate(audioManager, context,
++                                    AudioManager.VIBRATE_TYPE_RINGER);
+   }
+ 
+   private MediaPlayer createPlayer(@NonNull Uri ringtoneUri) {
+@@ -123,6 +124,20 @@ public class IncomingRinger {
+   }
+ 
+ 
++  boolean shouldVibrate(AudioManager audioManager, Context context,
++                        int vibrateType) {
++    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
++      Vibrator vibrator = (Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE);
++      if (vibrator == null || !vibrator.hasVibrator()) {
++      return false;
++      }
++      return audioManager.getRingerMode() != AudioManager.RINGER_MODE_SILENT;
++    }
++    else {
++      return audioManager.shouldVibrate(vibrateType);
++    }
++  }
++  
+   private class MediaPlayerErrorListener implements MediaPlayer.OnErrorListener {
+     @Override
+     public boolean onError(MediaPlayer mp, int what, int extra) {

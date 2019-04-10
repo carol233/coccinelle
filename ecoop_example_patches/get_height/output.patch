@@ -1,0 +1,28 @@
+--- TouchUtils.java
++++ /tmp/cocci-output-19640-0e4f1a-TouchUtils.java
+@@ -53,8 +53,10 @@ public class TouchUtils {
+      */
+     public static void dragQuarterScreenDown(InstrumentationTestCase test, Activity activity) {
+         Display display = activity.getWindowManager().getDefaultDisplay();
+-        int screenHeight = display.getHeight();
+-        int screenWidth = display.getWidth();
++        Point p = new Point();
++        display.getSize(p);
++        int screenHeight = p.y;
++        int screenWidth = p.x;
+         
+         final float x = screenWidth / 2.0f;
+         final float fromY = screenHeight * 0.5f;
+@@ -83,8 +85,10 @@ public class TouchUtils {
+      */
+     public static void dragQuarterScreenUp(InstrumentationTestCase test, Activity activity) {
+         Display display = activity.getWindowManager().getDefaultDisplay();
+-        int screenHeight = display.getHeight();
+-        int screenWidth = display.getWidth();
++        Point p = new Point();
++        display.getSize(p);
++        int screenHeight = p.y;
++        int screenWidth = p.x;
+         
+         final float x = screenWidth / 2.0f;
+         final float fromY = screenHeight * 0.5f;

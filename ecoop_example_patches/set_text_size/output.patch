@@ -1,0 +1,23 @@
+--- CustomWebView.java
++++ /tmp/cocci-output-19492-c4ade3-CustomWebView.java
+@@ -132,15 +132,15 @@ public class CustomWebView extends WebVi
+ 
+ 
+ 		if (Properties.webpageProp.fontSize==0)
+-			this.getSettings().setTextSize(WebSettings.TextSize.SMALLEST);
++			this.getSettings().setTextZoom(50);
+ 		if (Properties.webpageProp.fontSize==1)
+-			this.getSettings().setTextSize(WebSettings.TextSize.SMALLER);
++			this.getSettings().setTextZoom(75);
+ 		if (Properties.webpageProp.fontSize==2)
+-			this.getSettings().setTextSize(WebSettings.TextSize.NORMAL);
++			this.getSettings().setTextZoom(100);
+ 		if (Properties.webpageProp.fontSize==3)
+-			this.getSettings().setTextSize(WebSettings.TextSize.LARGER);
++			this.getSettings().setTextZoom(150);
+ 		if (Properties.webpageProp.fontSize==4)
+-			this.getSettings().setTextSize(WebSettings.TextSize.LARGEST);
++			this.getSettings().setTextZoom(200);
+ 
+ 		this.setLayoutParams(new RelativeLayout.LayoutParams(
+ 				LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));

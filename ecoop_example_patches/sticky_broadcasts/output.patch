@@ -1,0 +1,20 @@
+--- FileDownloader.java
++++ /tmp/cocci-output-19468-f41ca5-FileDownloader.java
+@@ -677,7 +677,7 @@ public class FileDownloader extends Serv
+             end.putExtra(EXTRA_LINKED_TO_PATH, unlinkedFromRemotePath);
+         }
+         end.setPackage(getPackageName());
+-        sendStickyBroadcast(end);
++        sendBroadcast(end);
+     }
+ 
+ 
+@@ -695,7 +695,7 @@ public class FileDownloader extends Serv
+         added.putExtra(EXTRA_FILE_PATH, download.getSavePath());
+         added.putExtra(EXTRA_LINKED_TO_PATH, linkedToRemotePath);
+         added.setPackage(getPackageName());
+-        sendStickyBroadcast(added);
++        sendBroadcast(added);
+     }
+ 
+     /**

@@ -1,0 +1,23 @@
+--- SimpleListItemDividerDecoration.java
++++ /tmp/cocci-output-19780-7f4c53-SimpleListItemDividerDecoration.java
+@@ -46,7 +46,7 @@ public class SimpleListItemDividerDecora
+     public SimpleListItemDividerDecoration(Context context) {
+         super(context, DividerItemDecoration.VERTICAL);
+         final TypedArray styledAttributes = context.obtainStyledAttributes(ATTRS);
+-        divider = styledAttributes.getDrawable(0);
++        divider = styledAttributes.getDrawable(0, context.getTheme());
+         leftPadding = Math.round(72 * (context.getResources().getDisplayMetrics().xdpi / DisplayMetrics.DENSITY_DEFAULT));
+         styledAttributes.recycle();
+     }
+--- DisplayUtils.java
++++ /tmp/cocci-output-19780-70b428-DisplayUtils.java
+@@ -478,7 +478,8 @@ public final class DisplayUtils {
+                 avatar = TextDrawable.createAvatarByUserId(userId, avatarRadius);
+             } catch (Exception e) {
+                 Log_OC.e(TAG, "Error calculating RGB value for active account icon.", e);
+-                avatar = resources.getDrawable(R.drawable.account_circle_white);
++                avatar = resources.getDrawable(R.drawable.account_circle_white,
++                                               getContext().getTheme());
+             }
+         }
+ 
