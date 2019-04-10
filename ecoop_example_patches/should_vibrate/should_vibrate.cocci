@@ -1,7 +1,8 @@
+virtual replace_no_context
+
 @@
 identifier am, f, ctx;
 expression vibrate_type;
-position p;
 @@
 + boolean shouldVibrate(AudioManager am, Context ctx, int vibrateType) {
 +     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -24,7 +25,7 @@ f(..., Context ctx, ...) {
 ...
 }
 
-@@
+@depends on replace_no_context@
 identifier am;
 expression vibrate_type;
 identifier f !~ "^shouldVibrate$";

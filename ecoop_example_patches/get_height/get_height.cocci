@@ -4,20 +4,24 @@ identifier p;
 type T;
 @@
 (
-- p = new Point(display.getWidth(), display.getHeight());
+- p = new Point(display.getWidth(),
+-              display.getHeight());
 + p = new Point();
 + d.getSize(p);
 |
-- T p = new Point(display.getWidth (), display.getHeight ());
-+ T p = new Point ();
+- T p = new Point(display.getWidth(),
+-                 display.getHeight());
++ T p = new Point();
 + d.getSize(p);
 )
 <...
-- display.getHeight ()
+(
+- display.getHeight()
 + p.y
 |
-- display.getWidth ()
+- display.getWidth()
 + p.x
+)
 ...>
 
 @rule2@
@@ -36,5 +40,6 @@ Display display = E;
 |
 - display.getWidth ()
 + p.x
+)
 ...>
 }
