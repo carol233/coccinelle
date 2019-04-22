@@ -1,6 +1,14 @@
-                            Coccinelle
+				Coccinelle4J
+
+The program transformation tool Coccinelle is designed for making changes that is required in many locations within a software project. It has been shown to be useful for C code and has been been adopted for use in the Linux kernel by many developers. Over 6000 commits mentioning the use of Coccinelle have been made in the Linux kernel.
+
+Our artifact, Coccinelle4J, is an extension to Coccinelle in order for it to apply program transformations to Java source code. This artifact accompanies our experience report "Semantic Patches for Java Program Transformation", in which we show a case study of applying code transformations to upgrade usage of deprecated Android API methods to replacement API methods.
+
+To get started easily, refer to `ecoop-artifact.pdf`
 
 
+				README of Coccinelle (for C source code)
+				
 Coccinelle allows programmers to easily write some complex
 style-preserving source-to-source transformations on C source code,
 like for instance to perform some refactorings.
