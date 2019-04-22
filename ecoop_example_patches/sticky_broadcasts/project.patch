@@ -1,0 +1,118 @@
+diff -u -p a//src/main/java/com/owncloud/android/ui/activity/FileDisplayActivity.java b//src/main/java/com/owncloud/android/ui/activity/FileDisplayActivity.java
+--- a//src/main/java/com/owncloud/android/ui/activity/FileDisplayActivity.java
++++ b//src/main/java/com/owncloud/android/ui/activity/FileDisplayActivity.java
+@@ -1377,7 +1377,6 @@ public class FileDisplayActivity extends
+                                 }
+                             }
+                         }
+-                        removeStickyBroadcast(intent);
+                         DataHolderUtil.getInstance().delete(intent.getStringExtra(FileSyncAdapter.EXTRA_RESULT));
+ 
+                         Log_OC.d(TAG, "Setting progress visibility to " + mSyncInProgress);
+@@ -1392,9 +1391,6 @@ public class FileDisplayActivity extends
+                     mLastSslUntrustedServerResult = synchResult;
+                 }
+             } catch (RuntimeException e) {
+-                // avoid app crashes after changing the serial id of RemoteOperationResult
+-                // in owncloud library with broadcast notifications pending to process
+-                removeStickyBroadcast(intent);
+ 
+                 try {
+                     DataHolderUtil.getInstance().delete(intent.getStringExtra(FileSyncAdapter.EXTRA_RESULT));
+@@ -1503,7 +1499,6 @@ public class FileDisplayActivity extends
+ 
+             } finally {
+                 if (intent != null) {
+-                    removeStickyBroadcast(intent);
+                 }
+             }
+ 
+@@ -1564,7 +1559,6 @@ public class FileDisplayActivity extends
+ 
+             } finally {
+                 if (intent != null) {
+-                    removeStickyBroadcast(intent);
+                 }
+             }
+         }
+diff -u -p a//src/main/java/com/owncloud/android/ui/activity/FolderPickerActivity.java b//src/main/java/com/owncloud/android/ui/activity/FolderPickerActivity.java
+--- a//src/main/java/com/owncloud/android/ui/activity/FolderPickerActivity.java
++++ b//src/main/java/com/owncloud/android/ui/activity/FolderPickerActivity.java
+@@ -519,7 +519,6 @@ public class FolderPickerActivity extend
+ 
+                         }
+                     }
+-                    removeStickyBroadcast(intent);
+                     DataHolderUtil.getInstance().delete(intent.getStringExtra(FileSyncAdapter.EXTRA_RESULT));
+                     Log_OC.d(TAG, "Setting progress visibility to " + mSyncInProgress);
+ 
+@@ -531,7 +530,6 @@ public class FolderPickerActivity extend
+             } catch (RuntimeException e) {
+                 // avoid app crashes after changing the serial id of RemoteOperationResult 
+                 // in owncloud library with broadcast notifications pending to process
+-                removeStickyBroadcast(intent);
+                 DataHolderUtil.getInstance().delete(intent.getStringExtra(FileSyncAdapter.EXTRA_RESULT));
+             }
+         }
+diff -u -p a//src/main/java/com/owncloud/android/ui/preview/PreviewImageActivity.java b//src/main/java/com/owncloud/android/ui/preview/PreviewImageActivity.java
+--- a//src/main/java/com/owncloud/android/ui/preview/PreviewImageActivity.java
++++ b//src/main/java/com/owncloud/android/ui/preview/PreviewImageActivity.java
+@@ -422,7 +422,6 @@ public class PreviewImageActivity extend
+                     Log_OC.d(TAG, "Download finished, but the fragment is offscreen");
+                 }
+             }
+-            removeStickyBroadcast(intent);
+         }
+     }
+ 
+diff -u -p a//src/main/java/com/owncloud/android/files/services/FileUploader.java b//src/main/java/com/owncloud/android/files/services/FileUploader.java
+--- a//src/main/java/com/owncloud/android/files/services/FileUploader.java
++++ b//src/main/java/com/owncloud/android/files/services/FileUploader.java
+@@ -1291,7 +1291,7 @@ public class FileUploader extends Servic
+         Intent start = new Intent(getUploadsAddedMessage());
+         // nothing else needed right now
+         start.setPackage(getPackageName());
+-        sendStickyBroadcast(start);
++        sendBroadcast(start);
+     }
+ 
+     /**
+@@ -1311,7 +1311,7 @@ public class FileUploader extends Servic
+         start.putExtra(ACCOUNT_NAME, upload.getAccount().name);
+ 
+         start.setPackage(getPackageName());
+-        sendStickyBroadcast(start);
++        sendBroadcast(start);
+     }
+ 
+     /**
+@@ -1345,7 +1345,7 @@ public class FileUploader extends Servic
+             end.putExtra(EXTRA_LINKED_TO_PATH, unlinkedFromRemotePath);
+         }
+         end.setPackage(getPackageName());
+-        sendStickyBroadcast(end);
++        sendBroadcast(end);
+     }
+ 
+     /**
+diff -u -p a//src/main/java/com/owncloud/android/files/services/FileDownloader.java b//src/main/java/com/owncloud/android/files/services/FileDownloader.java
+--- a//src/main/java/com/owncloud/android/files/services/FileDownloader.java
++++ b//src/main/java/com/owncloud/android/files/services/FileDownloader.java
+@@ -677,7 +677,7 @@ public class FileDownloader extends Serv
+             end.putExtra(EXTRA_LINKED_TO_PATH, unlinkedFromRemotePath);
+         }
+         end.setPackage(getPackageName());
+-        sendStickyBroadcast(end);
++        sendBroadcast(end);
+     }
+ 
+ 
+@@ -695,7 +695,7 @@ public class FileDownloader extends Serv
+         added.putExtra(EXTRA_FILE_PATH, download.getSavePath());
+         added.putExtra(EXTRA_LINKED_TO_PATH, linkedToRemotePath);
+         added.setPackage(getPackageName());
+-        sendStickyBroadcast(added);
++        sendBroadcast(added);
+     }
+ 
+     /**

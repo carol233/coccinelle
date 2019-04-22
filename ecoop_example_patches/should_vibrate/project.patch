@@ -1,5 +1,6 @@
---- IncomingRinger.java
-+++ /tmp/cocci-output-27627-6724c3-IncomingRinger.java
+diff -u -p a//src/org/thoughtcrime/securesms/webrtc/audio/IncomingRinger.java b//src/org/thoughtcrime/securesms/webrtc/audio/IncomingRinger.java
+--- a//src/org/thoughtcrime/securesms/webrtc/audio/IncomingRinger.java
++++ b//src/org/thoughtcrime/securesms/webrtc/audio/IncomingRinger.java
 @@ -103,7 +103,8 @@ public class IncomingRinger {
  
    private boolean shouldVibrateOld(Context context, boolean vibrate) {

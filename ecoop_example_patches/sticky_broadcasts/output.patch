@@ -1,5 +1,5 @@
 --- FileDownloader.java
-+++ /tmp/cocci-output-19468-f41ca5-FileDownloader.java
++++ /tmp/cocci-output-27618-4abef3-FileDownloader.java
 @@ -677,7 +677,7 @@ public class FileDownloader extends Serv
              end.putExtra(EXTRA_LINKED_TO_PATH, unlinkedFromRemotePath);
          }

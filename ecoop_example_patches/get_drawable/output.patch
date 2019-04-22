@@ -1,5 +1,5 @@
 --- SimpleListItemDividerDecoration.java
-+++ /tmp/cocci-output-19780-7f4c53-SimpleListItemDividerDecoration.java
++++ /tmp/cocci-output-27633-7e5425-SimpleListItemDividerDecoration.java
 @@ -46,7 +46,7 @@ public class SimpleListItemDividerDecora
      public SimpleListItemDividerDecoration(Context context) {
          super(context, DividerItemDecoration.VERTICAL);
@@ -10,7 +10,7 @@
          styledAttributes.recycle();
      }
 --- DisplayUtils.java
-+++ /tmp/cocci-output-19780-70b428-DisplayUtils.java
++++ /tmp/cocci-output-27633-ce3487-DisplayUtils.java
 @@ -478,7 +478,8 @@ public final class DisplayUtils {
                  avatar = TextDrawable.createAvatarByUserId(userId, avatarRadius);
              } catch (Exception e) {

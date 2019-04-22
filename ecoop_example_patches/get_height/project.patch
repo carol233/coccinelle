@@ -1,0 +1,13 @@
+diff -u -p a//library/src/main/java/com/bumptech/glide/request/target/ViewTarget.java b//library/src/main/java/com/bumptech/glide/request/target/ViewTarget.java
+--- a//library/src/main/java/com/bumptech/glide/request/target/ViewTarget.java
++++ b//library/src/main/java/com/bumptech/glide/request/target/ViewTarget.java
+@@ -221,7 +221,8 @@ public abstract class ViewTarget<T exten
+                 displayDimens = new Point();
+                 display.getSize(displayDimens);
+             } else {
+-                displayDimens = new Point(display.getWidth(), display.getHeight());
++                displayDimens = new Point();
++                d.getSize(displayDimens);
+             }
+             return displayDimens;
+         }

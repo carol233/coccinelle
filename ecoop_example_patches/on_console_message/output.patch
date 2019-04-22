@@ -1,5 +1,5 @@
 --- ViewFileFragment.java
-+++ /tmp/cocci-output-19670-435520-ViewFileFragment.java
++++ /tmp/cocci-output-27630-bc7dde-ViewFileFragment.java
 @@ -63,10 +63,9 @@ public class ViewFileFragment extends Ba
          webSettings.setJavaScriptEnabled(true);
          mFileContent.setWebChromeClient(new WebChromeClient() {

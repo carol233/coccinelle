@@ -1,0 +1,34 @@
+diff -u -p a//app/src/main/java/me/sheimi/sgit/fragments/ViewFileFragment.java b//app/src/main/java/me/sheimi/sgit/fragments/ViewFileFragment.java
+--- a//app/src/main/java/me/sheimi/sgit/fragments/ViewFileFragment.java
++++ b//app/src/main/java/me/sheimi/sgit/fragments/ViewFileFragment.java
+@@ -63,10 +63,9 @@ public class ViewFileFragment extends Ba
+         webSettings.setJavaScriptEnabled(true);
+         mFileContent.setWebChromeClient(new WebChromeClient() {
+             @Override
+-            public void onConsoleMessage(String message, int lineNumber,
+-                                         String sourceID) {
+-                Log.d("MyApplication", message + " -- From line " + lineNumber
+-                        + " of " + sourceID);
++            public void onConsoleMessage(ConsoleMessage cs) {
++                Log.d("MyApplication", cs.message() + " -- From line " + cs.lineNumber()
++                        + " of " + cs.sourceId());
+             }
+ 
+             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+diff -u -p a//app/src/main/java/me/sheimi/sgit/activities/CommitDiffActivity.java b//app/src/main/java/me/sheimi/sgit/activities/CommitDiffActivity.java
+--- a//app/src/main/java/me/sheimi/sgit/activities/CommitDiffActivity.java
++++ b//app/src/main/java/me/sheimi/sgit/activities/CommitDiffActivity.java
+@@ -81,10 +81,9 @@ public class CommitDiffActivity extends 
+         WebSettings webSettings = mDiffContent.getSettings();
+         webSettings.setJavaScriptEnabled(true);
+         mDiffContent.setWebChromeClient(new WebChromeClient() {
+-            public void onConsoleMessage(String message, int lineNumber,
+-                                         String sourceID) {
+-                Log.d("MyApplication", message + " -- From line " + lineNumber
+-                        + " of " + sourceID);
++            public void onConsoleMessage(ConsoleMessage cs) {
++                Log.d("MyApplication", cs.message() + " -- From line " + cs.lineNumber()
++                        + " of " + cs.sourceId());
+             }
+ 
+             public boolean shouldOverrideUrlLoading(WebView view, String url) {

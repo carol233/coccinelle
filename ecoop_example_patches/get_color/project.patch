@@ -1,0 +1,81 @@
+diff -u -p a//app/src/main/java/com/kickstarter/models/Category.java b//app/src/main/java/com/kickstarter/models/Category.java
+--- a//app/src/main/java/com/kickstarter/models/Category.java
++++ b//app/src/main/java/com/kickstarter/models/Category.java
+@@ -115,7 +115,7 @@ abstract public class Category implement
+       default:  identifier = R.color.white; break;
+     }
+ 
+-    return context.getResources().getColor(identifier);
++    return ContextCompat.getColor(context, identifier);
+   }
+ 
+   public @ColorInt int overlayTextColor(final Context context) {
+diff -u -p a//app/src/main/java/com/kickstarter/libs/utils/KSColorUtils.java b//app/src/main/java/com/kickstarter/libs/utils/KSColorUtils.java
+--- a//app/src/main/java/com/kickstarter/libs/utils/KSColorUtils.java
++++ b//app/src/main/java/com/kickstarter/libs/utils/KSColorUtils.java
+@@ -27,7 +27,7 @@ public class KSColorUtils {
+   }
+ 
+   public static @ColorInt int darkColor(final Context context) {
+-    return context.getResources().getColor(darkColorId());
++    return ContextCompat.getColor(context, darkColorId());
+   }
+ 
+   public static @ColorRes int darkColorId() {
+@@ -49,7 +49,7 @@ public class KSColorUtils {
+   }
+ 
+   public static @ColorInt int lightColor(final Context context) {
+-    return context.getResources().getColor(lightColorId());
++    return ContextCompat.getColor(context, lightColorId());
+   }
+ 
+   public static @ColorRes int lightColorId() {
+@@ -90,7 +90,7 @@ public class KSColorUtils {
+ 
+   public static @ColorInt int foregroundColor(final int backgroundColor, @NonNull final Context context) {
+     final @ColorRes int colorId = isLight(backgroundColor) ? darkColorId() : lightColorId();
+-    return context.getResources().getColor(colorId);
++    return ContextCompat.getColor(context, colorId);
+   }
+ 
+   /*
+diff -u -p a//app/src/main/java/com/kickstarter/libs/utils/DiscoveryUtils.java b//app/src/main/java/com/kickstarter/libs/utils/DiscoveryUtils.java
+--- a//app/src/main/java/com/kickstarter/libs/utils/DiscoveryUtils.java
++++ b//app/src/main/java/com/kickstarter/libs/utils/DiscoveryUtils.java
+@@ -39,13 +39,13 @@ public class DiscoveryUtils {
+   public static @ColorInt int primaryColor(@NonNull final Context context, @NonNull final DiscoveryParams params) {
+     return params.category() != null ?
+       params.category().colorWithAlpha() :
+-      context.getResources().getColor(R.color.discovery_primary);
++      ContextCompat.getColor(context, R.color.discovery_primary);
+   }
+ 
+   public static @ColorInt int secondaryColor(@NonNull final Context context, @NonNull final DiscoveryParams params) {
+     return params.category() != null ?
+       params.category().secondaryColor(context) :
+-      context.getResources().getColor(R.color.discovery_secondary);
++      ContextCompat.getColor(context, R.color.discovery_secondary);
+   }
+ 
+   public static boolean overlayShouldBeLight(@NonNull final DiscoveryParams params) {
+@@ -58,6 +58,6 @@ public class DiscoveryUtils {
+ 
+   public static @ColorInt int overlayTextColor(@NonNull final Context context, final boolean light) {
+     final @ColorRes int color = light ? KSColorUtils.lightColorId() : KSColorUtils.darkColorId();
+-    return context.getResources().getColor(color);
++    return ContextCompat.getColor(context, color);
+   }
+ }
+diff -u -p a//app/src/main/java/com/kickstarter/libs/PushNotifications.java b//app/src/main/java/com/kickstarter/libs/PushNotifications.java
+--- a//app/src/main/java/com/kickstarter/libs/PushNotifications.java
++++ b//app/src/main/java/com/kickstarter/libs/PushNotifications.java
+@@ -131,7 +131,7 @@ public class PushNotifications {
+   private @NonNull NotificationCompat.Builder notificationBuilder(@NonNull final String title, @NonNull final String text) {
+     return new NotificationCompat.Builder(context)
+       .setSmallIcon(R.drawable.ic_kickstarter_k)
+-      .setColor(context.getResources().getColor(R.color.green))
++      .setColor(ContextCompat.getColor(context, R.color.green))
+       .setContentText(text)
+       .setContentTitle(title)
+       .setStyle(new NotificationCompat.BigTextStyle().bigText(text))

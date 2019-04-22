@@ -1,5 +1,6 @@
---- CustomWebView.java
-+++ /tmp/cocci-output-27621-3dc12e-CustomWebView.java
+diff -u -p a//app/src/main/java/views/CustomWebView.java b//app/src/main/java/views/CustomWebView.java
+--- a//app/src/main/java/views/CustomWebView.java
++++ b//app/src/main/java/views/CustomWebView.java
 @@ -132,15 +132,15 @@ public class CustomWebView extends WebVi
  
  
