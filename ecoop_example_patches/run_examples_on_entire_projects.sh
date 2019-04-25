@@ -5,7 +5,7 @@ spatch --sp-file set_text_size.cocci --iso lucid_browser.iso Lucid-Browser/ > pr
 cd ../get_color
 spatch --sp-file get_color.cocci android-oss/ > project.patch
 cd ../get_height
-spatch --sp-file get_height.cocci glide/ > project.patch
+spatch --sp-file get_height.cocci glide/library > project.patch
 cd ../should_vibrate
 spatch --sp-file should_vibrate.cocci Signal-Android/ > project.patch
 cd ../on_console_message
