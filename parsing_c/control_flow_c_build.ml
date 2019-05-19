@@ -219,7 +219,7 @@ let rec add_arc_all_stmt_in_try_to_except firstcatch firsttry lasttry  =
     | Some stmt -> 
       (let s = Ast_c.unwrap_st stmt in 
       (match s with
-      | Ast_c.Labeled _ | Ast_c.Compound _| Ast_c.Decl _  | Ast_c.NestedFunc _ -> ()
+      | Ast_c.Labeled _ | Ast_c.Compound _ | Ast_c.NestedFunc _ -> ()
       | _ -> !g#add_arc ((lasttry, firstcatch), Direct)))
     | None -> ());
     
@@ -1191,10 +1191,11 @@ and mk_Try (starti :nodei option) (labels :int list)
 		    | None -> (!g +> add_node (EndStatement (None)) labels "catch1")
     in
     let finallynode = 
-	match st3 with 
-		     | Some finally_stmt -> (!g +> add_node (Finally (finally_stmt, ((), [i3]))) labels "finally")
+	(match st3 with 
+		     | Some finally_stmt -> Some (!g +> add_node (Finally (finally_stmt, ((), [i3]))) labels "finally")
 		     | None -> 
-		     (!g +> add_node (EndStatement (None)) labels "finally")
+		     (* (!g +> add_node (EndStatement (None)) labels "finally") *)
+			None )
     in
   
     !g +> add_arc_opt (starti, trynode);
@@ -1205,14 +1206,18 @@ and mk_Try (starti :nodei option) (labels :int list)
       | None -> Some catchnode) 
     in
 
-    add_arc_opt (finaltry, finallynode) !g;
-    add_arc_opt (finalcatch, finallynode) !g;
+    (match st3, finallynode  with  
+    | Some finally_stmt, Some node -> 
+	add_arc_opt (finaltry, node) !g;
+	add_arc_opt (finalcatch, node) !g;
+    | _, _  -> ()
+    );
     let finalfinally = 
 	(
 	match st3 with 
-	| Some stmt -> aux_statement (Some finallynode, xi_lbl) stmt
+	| Some stmt -> aux_statement ( finallynode, xi_lbl) stmt
 	| None -> 
-	Some finallynode) 	
+	 finallynode) 	
     in	
 	
     (match st2 with 
@@ -1221,20 +1226,29 @@ and mk_Try (starti :nodei option) (labels :int list)
 	(* we don't do interprocedural analysis, 
 	* potentially any statement in the try-block might throw *)
 	(match finaltry with 
-	| Some node -> add_arc_all_stmt_in_try_to_except catchnode trynode node;
+	| Some node -> 
+	  add_arc_all_stmt_in_try_to_except catchnode trynode node;
 	| None -> ());
     | None -> 
 	(* link in nodes in st1 to `finally` *)
 	(* we don't do interprocedural analysis, 
 	* potentially any statement in the try-block might throw *)
-	(match finaltry with 
-	| Some node -> add_arc_all_stmt_in_try_to_except catchnode trynode node; add_arc_all_stmt_in_try_to_except finallynode trynode node;
-	| None -> ());
+	(match finaltry, finallynode with 
+	  | Some node, Some fnode -> 
+	  add_arc_all_stmt_in_try_to_except fnode trynode node;
+	| _, _ -> ());
     );
    
 	
     let endnode = add_node (EndStatement(Some i3)) labels "[end-finally]" !g in
-      add_arc_opt (finalfinally, endnode) !g;
+	(
+	match st3 with 
+		| Some stmt -> add_arc_opt (finalfinally, endnode) !g;
+		| None -> add_arc_opt (finaltry, endnode) !g;
+		add_arc_opt (finalcatch, endnode) !g;
+		
+	);
+      
        (* !g#add_arc ((finalfinally, endnode), Direct) *)
     Some endnode
 
