@@ -12,3 +12,7 @@ RUN git checkout java
 RUN ./autogen
 RUN opam config exec ./configure
 RUN  sudo make install
+WORKDIR ecoop_example_patches
+RUN sh ./download_all_projects.sh
+
+WORKDIR ..
