@@ -4,7 +4,7 @@ The program transformation tool Coccinelle is designed for making changes that i
 
 Our artifact, Coccinelle4J, is an extension to Coccinelle in order for it to apply program transformations to Java source code. This artifact accompanies our experience report "Semantic Patches for Java Program Transformation", in which we show a case study of applying code transformations to upgrade usage of deprecated Android API methods to replacement API methods.
 
-To get started easily, refer to `ecoop-artifact.pdf`
+To get started easily, refer to `ecoop-artifact.pdf`, which contains instructions for reproducing the results in our ECOOP paper. 
 
 
 				README of Coccinelle (for C source code)
