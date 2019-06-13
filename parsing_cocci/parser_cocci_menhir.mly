@@ -1220,7 +1220,7 @@ filespec:
 includes:
   TIncludeL
     { Ast0.wrap
-	(Ast0.Include(P.clt2mcode "#include"
+	(Ast0.Include(P.clt2mcode "import"
 			(P.drop_pos (P.drop_aft (P.id2clt $1))),
 		      let (arity,ln,lln,llne,offset,col,strbef,straft,pos,_) =
 			P.id2clt $1 in
@@ -1231,7 +1231,7 @@ includes:
 			(P.drop_bef clt))) }
 | TIncludeNL
     { Ast0.wrap
-	(Ast0.Include(P.clt2mcode "#include"
+	(Ast0.Include(P.clt2mcode "import"
 			(P.drop_pos (P.drop_aft (P.id2clt $1))),
 		      let (arity,ln,lln,llne,offset,col,strbef,straft,pos,_) =
 			P.id2clt $1 in
@@ -1242,7 +1242,7 @@ includes:
 			(P.drop_bef clt))) }
 | TIncludeAny
     { Ast0.wrap
-	(Ast0.Include(P.clt2mcode "#include"
+	(Ast0.Include(P.clt2mcode "import"
 			(P.drop_pos (P.drop_aft (P.id2clt $1))),
 		      let (arity,ln,lln,llne,offset,col,strbef,straft,pos,_) =
 			P.id2clt $1 in
@@ -1252,7 +1252,7 @@ includes:
 | TInclude TMetaExp
      { Ast0.wrap
 	 (Ast0.MetaInclude
-	    (P.clt2mcode "#include" $1,
+	    (P.clt2mcode "import" $1,
 	     match $2 with
 	       (nm,constraints,pure,ty,clt,None) ->
 		 Ast0.wrap

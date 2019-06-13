@@ -137,10 +137,10 @@ let token2c (tok,_) add_clt =
   | PC.TDirective(Ast.Indent s,_)   -> s
   | PC.TDirective(Ast.Space s,_)   -> s
   | PC.TAttr_(clt) -> add_clt "__attribute__" clt
-  | PC.TIncludeL(s,clt) -> add_clt (pr "#include \"%s\"" s) clt
-  | PC.TIncludeNL(s,clt) -> add_clt (pr "#include <%s>" s) clt
-  | PC.TIncludeAny(s,clt) -> add_clt (pr "#include %s" s) clt
-  | PC.TInclude(clt) -> add_clt "#include" clt
+  | PC.TIncludeL(s,clt) -> add_clt (pr "import %s" s) clt
+  | PC.TIncludeNL(s,clt) -> add_clt (pr "import %s" s) clt
+  | PC.TIncludeAny(s,clt) -> add_clt (pr "import %s" s) clt
+  | PC.TInclude(clt) -> add_clt "import" clt
   | PC.TUndef(clt,_) -> add_clt "#undef" clt
   | PC.TDefine(clt,_) -> add_clt "#define" clt
   | PC.TDefineParam(clt,_,_,_) -> add_clt "#define_param" clt

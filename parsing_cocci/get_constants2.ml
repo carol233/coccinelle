@@ -210,7 +210,6 @@ let interpret_cocci_git_grep strict x virt =
     | And l | Or l -> List.fold_left atoms acc l
     | True | False -> acc in
   let wordify x = 
-    (* HJ: handle clazz#ident for java, search on just `ident`, and ignore `clazz` *)
     if !Flag.java then 
 	(if String.contains x '>' then 
 		("\\b" ^ x )  else 
@@ -612,7 +611,8 @@ let do_get_constants constants keywords env (neg_pos,_) =
 		    function
 			(* just take the last thing, probably the most
 			   specific.  everything is necessary anyway. *)
-			Ast.IncPath s -> [Elem s]
+			   (* HJ: drop the last ';'*)
+			Ast.IncPath s -> [Elem (String.sub s 0 ((String.length s) - 1))]
 		      | Ast.IncDots -> prev)
 		  [] l in
 	      (match strings with

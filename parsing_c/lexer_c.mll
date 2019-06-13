@@ -178,7 +178,14 @@ let keyword_table = Common.hash_of_list [
   "extends",    (fun ii -> Textends ii);
   "implements", (fun ii -> Timplements ii);
 
-  "import",  (fun ii -> Timport ii);
+  (* ("import" [' ' '\t']* (('\"' ([^ '\"']+) '\"' |
+     '<' [^ '>']+ '>' |
+      ['A'-'Z''_']+
+    ) as filename)) ,  (fun ii -> let info = tokinfo lexbuf in
+        TInclude ("import", filename, Ast_c.noInIfdef(), info)); *)
+
+ 
+
   "package",  (fun ii -> Tpackage ii);
 
   (* "struct",  (fun ii -> Tstruct ii); *)
@@ -516,6 +523,11 @@ rule token = parse
       { let info = tokinfo lexbuf in
         TInclude (includes, filename, Ast_c.noInIfdef(), info)
       }
+
+  | "import" [' ' ]+ (( ([^ ';']+) ';' ) as filename)  {
+      let info = tokinfo lexbuf in
+        TInclude ("import ", filename, Ast_c.noInIfdef(), info)
+    }
 
   (* ---------------------- *)
   (* #ifdef *)

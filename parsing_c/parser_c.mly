@@ -2569,14 +2569,14 @@ cpp_directive:
        let (s, i2) = $2 in
 
        (* redo some lexing work :( *)
-       let inc_file =
-         match () with
+       let inc_file = Local [s]
+         (*match () with
          | _ when s =~ "^\"\\(.*\\)\"$" ->
              Local (Common.split "/" (matched1 s))
          | _ when s =~ "^\\<\\(.*\\)\\>$" ->
              NonLocal (Common.split "/" (matched1 s))
          | _ ->
-             Weird s
+             Weird s *)
        in
        Include { i_include = (inc_file, [i1;i2]);
                  i_rel_pos = Ast_c.noRelPos();

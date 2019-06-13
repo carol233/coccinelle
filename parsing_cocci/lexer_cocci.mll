@@ -815,25 +815,24 @@ rule token = parse
 
     (* For the unparser: in TIncludeL and TIncludeNL, the whitespace after
      * #include is not preserved, because we have nowhere to put it. *)
-  | "#" [' ' '\t']* "include" [' ' '\t']* '\"' [^ '\"']+ '\"'
+  | "import" [' ' '\t']* "...;"
+      { check_minus_context_linetype (tok lexbuf);
+	start_line true;
+	TIncludeAny("...",get_current_line_type lexbuf) }
+  | "import" [' ' '\t']* [^ ';']+ ';'
       { TIncludeL
 	  (let str = tok lexbuf in
-	  let start = String.index str '\"' in
-	  let finish = String.rindex str '\"' in
 	  start_line true;
-	  (process_include start finish str, get_current_line_type lexbuf)) }
-  | "#" [' ' '\t']* "include" [' ' '\t']* '<' [^ '>']+ '>'
+	  ((process_include (String.index str ' ') ((String.length str)) str), get_current_line_type lexbuf)) }
+  | "import" [' ' '\t']* '<' [^ ';']+ ';'
       { TIncludeNL
 	  (let str = tok lexbuf in
 	  let start = String.index str '<' in
 	  let finish = String.rindex str '>' in
 	  start_line true;
 	  (process_include start finish str,get_current_line_type lexbuf)) }
-  | "#" [' ' '\t']* "include" [' ' '\t']* "..."
-      { check_minus_context_linetype (tok lexbuf);
-	start_line true;
-	TIncludeAny("...",get_current_line_type lexbuf) }
-  | "#" [' ' '\t']* "include" (* changes not supported *)
+  
+  | "import" (* changes not supported *)
       { check_context_linetype (tok lexbuf);
 	start_line true;
 	TInclude(get_current_line_type lexbuf) }

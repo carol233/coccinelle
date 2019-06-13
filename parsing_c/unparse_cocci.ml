@@ -1064,7 +1064,7 @@ in
 
 let rec inc_file = function
     Ast.Local(elems) ->
-      print_string ("\""^(String.concat "/" (List.map inc_elem elems))^"\"")
+      print_string  ((String.concat "/" (List.map inc_elem elems)))
   | Ast.NonLocal(elems) ->
       print_string ("<"^(String.concat "/" (List.map inc_elem elems))^">")
   | Ast.AnyInc -> failwith "should not be in generated code"
