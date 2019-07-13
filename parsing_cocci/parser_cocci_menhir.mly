@@ -1439,11 +1439,11 @@ fundecl:
   f = single_fundecl { f }
 | s = close_boolean_statement(fundecl) { s }
 
-topar:
+/* topar:
    r=TOPar {
 	   
 	   r
-   }
+   } */
 
 tcpar:
   r=TCPar {
@@ -1452,7 +1452,7 @@ tcpar:
 
 single_fundecl:
   f=fninfo
-  TFunDecl i=fn_ident lp=topar arglist=arg_list(decl_typedef) rp=tcpar
+  TFunDecl i=fn_ident lp=TOPar arglist=arg_list(decl_typedef) rp=TCPar
   lb=TOBrace b=fun_start rb=TCBrace
       { let (args,vararg) = arglist in
       (*print_string" single fundecl\n";*)
@@ -2189,6 +2189,7 @@ unary_op: TAnd    { P.clt2mcode Ast.GetRef $1 }
 	| TTilde  { P.clt2mcode Ast.Tilde $1 }
 	| TBang   { P.clt2mcode Ast.Not $1 }
 
+
 postfix_expr(r,pe):
    primary_expr(r,pe)                            { $1 }
  | postfix_expr(r,pe) TOCro eexpr TCCro
@@ -2196,9 +2197,9 @@ postfix_expr(r,pe):
 				       P.clt2mcode "]" $4)) }
  | postfix_expr(r,pe) TDot   disj_ident
      { Ast0.wrap(Ast0.RecordAccess($1, P.clt2mcode "." $2, $3)) }
- | postfix_expr(r,pe) TPtrOp disj_ident
+ /* | postfix_expr(r,pe) TPtrOp disj_ident
      { Ast0.wrap(Ast0.RecordPtAccess($1, P.clt2mcode "->" $2,
-				     $3)) }
+				     $3)) } */
  | postfix_expr(r,pe) TInc
      { Ast0.wrap(Ast0.Postfix ($1, P.clt2mcode Ast.Inc $2)) }
  | postfix_expr(r,pe) TDec
@@ -2207,12 +2208,12 @@ postfix_expr(r,pe):
      { Ast0.wrap(Ast0.FunCall($1,P.clt2mcode "(" $2,
 			      $3,
 			      P.clt2mcode ")" $4)) }
- /*(* gccext: also called compound literals *)
-   empty case causes conflicts */
- | TNew postfix_expr(r, pe) {
+ | TNew primary_expr(r, pe) {
       Ast0.wrap(Ast0.New($2, P.clt2mcode "new" $1) 
       )
    }
+/*(* gccext: also called compound literals *)
+empty case causes conflicts */
  | TOPar ctype TCPar TOBrace initialize_list TCBrace
      { let init =
        if P.struct_initializer $5
@@ -2677,12 +2678,12 @@ typedef_ident:
 typedef_ident_typename:
        pure_ident_or_symbol
          { Ast0.wrap(Ast0.TypeName(P.id2mcode $1)) }
-     | TMeta { tmeta_to_type $1 }
-     | TMetaType
+     /* | TMeta { tmeta_to_type $1 } */
+     /* | TMetaType
          { let (nm,cstr,pure,clt) = $1 in
 	 Ast0.wrap(Ast0.MetaType(P.clt2mcode nm clt,cstr,pure)) }
      | TTypeId 
-         { Ast0.wrap(Ast0.TypeName(P.id2mcode $1)) }
+         { Ast0.wrap(Ast0.TypeName(P.id2mcode $1)) } */
      | ctype 
         { $1 }
 /*****************************************************************************/
@@ -2983,17 +2984,17 @@ exec_ident:
  | TDot   disj_ident exec_ident
      { function prev ->
        $3 (Ast0.wrap(Ast0.RecordAccess(prev, P.clt2mcode "." $1, $2))) }
- | TPtrOp disj_ident exec_ident
+ /* | TPtrOp disj_ident exec_ident
      { function prev ->
        $3 (Ast0.wrap(Ast0.RecordPtAccess(prev, P.clt2mcode "->" $1,
-				     $2))) }
+				     $2))) } */
 
 exec_ident2:
      { [] }
  | TDot   TIdent exec_ident2
      { (P.clt2mcode "." $1) :: (P.clt2mcode (fst $2) (snd $2)) :: $3 }
- | TPtrOp TIdent exec_ident2
-     { (P.clt2mcode "." $1) :: (P.clt2mcode (fst $2) (snd $2)) :: $3 }
+ /* | TPtrOp TIdent exec_ident2
+     { (P.clt2mcode "." $1) :: (P.clt2mcode (fst $2) (snd $2)) :: $3 } */
 
 token:
     TPlus { P.clt2mcode "+" $1 }
