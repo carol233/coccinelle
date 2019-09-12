@@ -887,6 +887,8 @@ rule token = parse
       (* christia: testing *)
   | (letter | '$') (letter | digit | '$') *
       { start_line true; id_tokens lexbuf }
+| (letter | '$') (letter | digit | '$') * '[' ']'
+      { start_line true; id_tokens lexbuf }
   | (letter) * ('#') (letter | digit ) *
       
 

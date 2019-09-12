@@ -1069,6 +1069,7 @@ let change_typedef_to_ident l =
   let is_open_paren = function 
 	(PC.TOPar0(_),info) -> true
 	| (PC.TOPar(_),info) -> true
+	(* | (PC.TOCro(_),info) -> true *)
 	| _ -> false
   in
   (* is_type hacks over nested types to treat them as field access *)
@@ -1208,6 +1209,11 @@ let detect_types in_meta_decls l =
 	newid::id::(loop false infn (ident::type_names) rest)
     | (PC.TIdent(ident,clt),v)::rest when List.mem ident type_names ->
 	(PC.TTypeId(ident,clt),v)::(loop false infn type_names rest)
+    (* | (PC.TIdent(ident,clt),v)::((PC.TOCro(_),_) as x)::((PC.TCCro(_),_) as y)::rest ->
+	(* let _ = print_string "matched!\n" in 
+	let _ = print_string (ident) in  *)
+	let newid = redo_id (ident) clt v in
+	newid::x::y::(loop false infn (ident::type_names) rest) *)
     | ((PC.TIdent(ident,clt),v) as x)::rest ->
 	x::(loop false infn type_names rest)
     | x::rest -> x::(loop false infn type_names rest)
@@ -2277,8 +2283,9 @@ let parse file =
 	    let plus_tokens = consume_plus_positions plus_tokens in
 	    let minus_tokens = prepare_tokens false minus_tokens in
 	    let plus_tokens = prepare_tokens true plus_tokens in
+	    (* let _ = print_string in  *)
 
-	    (*
+	(* 	    
 	       print_tokens "minus tokens" minus_tokens;
 	       print_tokens "plus tokens" plus_tokens; 
 	    *)

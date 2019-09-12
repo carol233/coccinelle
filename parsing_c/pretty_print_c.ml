@@ -931,10 +931,11 @@ and pp_string_format (e,ii) =
       | (Array (eopt, t), [i1;i2]) ->
           pp_type_left fullt;
 
-          iiqu +> List.iter pr_elem;
+	  iiqu +> List.iter pr_elem;
+	  pp_type_right fullt;
+
           print_ident ident;
 
-          pp_type_right fullt;
 
 
       | (FunctionType (returnt, paramst), [i1;i2]) ->

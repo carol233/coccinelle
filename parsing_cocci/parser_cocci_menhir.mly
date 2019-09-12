@@ -1764,6 +1764,11 @@ decl_var:
 	       (t,P.clt2mcode "(" lp1,P.clt2mcode "*" st,P.clt2mcode ")" rp1,
 		P.clt2mcode "(" lp2,p,P.clt2mcode ")" rp2)) in
 	[Ast0.wrap(Ast0.Typedef(s,t,id,P.clt2mcode ";" pv))]}
+  /* | s=Ttypedef t=typedef_ctype id=typedef_ident
+      l=TOCro i=eexpr r=TCCro pv=TPtVirg
+      { let s = P.clt2mcode "typedef" s in
+        let t = P.arrayify t [(l,Some i,r)] in
+       [Ast0.wrap(Ast0.Typedef(s,t,id,P.clt2mcode ";" pv))] } */
 
 one_decl_var:
     t=ctype pv=TPtVirg
@@ -2189,6 +2194,18 @@ unary_op: TAnd    { P.clt2mcode Ast.GetRef $1 }
 	| TTilde  { P.clt2mcode Ast.Tilde $1 }
 	| TBang   { P.clt2mcode Ast.Not $1 }
 
+new_expr(r, pe):
+  primary_expr(r,pe) TOPar eexpr_list_option TCPar {
+	Ast0.wrap(Ast0.FunCall($1,P.clt2mcode "(" $2,
+			      $3,
+			      P.clt2mcode ")" $4))  
+  }
+  | primary_expr(r,pe) TOCro eexpr_list_option TCCro {
+	Ast0.wrap(Ast0.FunCall($1,P.clt2mcode "(" $2,
+			      $3,
+			      P.clt2mcode ")" $4))  
+  }
+
 
 postfix_expr(r,pe):
    primary_expr(r,pe)                            { $1 }
@@ -2208,7 +2225,7 @@ postfix_expr(r,pe):
      { Ast0.wrap(Ast0.FunCall($1,P.clt2mcode "(" $2,
 			      $3,
 			      P.clt2mcode ")" $4)) }
- | TNew primary_expr(r, pe) {
+ | TNew new_expr(r, pe) {
       Ast0.wrap(Ast0.New($2, P.clt2mcode "new" $1) 
       )
    }
@@ -2686,6 +2703,11 @@ typedef_ident_typename:
          { Ast0.wrap(Ast0.TypeName(P.id2mcode $1)) } */
      | ctype 
         { $1 }
+    | t=ctype TOCro TCCro
+     { Ast0.wrap
+         (Ast0.Array
+            (t,
+             Ast0.make_mcode "", None, Ast0.make_mcode "")) }
 /*****************************************************************************/
 
 decl_list(decl):
